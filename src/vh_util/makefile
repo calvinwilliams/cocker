@@ -8,27 +8,25 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
-			main.c \
-			env.c \
-			action_create.c \
-			action_install_test.c \
+			LOGC.c \
+			version.c \
+			file.c \
 
 ###### 目标文件、安装目录配置区
 include ../makeinstall
-BIN		=	vhm
-BININST		=	$(_BININST)
+LIB		=	libvh_util.so
+LIBINST		=	$(_LIBINST)
 HDER		= \
-			vhm_in.h \
+			LOGC.h \
+			vh_util.h \
+
+HDERINST	=	$(_HDERBASE)/vh_in
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
-			-std=gnu99 \
-			-I$(_HDERBASE)/vh_in \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
-			-L$(_LIBBASE) \
-			-lvh_util \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -39,16 +37,16 @@ PREMAKE		=
 #@ make_all
 #@ make_clean
 #@ make_install
-#@ make_install_BININST
+#@ make_install_LIBINST
 #@ make_install_HDERINST
 #@ make_install_DFTHDERINST
 #@ make_uninstall
-#@ make_uninstall_BININST
+#@ make_uninstall_LIBINST
 #@ make_uninstall_HDERINST
 #@ make_uninstall_DFTHDERINST
 include $(MKTPL2_HOME)/makeobj_$(MKTPL2_OS).inc
 
 ###### 目标文件依赖关系
-vhm		:	$(c_FILE_o)
-	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
+libvh_util.so		:	$(c_FILE_o)
+	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 
