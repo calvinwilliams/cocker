@@ -1,0 +1,11 @@
+_HDERBASE	=	$(HOME)/include
+_LIBBASE	=	$(HOME)/lib
+_BINBASE	=	$(HOME)/bin
+
+_CFLAGS		=	-I. -I$(_HDERBASE)
+_LFLAGS		=	-L. -L$(_LIBBASE)
+
+_HDERINST	=	$(_HDERBASE)
+_LIBINST	=	$(_LIBBASE)
+_BININST	=	$(_BINBASE)
+
