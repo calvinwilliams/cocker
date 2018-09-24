@@ -43,7 +43,7 @@ static int VHostEntry( void *p )
 	
 	mount( "proc" , "/proc" , "proc" , 0 , "" );
 	
-	nret = execl( "/bin/bash" , "bash" , NULL ) ;
+	nret = execl( "/bin/bash" , "bash" , "--login" , NULL ) ;
 	if( nret == -1 )
 	{
 		printf( "*** ERROR : execl failed , errno[%d]\n" , errno );
