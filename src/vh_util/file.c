@@ -33,7 +33,7 @@ int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *format , ... )
 	return 0;
 }
 
-int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *format , ... )
+int WriteFileLine( char *fileline , char *pathfile_format , ... )
 {
 	va_list		valist ;
 	char		pathfilename[ PATH_MAX ] ;
@@ -41,8 +41,8 @@ int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , 
 	
 	int		nret = 0 ;
 	
-	va_start( valist , format );
-	nret = vsnprintf( pathfilename , sizeof(pathfilename)-1 , format , valist ) ;
+	va_start( valist , pathfile_format );
+	nret = vsnprintf( pathfilename , sizeof(pathfilename)-1 , pathfile_format , valist ) ;
 	va_end( valist );
 	if( SNPRINTF_OVERFLOW( nret , sizeof(pathfilename)-1 ) )
 		return -1;
@@ -58,7 +58,7 @@ int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , 
 	return 0;
 }
 
-int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *format , ... )
+int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_format , ... )
 {
 	va_list		valist ;
 	char		pathfilename[ PATH_MAX ] ;
@@ -67,8 +67,8 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
 	
 	int		nret = 0 ;
 	
-	va_start( valist , format );
-	nret = vsnprintf( pathfilename , sizeof(pathfilename)-1 , format , valist ) ;
+	va_start( valist , pathfile_format );
+	nret = vsnprintf( pathfilename , sizeof(pathfilename)-1 , pathfile_format , valist ) ;
 	va_end( valist );
 	if( SNPRINTF_OVERFLOW( nret , sizeof(pathfilename)-1 ) )
 		return -1;

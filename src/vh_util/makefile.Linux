@@ -30,32 +30,25 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 	$(CC) $(CFLAGS) -c $<
 
 c_FILE		=	\
-			main.c \
-			env.c \
-			show_vtemplates.c \
-			show_vhosts.c \
-			action_install_test.c \
-			action_create.c \
-			action_destroy.c \
-			action_start.c \
-			action_stop.c \
+			LOGC.c \
+			version.c \
+			file.c \
 
 ###### 目标文件、安装目录配置区
 include ../makeinstall
-BIN		=	vhm
-BININST		=	$(_BININST)
+LIB		=	libvh_util.so
+LIBINST		=	$(_LIBINST)
 HDER		= \
-			vhm_in.h \
+			LOGC.h \
+			vh_util.h \
+
+HDERINST	=	$(_HDERBASE)/openvh_in
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
-			-std=gnu99 \
-			-I$(_HDERBASE)/openvh_in \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
-			-L$(_LIBBASE) \
-			-lvh_util \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -95,38 +88,38 @@ DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FIL
 .PHONY:install
 install		:	all
 
-ifneq ($(strip $(BININST)),)
-	@if [ ! -d "$(BININST)" ] ; then \
-		echo $(MKDIR) $(BININST) ; \
-		$(MKDIR) $(BININST) ; \
+ifneq ($(strip $(LIBINST)),)
+	@if [ ! -d "$(LIBINST)" ] ; then \
+		echo $(MKDIR) $(LIBINST) ; \
+		$(MKDIR) $(LIBINST) ; \
 	fi
-ifneq ($(strip $(BIN)),)
-	@for FILE in `echo $(BIN)` ; do \
-		if [ -f $(BININST)/$$FILE ] ; then \
-			echo $(RM) $(BININST)/$$FILE ; \
-			$(RM) $(BININST)/$$FILE ; \
+ifneq ($(strip $(LIB)),)
+	@for FILE in `echo $(LIB)` ; do \
+		if [ -f $(LIBINST)/$$FILE ] ; then \
+			echo $(RM) $(LIBINST)/$$FILE ; \
+			$(RM) $(LIBINST)/$$FILE ; \
 		fi ; \
 		if [ -f $$FILE ] ; then \
-			echo $(CP) $$FILE $(BININST)/ ; \
-			$(CP) $$FILE $(BININST)/ ; \
+			echo $(CP) $$FILE $(LIBINST)/ ; \
+			$(CP) $$FILE $(LIBINST)/ ; \
 		fi ; \
 	done
 endif
 endif
-ifneq ($(strip $(BININST2)),)
-	@if [ ! -d "$(BININST2)" ] ; then \
-		echo $(MKDIR) $(BININST2) ; \
-		$(MKDIR) $(BININST2) ; \
+ifneq ($(strip $(LIBINST2)),)
+	@if [ ! -d "$(LIBINST2)" ] ; then \
+		echo $(MKDIR) $(LIBINST2) ; \
+		$(MKDIR) $(LIBINST2) ; \
 	fi
-ifneq ($(strip $(BIN2)),)
-	@for FILE in `echo $(BIN2)` ; do \
-		if [ -f $(BININST2)/$$FILE ] ; then \
-			echo $(RM) $(BININST2)/$$FILE ; \
-			$(RM) $(BININST2)/$$FILE ; \
+ifneq ($(strip $(LIB2)),)
+	@for FILE in `echo $(LIB2)` ; do \
+		if [ -f $(LIBINST2)/$$FILE ] ; then \
+			echo $(RM) $(LIBINST2)/$$FILE ; \
+			$(RM) $(LIBINST2)/$$FILE ; \
 		fi ; \
 		if [ -f $$FILE ] ; then \
-			echo $(CP) $$FILE $(BININST2)/ ; \
-			$(CP) $$FILE $(BININST2)/ ; \
+			echo $(CP) $$FILE $(LIBINST2)/ ; \
+			$(CP) $$FILE $(LIBINST2)/ ; \
 		fi ; \
 	done
 endif
@@ -196,22 +189,22 @@ DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FIL
 .PHONY:uninstall
 uninstall		:
 
-ifneq ($(strip $(BIN)),)
-ifneq ($(strip $(BININST)),)
-	@for FILE in `echo $(BIN)` ; do \
-		if [ -f $(BININST)/$$FILE ] ; then \
-			echo $(RM) $(BININST)/$$FILE ; \
-			$(RM) $(BININST)/$$FILE ; \
+ifneq ($(strip $(LIB)),)
+ifneq ($(strip $(LIBINST)),)
+	@for FILE in `echo $(LIB)` ; do \
+		if [ -f $(LIBINST)/$$FILE ] ; then \
+			echo $(RM) $(LIBINST)/$$FILE ; \
+			$(RM) $(LIBINST)/$$FILE ; \
 		fi ; \
 	done
 endif
 endif
-ifneq ($(strip $(BIN2)),)
-ifneq ($(strip $(BININST2)),)
-	@for FILE in `echo $(BIN2)` ; do \
-		if [ -f $(BININST2)/$$FILE ] ; then \
-			echo $(RM) $(BININST2)/$$FILE ; \
-			$(RM) $(BININST2)/$$FILE ; \
+ifneq ($(strip $(LIB2)),)
+ifneq ($(strip $(LIBINST2)),)
+	@for FILE in `echo $(LIB2)` ; do \
+		if [ -f $(LIBINST2)/$$FILE ] ; then \
+			echo $(RM) $(LIBINST2)/$$FILE ; \
+			$(RM) $(LIBINST2)/$$FILE ; \
 		fi ; \
 	done
 endif
@@ -251,6 +244,6 @@ endif
 
 
 ###### 目标文件依赖关系
-vhm		:	$(c_FILE_o)
-	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
+libvh_util.so		:	$(c_FILE_o)
+	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 

@@ -1,9 +1,10 @@
 #include "vhm_in.h"
 
-int VhmAction_InstallTest( struct VhmEnvironment *vhm_env )
+int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 {
 	char		vtemplate_path_base[ PATH_MAX ] ;
 	char		path[ PATH_MAX ] ;
+	char		path2[ PATH_MAX ] ;
 	
 	int		nret = 0 ;
 	
@@ -19,6 +20,13 @@ int VhmAction_InstallTest( struct VhmEnvironment *vhm_env )
 	if( nret )
 	{
 		ERRORLOGC( "SnprintfAndMakeDir[%s] failed[%d] , errno[%d]" , path , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndMakeDir( path2 , sizeof(path2)-1 , "%s/root" , path ) ;
+	if( nret )
+	{
+		ERRORLOGC( "SnprintfAndMakeDir[%s] failed[%d] , errno[%d]" , path2 , nret , errno );
 		return -1;
 	}
 	

@@ -8,6 +8,9 @@
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <dirent.h>
+#include <grp.h>
+#include <sys/mount.h>
 #define __USE_GNU
 #include <sched.h>
 
@@ -34,8 +37,8 @@ extern char	*_OPENVH_VERSION ;
 int CheckAndMakeDir( char *path );
 int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *format , ... );
 
-int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *format , ... );
-int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *format , ... );
+int WriteFileLine( char *fileline , char *pathfile_format , ... );
+int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_format , ... );
 
 #ifdef __cplusplus
 }

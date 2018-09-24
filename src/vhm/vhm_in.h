@@ -10,6 +10,7 @@ extern "C" {
 struct CommandParameter
 {
 	char		*_action ;
+	char		*_show ;
 	
 	char		*__vhost ;
 	char		*__vtemplate ;
@@ -32,8 +33,13 @@ struct VhmEnvironment
 int CreateVhmEnvironment( struct VhmEnvironment **pp_vhm_env );
 void DestroyVhmEnvironment( struct VhmEnvironment **pp_vhm_env );
 
-int VhmAction_Create( struct VhmEnvironment *vhm_env );
-int VhmAction_InstallTest( struct VhmEnvironment *vhm_env );
+int VhmShow_vtemplates( struct VhmEnvironment *vhm_env );
+int VhmShow_vhosts( struct VhmEnvironment *vhm_env );
+int VhmAction_create( struct VhmEnvironment *vhm_env );
+int VhmAction_destroy( struct VhmEnvironment *vhm_env );
+int VhmAction_start( struct VhmEnvironment *vhm_env );
+int VhmAction_stop( struct VhmEnvironment *vhm_env );
+int VhmAction_install_test( struct VhmEnvironment *vhm_env );
 
 
 

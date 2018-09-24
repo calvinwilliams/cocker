@@ -2,7 +2,12 @@
 
 static void usage()
 {
-	printf( "USAGE : vhm -a create [ --vtemplate (vt_name) ] --vhost (vh_name) [ --host-name (host_name) ]\n" );
+	printf( "USAGE : vhm -s vtemplates\n" );
+	printf( "            -s vhosts\n" );
+	printf( "            -a create [ --vtemplate (vt_name) ] --vhost (vh_name) [ --host-name (host_name) ]\n" );
+	printf( "            -a destroy --vhost (vh_name)\n" );
+	printf( "            -a start --vhost (vh_name)\n" );
+	printf( "            -a stop --vhost (vh_name)\n" );
 	printf( "            -a install_test\n" );
 	return;
 }
@@ -18,6 +23,11 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 			printf( "vhm v%s build %s %s\n" , _OPENVH_VERSION , __DATE__ , __TIME__ );
 			DestroyVhmEnvironment( & vhm_env );
 			exit(0);
+		}
+		else if( STRCMP( argv[i] , == , "-s" ) && i + 1 < argc )
+		{
+			vhm_env->cmd_para._show = argv[i+1] ;
+			i++;
 		}
 		else if( STRCMP( argv[i] , == , "-a" ) && i + 1 < argc )
 		{
@@ -49,12 +59,28 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 	if( vhm_env->cmd_para.__host_name == NULL )
 		vhm_env->cmd_para.__host_name = vhm_env->cmd_para.__vhost ;
 	
-	if( vhm_env->cmd_para._action == NULL )
+	return 0;
+}
+
+static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
+{
+	if( vhm_env->cmd_para._show )
 	{
-		printf( "*** ERROR : expect cmd para '-a (action)'\n" );
-		return -7;
+		if( STRCMP( vhm_env->cmd_para._show , == , "vtemplates" ) )
+		{
+			return -VhmShow_vtemplates( vhm_env );
+		}
+		else if( STRCMP( vhm_env->cmd_para._show , == , "vhosts" ) )
+		{
+			return -VhmShow_vhosts( vhm_env );
+		}
+		else
+		{
+			printf( "*** ERROR : show[%s] invalid\n" , vhm_env->cmd_para._show );
+			return -7;
+		}
 	}
-	else
+	else if( vhm_env->cmd_para._action )
 	{
 		if( STRCMP( vhm_env->cmd_para._action , == , "create" ) )
 		{
@@ -63,34 +89,53 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 				printf( "*** ERROR : expect '--vhost' with action '-a create'\n" );
 				return -7;
 			}
+			
+			return -VhmAction_create( vhm_env );
+		}
+		else if( STRCMP( vhm_env->cmd_para._action , == , "start" ) )
+		{
+			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			{
+				printf( "*** ERROR : expect '--vhost' with action '-a start'\n" );
+				return -7;
+			}
+			
+			return -VhmAction_start( vhm_env );
+		}
+		else if( STRCMP( vhm_env->cmd_para._action , == , "stop" ) )
+		{
+			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			{
+				printf( "*** ERROR : expect '--vhost' with action '-a stop'\n" );
+				return -7;
+			}
+			
+			return -VhmAction_stop( vhm_env );
+		}
+		else if( STRCMP( vhm_env->cmd_para._action , == , "destroy" ) )
+		{
+			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			{
+				printf( "*** ERROR : expect '--vhost' with action '-a destroy'\n" );
+				return -7;
+			}
+			
+			return -VhmAction_destroy( vhm_env );
 		}
 		else if( STRCMP( vhm_env->cmd_para._action , == , "install_test" ) )
 		{
-			;
+			return -VhmAction_install_test( vhm_env );
 		}
 		else
 		{
-			printf( "*** ERROR : cmd para action[%s] invalid\n" , vhm_env->cmd_para._action );
+			printf( "*** ERROR : action[%s] invalid\n" , vhm_env->cmd_para._action );
 			return -7;
 		}
 	}
-	
-	return 0;
-}
-
-static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
-{
-	if( STRCMP( vhm_env->cmd_para._action , == , "create" ) )
-	{
-		return -VhmAction_Create( vhm_env );
-	}
-	else if( STRCMP( vhm_env->cmd_para._action , == , "install_test" ) )
-	{
-		return -VhmAction_InstallTest( vhm_env );
-	}
 	else
 	{
-		return -9;
+		printf( "*** ERROR : cmd para action[%s] invalid\n" , vhm_env->cmd_para._action );
+		return -7;
 	}
 }
 
@@ -132,10 +177,6 @@ int main( int argc , char *argv[] )
 	{
 		printf( "*** ERROR : ExecuteCommandParameters failed[%d]\n" , nret );
 		return -nret;
-	}
-	else
-	{
-		printf( "OK\n" );
 	}
 	
 	return 0;

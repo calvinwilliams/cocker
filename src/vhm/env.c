@@ -25,7 +25,7 @@ int CreateVhmEnvironment( struct VhmEnvironment **pp_vhm_env )
 	}
 	else
 	{
-		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "%s/openvh" , getenv("HOME") ) ;
+		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "/var/openvh" ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->openvh_home , nret );

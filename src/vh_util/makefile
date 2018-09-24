@@ -20,7 +20,7 @@ HDER		= \
 			LOGC.h \
 			vh_util.h \
 
-HDERINST	=	$(_HDERBASE)/vh_in
+HDERINST	=	$(_HDERBASE)/openvh_in
 
 ###### ±‡“Î—°œÓ
 CFLAGS		=	$(_CFLAGS) \

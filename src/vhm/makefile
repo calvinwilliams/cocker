@@ -10,8 +10,13 @@
 c_FILE		=	\
 			main.c \
 			env.c \
-			action_create.c \
+			show_vtemplates.c \
+			show_vhosts.c \
 			action_install_test.c \
+			action_create.c \
+			action_destroy.c \
+			action_start.c \
+			action_stop.c \
 
 ###### 目标文件、安装目录配置区
 include ../makeinstall
@@ -23,7 +28,7 @@ HDER		= \
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
 			-std=gnu99 \
-			-I$(_HDERBASE)/vh_in \
+			-I$(_HDERBASE)/openvh_in \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
