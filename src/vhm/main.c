@@ -64,6 +64,41 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 
 static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
 {
+	int		nret = 0 ;
+	
+	if( getenv("OPENVH_HOME" ) )
+	{
+		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "%s" , getenv("OPENVH_HOME" ) ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->openvh_home , nret );
+			return -1;
+		}
+	}
+	else
+	{
+		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "/var/openvh" ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->openvh_home , nret );
+			return -1;
+		}
+	}
+	
+	nret = SnprintfAndMakeDir( vhm_env->vtemplates_path_base , sizeof(vhm_env->vtemplates_path_base)-1 , "%s/vtemplate" , vhm_env->openvh_home ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->vtemplates_path_base , nret );
+		return -1;
+	}
+	
+	nret = SnprintfAndMakeDir( vhm_env->vhosts_path_base , sizeof(vhm_env->vhosts_path_base)-1 , "%s/vhost" , vhm_env->openvh_home ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->vhosts_path_base , nret );
+		return -1;
+	}
+	
 	if( vhm_env->cmd_para._show )
 	{
 		if( STRCMP( vhm_env->cmd_para._show , == , "vtemplates" ) )

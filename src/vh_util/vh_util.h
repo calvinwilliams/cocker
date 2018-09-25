@@ -34,11 +34,17 @@ extern char	*_OPENVH_VERSION ;
  * file
  */
 
-int CheckAndMakeDir( char *path );
-int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *format , ... );
+char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist );
 
-int WriteFileLine( char *fileline , char *pathfile_format , ... );
-int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_format , ... );
+int CheckAndMakeDir( char *path );
+
+int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... );
+int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *path_format , ... );
+
+int SnprintfAndSystem( char *cmd_buf , int cmd_bufsize , char *cmd_format , ... );
+
+int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
+int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 
 #ifdef __cplusplus
 }

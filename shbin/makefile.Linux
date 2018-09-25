@@ -1,0 +1,101 @@
+# 此文件由makelocal.sh自动生成
+MAKEFILE_POSTFIX=.Linux
+# 此文件由makeobj.sh自动生成
+############################################################
+# 项目名 : 
+# 模块名 : 
+# 备  注 : 
+############################################################
+
+###### 源文件配置区
+
+###### 目标文件、安装目录配置区
+include ../makeinstall
+NOCLEAN_OBJ	=	\
+			vhm_ldd_and_cp_lib64.sh \
+
+NOCLEAN_OBJINST	=	$(_BINBASE)
+
+###### 编译选项
+CFLAGS		=	$(_CFLAGS) \
+
+###### 链接选项
+LFLAGS		=	$(_LFLAGS) \
+
+###### 额外宏定义区
+CLEAN_ADDITION	=
+
+###### 加载mktpl模板库
+# 最终目标列表
+all	:	$(OBJ) $(OBJ2) $(LIB) $(LIB2) $(SQL) $(NOINST_OBJ) $(BIN) $(BIN2)
+
+prepro_all	:	$(PREPRO)
+
+
+# 文件系统宏
+CD		=	cd
+RM		=	rm -f
+CP		=	cp -rf
+MV		=	mv -f
+MKDIR		=	mkdir -p
+
+# 预定义源文件清理删除关联宏
+_FILE_CLEAN	=	$(c_FILE_CLEAN) $(cpp_FILE_CLEAN) $(SQC_FILE_CLEAN) $(ec_FILE_CLEAN) $(ec_FILE2_CLEAN) $(csm_FILE_CLEAN) $(c_html_FILE_CLEAN) $(cui_FILE_CLEAN) $(dtd_FILE_CLEAN) $(prt_FILE_CLEAN) $(fmd_FILE_CLEAN) $(smd_FILE_CLEAN) $(def_FILE_CLEAN) $(act_FILE_CLEAN) $(sml2c_FILE_CLEAN)
+
+# 清理删除规则
+.PHONY:clean
+clean		:
+	@for FILE in $(_FILE_CLEAN) $(BIN) $(BIN2) $(LIB) $(LIB2) $(OBJ) $(OBJ2) $(NOINST_OBJ) $(CLEAN_ADDITION) ; do \
+		echo $(RM) $$FILE ; \
+		$(RM) $$FILE ; \
+	done
+
+
+# 预定义源代码缺省头文件宏
+DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FILE_DFTHDER) $(fmd_FILE_DFTHDER) $(smd_FILE_DFTHDER) $(def_FILE_DFTHDER) $(act_FILE_DFTHDER) $(sml2c_FILE_DFTHDER)
+
+# 提交安装规则
+.PHONY:install
+install		:	all
+
+ifneq ($(strip $(NOCLEAN_OBJINST)),)
+	@if [ ! -d "$(NOCLEAN_OBJINST)" ] ; then \
+		echo $(MKDIR) $(NOCLEAN_OBJINST) ; \
+		$(MKDIR) $(NOCLEAN_OBJINST) ; \
+	fi ;
+ifneq ($(strip $(NOCLEAN_OBJ)),)
+	@for FILE in `echo $(NOCLEAN_OBJ)` ; do \
+		if [ -e $(NOCLEAN_OBJINST)/$$FILE ] ; then \
+			echo $(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+			$(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+		fi ; \
+		if [ -f $$FILE ] ; then \
+			echo $(CP) $$FILE $(NOCLEAN_OBJINST)/ ; \
+			$(CP) $$FILE $(NOCLEAN_OBJINST)/ ; \
+		fi ; \
+	done
+endif
+endif
+
+
+# 预定义源代码缺省头文件宏
+DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FILE_DFTHDER) $(fmd_FILE_DFTHDER) $(smd_FILE_DFTHDER) $(def_FILE_DFTHDER) $(act_FILE_DFTHDER) $(sml2c_FILE_DFTHDER)
+
+# 提交安装规则
+.PHONY:uninstall
+uninstall		:
+
+ifneq ($(strip $(NOCLEAN_OBJ)),)
+ifneq ($(strip $(NOCLEAN_OBJINST)),)
+	@for FILE in `echo $(NOCLEAN_OBJ)` ; do \
+		if [ -f $(NOCLEAN_OBJINST)/$$FILE ] ; then \
+			echo $(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+			$(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+		fi ; \
+	done
+endif
+endif
+
+
+###### 目标文件依赖关系
+

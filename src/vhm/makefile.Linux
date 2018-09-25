@@ -41,7 +41,7 @@ c_FILE		=	\
 			action_stop.c \
 
 ###### 目标文件、安装目录配置区
-include ../makeinstall
+include ../../makeinstall
 BIN		=	vhm
 BININST		=	$(_BININST)
 HDER		= \

@@ -32,11 +32,12 @@ int VhmAction_destroy( struct VhmEnvironment *vhm_env )
 	}
 	
 	if( access( rwlayer_path , W_OK ) == 0 && access( hostname_path , W_OK ) == 0 )
-	
-	
-	memset( cmd , 0x00 , sizeof(cmd) );
-	snprintf( cmd , sizeof(cmd)-1 , "rm -rf %s" , vhost_path_base );
-	system( cmd );
+	{
+		memset( cmd , 0x00 , sizeof(cmd) );
+		snprintf( cmd , sizeof(cmd)-1 , "rm -rf %s" , vhost_path_base );
+printf( "system[%s]\n" , cmd );
+		// system( cmd );
+	}
 	
 	return 0;
 }

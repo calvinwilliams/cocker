@@ -35,7 +35,7 @@ c_FILE		=	\
 			file.c \
 
 ###### 目标文件、安装目录配置区
-include ../makeinstall
+include ../../makeinstall
 LIB		=	libvh_util.so
 LIBINST		=	$(_LIBINST)
 HDER		= \
