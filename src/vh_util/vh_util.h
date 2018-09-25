@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include <grp.h>
 #include <sys/mount.h>
+#include <locale.h>
 #define __USE_GNU
 #include <sched.h>
 
@@ -40,6 +41,8 @@ int CheckAndMakeDir( char *path );
 
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... );
 int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *path_format , ... );
+
+int SnprintfAndUnlink( char *path_buf , int path_bufsize , char *path_format , ... );
 
 int SnprintfAndSystem( char *cmd_buf , int cmd_bufsize , char *cmd_format , ... );
 

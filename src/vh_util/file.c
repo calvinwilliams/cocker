@@ -79,6 +79,26 @@ int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *path_format , 
 	return 0;
 }
 
+int SnprintfAndUnlink( char *path_buf , int path_bufsize , char *path_format , ... )
+{
+	char		*p_file = NULL ;
+	va_list		valist ;
+	
+	int		nret = 0 ;
+	
+	va_start( valist , path_format );
+	p_file = SnprintfV( path_buf , path_bufsize , path_format , valist ) ;
+	va_end( valist );
+	if( p_file == NULL )
+		return -1;
+	
+	nret = unlink( p_file ) ;
+	if( nret == -1 )
+		return OVERLAY_RET(100,nret);
+	
+	return 0;
+}
+
 int SnprintfAndSystem( char *cmd_buf , int cmd_bufsize , char *cmd_format , ... )
 {
 	char		*p_cmd = NULL ;

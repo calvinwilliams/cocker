@@ -30,6 +30,9 @@ static int VHostEntry( void *p )
 	setgid(0);
 	setgroups(0,NULL);
 	
+	/* setlocale */
+	setlocale( LC_ALL , "C" );
+	
 	/* sethostname */
 	sethostname( vhm_env->cmd_para.__host_name , strlen(vhm_env->cmd_para.__host_name) );
 	
@@ -45,7 +48,7 @@ static int VHostEntry( void *p )
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
 	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost ) ;
-	if( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) )
+	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );
 		return -1;
@@ -71,7 +74,7 @@ static int VHostEntry( void *p )
 	
 	/* chroot */
 	chroot( mount_target );
-	chdir( "/" );
+	chdir( "/root" );
 	
 	/* mount /proc */
 	mount( "proc" , "/proc" , "proc" , MS_MGC_VAL , NULL );
@@ -90,9 +93,11 @@ static int VHostEntry( void *p )
 int VhmAction_start( struct VhmEnvironment *vhm_env )
 {
 	pid_t		pid ;
+	char		pid_str[ 20 + 1 ] ;
 #if 0
 	int		status ;
 #endif
+	int		nret = 0 ;
 	
 	/* create vhost */
 	pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)vhm_env ) ;
@@ -102,6 +107,17 @@ int VhmAction_start( struct VhmEnvironment *vhm_env )
 		return -1;
 	}
 	
+	/* write pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
+	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
+	nret = WriteFileLine( pid_str , NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	
+	/* wait for vhost end */
 #if 0
 	while(1)
 	{
@@ -120,6 +136,12 @@ int VhmAction_start( struct VhmEnvironment *vhm_env )
 	{
 		continue;
 	}
+	
+	/* kill clone process */
+	kill( pid , SIGKILL );
+	
+	/* cleanup pid file */
+	SnprintfAndUnlink( NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost );
 	
 	return 0;
 }

@@ -35,8 +35,7 @@ int VhmAction_destroy( struct VhmEnvironment *vhm_env )
 	{
 		memset( cmd , 0x00 , sizeof(cmd) );
 		snprintf( cmd , sizeof(cmd)-1 , "rm -rf %s" , vhost_path_base );
-printf( "system[%s]\n" , cmd );
-		// system( cmd );
+		system( cmd );
 	}
 	
 	return 0;

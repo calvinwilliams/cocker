@@ -32,13 +32,6 @@ int VhmAction_create( struct VhmEnvironment *vhm_env )
 		return -1;
 	}
 	
-	nret = WriteFileLine( vhm_env->cmd_para.__host_name , NULL , -1 , "%s/rwlayer/etc/hostname" , vhost_path_base ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : WriteFileLine /etc/hostname failed[%d] , errno[%d]\n" , nret , errno );
-		return -1;
-	}
-	
 	nret = SnprintfAndMakeDir( NULL , -1 , "%s/merged" , vhost_path_base ) ;
 	if( nret )
 	{
@@ -70,6 +63,13 @@ int VhmAction_create( struct VhmEnvironment *vhm_env )
 			printf( "*** ERROR : WriteFileLine vtemplates failed[%d] , errno[%d]\n" , nret , errno );
 			return -1;
 		}
+	}
+	
+	nret = WriteFileLine( vhm_env->cmd_para.__host_name , NULL , -1 , "%s/hostname" , vhost_path_base ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : WriteFileLine hostname failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
 	}
 	
 	return 0;
