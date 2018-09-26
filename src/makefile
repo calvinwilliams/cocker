@@ -7,7 +7,8 @@
 
 ###### 子目录配置区
 DIROBJS		= \
-			vhm \
+			util \
+			cocker \
 
 ###### 加载mktpl模板库
 include $(MKTPL2_HOME)/makedir_$(MKTPL2_OS).inc

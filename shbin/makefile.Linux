@@ -12,9 +12,9 @@ MAKEFILE_POSTFIX=.Linux
 ###### 目标文件、安装目录配置区
 include ../makeinstall
 NOCLEAN_OBJ	=	\
-			vhm_ldd_and_cp_lib64.sh \
-			vhm_profile_template.sh \
-			vhm_etc_profile_template.sh \
+			cocker_ldd_and_cp_lib64.sh \
+			cocker_profile_template.sh \
+			cocker_etc_profile_template.sh \
 
 NOCLEAN_OBJINST	=	$(_BINBASE)
 
