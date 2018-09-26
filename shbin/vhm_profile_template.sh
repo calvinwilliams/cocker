@@ -1,11 +1,11 @@
 #################################################
-# OpenVH profile template
+# OpenVH .profile template
 #################################################
 
 set -o vi
-# ulimit -c unlimited
 
 export PATH=.:/bin:/usr/bin:/usr/local/bin
+export PATH=.:/sbin:/usr/sbin:/usr/local/sbin:$PATH
 
 alias l='ls -l'
 alias ll='ls -lF'
@@ -23,5 +23,4 @@ HOSTNAME=`hostname`
 USERNAME=$LOGNAME
 export PS1='[$USERNAME@$HOSTNAME $PWD] '
 
-echo "--- Welcome to contrainer for OpenVH ---"
 

@@ -2,7 +2,7 @@
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist )
 {
-	static char		path[ PATH_MAX ] = "" ;
+	static char		path[ 4096 ] = "" ;
 	
 	static char		*p_path = NULL ;
 	static int		path_size = 0 ;

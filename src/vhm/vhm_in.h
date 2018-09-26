@@ -41,9 +41,6 @@ int VhmAction_start( struct VhmEnvironment *vhm_env );
 int VhmAction_stop( struct VhmEnvironment *vhm_env );
 int VhmAction_install_test( struct VhmEnvironment *vhm_env );
 
-
-
-
 #ifdef __cplusplus
 }
 #endif

@@ -19,14 +19,43 @@ static int VHostEntry( void *p )
 {
 	struct VhmEnvironment	*vhm_env = (struct VhmEnvironment *)p ;
 	
+	int			len ;
+	
+	char			netns_path[ PATH_MAX ] ;
+	int			netns_fd ;
+	
 	char			hostname[ HOST_NAME_MAX ] ;
 	char			vtemplate[ PATH_MAX ] ;
 	char			mount_target[ PATH_MAX ] ;
 	char			mount_data[ 4096 ] ;
-	int			len ;
 	
 	int			nret = 0 ;
 	
+	/* setns */
+	memset( netns_path , 0x00 , sizeof(netns_path) );
+	len = snprintf( netns_path , sizeof(netns_path)-1 , "/var/run/netns/netns-%s" , vhm_env->cmd_para.__vhost ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(netns_path)-1) )
+	{
+		printf( "*** ERROR : netns path overflow\n" );
+		return -1;
+	}
+	netns_fd = open( netns_path , O_RDONLY ) ;
+	if( netns_fd == -1 )
+	{
+		printf( "*** ERROR : open netns path failed , errno[%d]\n" , errno );
+		return -1;
+	}
+	
+	nret = setns( netns_fd , CLONE_NEWNET ) ;
+	if( nret == -1 )
+	{
+		printf( "*** ERROR : setns failed , errno[%d]\n" , errno );
+		return -1;
+	}
+	
+	close( netns_fd );
+	
+	/* basic seting */
 	setuid(0);
 	setgid(0);
 	setgroups(0,NULL);
@@ -99,12 +128,97 @@ static int VHostEntry( void *p )
 
 int VhmAction_start( struct VhmEnvironment *vhm_env )
 {
+	char		cmd[ 4096 ] ;
+	int		len ;
+	
+	char		netns_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char		veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char		veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char		veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
+	char		vnetbr_name[ ETHERNET_NAME_MAX + 1 ] ;
+	
 	pid_t		pid ;
 	char		pid_str[ 20 + 1 ] ;
 #if 0
 	int		status ;
 #endif
 	int		nret = 0 ;
+	
+	/* up network */
+	memset( netns_name , 0x00 , sizeof(netns_name) );
+	len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , vhm_env->cmd_para.__vhost ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
+	{
+		printf( "*** ERROR : netns name overflow\n" );
+		return -1;
+	}
+	
+	memset( veth1_name , 0x00 , sizeof(veth1_name) );
+	len = snprintf( veth1_name , sizeof(veth1_name)-1 , "veth1-%s" , vhm_env->cmd_para.__vhost ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth1_name)-1) )
+	{
+		printf( "*** ERROR : veth1 name overflow\n" );
+		return -1;
+	}
+	
+	memset( veth0_name , 0x00 , sizeof(veth0_name) );
+	len = snprintf( veth0_name , sizeof(veth0_name)-1 , "veth0-%s" , vhm_env->cmd_para.__vhost ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth0_name)-1) )
+	{
+		printf( "*** ERROR : veth0 name overflow\n" );
+		return -1;
+	}
+	
+	memset( veth0_sname , 0x00 , sizeof(veth0_sname) );
+	len = snprintf( veth0_sname , sizeof(veth0_sname)-1 , "eth0" ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth0_sname)-1) )
+	{
+		printf( "*** ERROR : veth0 sname overflow\n" );
+		return -1;
+	}
+	
+	memset( vnetbr_name , 0x00 , sizeof(vnetbr_name) );
+	len = snprintf( vnetbr_name , sizeof(vnetbr_name)-1 , "vnetbr-%s" , vhm_env->cmd_para.__vhost ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(vnetbr_name)-1) )
+	{
+		printf( "*** ERROR : vnetbr name overflow\n" );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , vnetbr_name ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , veth1_name ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : [%s] failed [%d], errno[%d]\n" , cmd , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , netns_name , veth0_sname ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , netns_name ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s route add default gw 192.168.8.1 netmask 0.0.0.0 dev %s" , netns_name , veth0_sname ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+		return -1;
+	}
 	
 	/* create vhost */
 	pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)vhm_env ) ;

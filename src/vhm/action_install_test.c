@@ -8,7 +8,9 @@ static char	install_bin[][10] = { "bash"
 					, "ls" , "cat" , "echo" , "rm"
 					, "pwd" , "cd" , "mkdir" , "rmdir"
 					, "clear" , "ps" , "grep" , "more" , "id" , "uname" , "hostname" , "vi" , "vim" , "awk" , "sed" , "tr"
-					, "file" , "ldd" } ;
+					, "file" , "ldd"
+					, "netstat" , "ping" , "telnet" , "nc" } ;
+static char	install_sbin[][10] = { "ifconfig" } ;
 
 int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 {
@@ -61,6 +63,26 @@ int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 	SnprintfAndChangeDir( NULL , -1 , "%s/bin" , vtemplate_rlayer_path ) ;
 	system( "vhm_ldd_and_cp_lib64.sh" );
 	
+	nret = SnprintfAndMakeDir( NULL , -1 , "%s/sbin" , vtemplate_rlayer_path ) ;
+	if( nret )
+	{
+		printf( "SnprintfAndMakeDir /sbin failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	
+	for( i = 0 ; i < sizeof(install_sbin)/sizeof(install_sbin[0]) ; i++ )
+	{
+		nret = SnprintfAndSystem( cmd , sizeof(cmd)-1 , "cp /sbin/%s %s/sbin/" , install_sbin[i] , vtemplate_rlayer_path ) ;
+		if( nret )
+		{
+			printf( "SnprintfAndSystem[%s] failed\n" , install_bin[i] );
+			return -1;
+		}
+	}
+	
+	SnprintfAndChangeDir( NULL , -1 , "%s/sbin" , vtemplate_rlayer_path ) ;
+	system( "vhm_ldd_and_cp_lib64.sh" );
+	
 	nret = SnprintfAndMakeDir( NULL , -1 , "%s/etc" , vtemplate_rlayer_path ) ;
 	if( nret )
 	{
@@ -84,10 +106,17 @@ int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 		return -1;
 	}
 	
-	nret = SnprintfAndSystem( NULL , -1 , "cp /bin/vhm_profile_template.sh %s/etc/profile" , vtemplate_rlayer_path ) ;
+	nret = SnprintfAndSystem( NULL , -1 , "cp /bin/vhm_etc_profile_template.sh %s/etc/profile" , vtemplate_rlayer_path ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : SnprintfAndSystem profile failed[%d] , errno[%d]\n" , nret , errno );
+		printf( "*** ERROR : SnprintfAndSystem /etc/profile failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( NULL , -1 , "cp /bin/vhm_profile_template.sh %s/root/.profile" , vtemplate_rlayer_path ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndSystem .profile failed[%d] , errno[%d]\n" , nret , errno );
 		return -1;
 	}
 	

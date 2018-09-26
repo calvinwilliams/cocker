@@ -23,6 +23,10 @@ extern "C" {
 
 extern char	*_OPENVH_VERSION ;
 
+#ifndef ETHERNET_NAME_MAX
+#define ETHERNET_NAME_MAX	256
+#endif
+
 #ifndef SNPRINTF_OVERFLOW
 #define SNPRINTF_OVERFLOW(_ret_,_sizeof_)	( (_ret_) == -1 || (_ret_) >= (_sizeof_) )
 #endif
