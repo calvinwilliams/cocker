@@ -19,6 +19,7 @@ static int VHostEntry( void *p )
 {
 	struct VhmEnvironment	*vhm_env = (struct VhmEnvironment *)p ;
 	
+	char			hostname[ HOST_NAME_MAX ] ;
 	char			vtemplate[ PATH_MAX ] ;
 	char			mount_target[ PATH_MAX ] ;
 	char			mount_data[ 4096 ] ;
@@ -34,9 +35,15 @@ static int VHostEntry( void *p )
 	setlocale( LC_ALL , "C" );
 	
 	/* sethostname */
-	sethostname( vhm_env->cmd_para.__host_name , strlen(vhm_env->cmd_para.__host_name) );
+	nret = ReadFileLine( hostname , sizeof(hostname)-1 , NULL , -1 , "%s/%s/hostname" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : ReadFileLine hostname in vhost '%s' failed\n" , vhm_env->cmd_para.__vhost );
+		return -1;
+	}
+	sethostname( hostname , strlen(hostname) );
 	
-	// unshare( CLONE_NEWUSER );
+	unshare( CLONE_NEWUSER );
 	
 	/* mount filesystem */
 	nret = ReadFileLine( vtemplate , sizeof(vtemplate)-1 , NULL , -1 , "%s/%s/vtemplates" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost ) ;
@@ -142,6 +149,8 @@ int VhmAction_start( struct VhmEnvironment *vhm_env )
 	
 	/* cleanup pid file */
 	SnprintfAndUnlink( NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost );
+	
+	printf( "OK\n" );
 	
 	return 0;
 }

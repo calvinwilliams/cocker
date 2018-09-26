@@ -119,7 +119,7 @@ static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
 	{
 		if( STRCMP( vhm_env->cmd_para._action , == , "create" ) )
 		{
-			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( vhm_env->cmd_para.__vhost == NULL ||  STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
 			{
 				printf( "*** ERROR : expect '--vhost' with action '-a create'\n" );
 				return -7;
@@ -129,7 +129,7 @@ static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
 		}
 		else if( STRCMP( vhm_env->cmd_para._action , == , "start" ) )
 		{
-			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
 			{
 				printf( "*** ERROR : expect '--vhost' with action '-a start'\n" );
 				return -7;
@@ -139,7 +139,7 @@ static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
 		}
 		else if( STRCMP( vhm_env->cmd_para._action , == , "stop" ) )
 		{
-			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
 			{
 				printf( "*** ERROR : expect '--vhost' with action '-a stop'\n" );
 				return -7;
@@ -149,7 +149,7 @@ static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
 		}
 		else if( STRCMP( vhm_env->cmd_para._action , == , "destroy" ) )
 		{
-			if ( STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
 			{
 				printf( "*** ERROR : expect '--vhost' with action '-a destroy'\n" );
 				return -7;

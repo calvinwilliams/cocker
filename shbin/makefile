@@ -11,6 +11,7 @@
 include ../makeinstall
 NOCLEAN_OBJ	=	\
 			vhm_ldd_and_cp_lib64.sh \
+			vhm_profile_template.sh \
 
 NOCLEAN_OBJINST	=	$(_BINBASE)
 

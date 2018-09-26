@@ -38,6 +38,8 @@ int VhmAction_destroy( struct VhmEnvironment *vhm_env )
 		system( cmd );
 	}
 	
+	printf( "OK\n" );
+	
 	return 0;
 }
 

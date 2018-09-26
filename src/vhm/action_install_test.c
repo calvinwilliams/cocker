@@ -1,8 +1,14 @@
 #include "vhm_in.h"
 
-static char	install_bin[][10] = { "bash" , "clear" , "ps" , "grep" , "more"
+/* for test
+$ vhm -a install_test
+*/
+
+static char	install_bin[][10] = { "bash"
 					, "ls" , "cat" , "echo" , "rm"
-					, "pwd" , "cd" , "mkdir" , "rmdir" } ;
+					, "pwd" , "cd" , "mkdir" , "rmdir"
+					, "clear" , "ps" , "grep" , "more" , "id" , "uname" , "hostname" , "vi" , "vim" , "awk" , "sed" , "tr"
+					, "file" , "ldd" } ;
 
 int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 {
@@ -62,14 +68,26 @@ int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 		return -1;
 	}
 	
-	nret = WriteFileLine( "#!/bin/bash\n"
-				"export PATH=/bin\n"
-				"export LC_ALL=C\n"
-				"export LANG=C\n"
-				, NULL , -1 , "%s/etc/profile" , vtemplate_rlayer_path ) ;
+	nret = WriteFileLine( "root:x:0:0:root:/root:/bin/bash\n"
+				, NULL , -1 , "%s/etc/passwd" , vtemplate_rlayer_path ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : WriteFileLine profile failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	
+	nret = WriteFileLine( "root:x:0:\n"
+				, NULL , -1 , "%s/etc/group" , vtemplate_rlayer_path ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : WriteFileLine profile failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	
+	nret = SnprintfAndSystem( NULL , -1 , "cp /bin/vhm_profile_template.sh %s/etc/profile" , vtemplate_rlayer_path ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndSystem profile failed[%d] , errno[%d]\n" , nret , errno );
 		return -1;
 	}
 	
@@ -93,6 +111,8 @@ int VhmAction_install_test( struct VhmEnvironment *vhm_env )
 		printf( "SnprintfAndMakeDir /dev/pts failed[%d] , errno[%d]\n" , nret , errno );
 		return -1;
 	}
+	
+	printf( "OK\n" );
 	
 	return 0;
 }

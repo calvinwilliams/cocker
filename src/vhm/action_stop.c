@@ -41,19 +41,18 @@ int VhmAction_stop( struct VhmEnvironment *vhm_env )
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost ) ;
-	if( nret )
+	if( nret == 0 )
 	{
-		printf( "ReadFileLine pid file failed\n" );
-		return -1;
+		pid = atoi(pid_str) ;
+		
+		/* kill clone process */
+		kill( pid , SIGKILL );
+		
+		/* cleanup pid file */
+		SnprintfAndUnlink( NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost );
 	}
 	
-	pid = atoi(pid_str) ;
-	
-	/* kill clone process */
-	kill( pid , SIGKILL );
-	
-	/* cleanup pid file */
-	SnprintfAndUnlink( NULL , -1 , "%s/%s/pid" , vhm_env->vhosts_path_base , vhm_env->cmd_para.__vhost );
+	printf( "OK\n" );
 	
 	return 0;
 }

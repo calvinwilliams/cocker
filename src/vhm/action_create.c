@@ -72,6 +72,8 @@ int VhmAction_create( struct VhmEnvironment *vhm_env )
 		return -1;
 	}
 	
+	printf( "OK\n" );
+	
 	return 0;
 }
 
