@@ -1,12 +1,12 @@
-#include "vhm_in.h"
+#include "cocker_in.h"
 
-int VhmShow_vtemplates( struct VhmEnvironment *vhm_env )
+int DoShow_containers( struct CockerEnvironment *cocker_env )
 {
 	DIR		*dir = NULL ;
 	struct dirent	*dirent = NULL ;
 	int		count ;
 	
-	dir = opendir( vhm_env->vtemplates_path_base ) ;
+	dir = opendir( cocker_env->containers_path_base ) ;
 	count = 0 ;
 	while(1)
 	{
@@ -21,7 +21,7 @@ int VhmShow_vtemplates( struct VhmEnvironment *vhm_env )
 		
 		if( count == 0 )
 		{
-			printf( "vtemplate_name\n" );
+			printf( "container\n" );
 			printf( "--------------\n" );
 		}
 		

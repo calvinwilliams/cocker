@@ -21,10 +21,14 @@
 extern "C" {
 #endif
 
-extern char	*_OPENVH_VERSION ;
+extern char	*_COCKER_VERSION ;
 
 #ifndef ETHERNET_NAME_MAX
 #define ETHERNET_NAME_MAX	256
+#endif
+
+#ifndef IP_MAX
+#define IP_MAX			20
 #endif
 
 #ifndef SNPRINTF_OVERFLOW

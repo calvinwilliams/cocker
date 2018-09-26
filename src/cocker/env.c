@@ -1,26 +1,26 @@
-#include "vhm_in.h"
+#include "cocker_in.h"
 
-int CreateVhmEnvironment( struct VhmEnvironment **pp_vhm_env )
+int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 {
-	struct VhmEnvironment	*vhm_env = NULL ;
+	struct CockerEnvironment	*cocker_env = NULL ;
 	
-	vhm_env = (struct VhmEnvironment *)malloc( sizeof(struct VhmEnvironment) ) ;
-	if( vhm_env == NULL )
+	cocker_env = (struct CockerEnvironment *)malloc( sizeof(struct CockerEnvironment) ) ;
+	if( cocker_env == NULL )
 	{
 		printf( "*** ERROR : malloc failed , errno[%d]\n" , errno );
 		return 1;
 	}
-	memset( vhm_env , 0x00 , sizeof(struct VhmEnvironment) );
+	memset( cocker_env , 0x00 , sizeof(struct CockerEnvironment) );
 	
-	(*pp_vhm_env) = vhm_env ;
+	(*pp_cocker_env) = cocker_env ;
 	
 	return 0;
 }
 
-void DestroyVhmEnvironment( struct VhmEnvironment **pp_vhm_env )
+void DestroyCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 {
-	free( (*pp_vhm_env) );
-	(*pp_vhm_env) = NULL ;
+	free( (*pp_cocker_env) );
+	(*pp_cocker_env) = NULL ;
 	
 	return;
 }

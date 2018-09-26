@@ -1,5 +1,5 @@
-#include "vh_util.h"
+#include "cocker_util.h"
 
-char	_OPENVH_VERSION_0_2_0[] = "0.2.0" ;
-char	*_OPENVH_VERSION = _OPENVH_VERSION_0_2_0 ;
+char	_COCKER_VERSION_0_4_0[] = "0.4.0" ;
+char	*_COCKER_VERSION = _COCKER_VERSION_0_4_0 ;
 

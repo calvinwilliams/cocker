@@ -10,8 +10,8 @@
 c_FILE		=	\
 			main.c \
 			env.c \
-			show_vtemplates.c \
-			show_vhosts.c \
+			show_images.c \
+			show_containers.c \
 			action_install_test.c \
 			action_create.c \
 			action_destroy.c \
@@ -20,20 +20,20 @@ c_FILE		=	\
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall
-BIN		=	vhm
+BIN		=	cocker
 BININST		=	$(_BININST)
 HDER		= \
-			vhm_in.h \
+			cocker_in.h \
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
 			-std=gnu99 \
-			-I$(_HDERBASE)/openvh_in \
+			-I$(_HDERBASE)/cocker_in \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
 			-L$(_LIBBASE) \
-			-lvh_util \
+			-lcocker_util \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=
@@ -54,6 +54,6 @@ PREMAKE		=
 include $(MKTPL2_HOME)/makeobj_$(MKTPL2_OS).inc
 
 ###### 目标文件依赖关系
-vhm		:	$(c_FILE_o)
+cocker		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
 

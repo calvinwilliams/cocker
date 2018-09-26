@@ -1,4 +1,4 @@
-#include "vh_util.h"
+#include "cocker_util.h"
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist )
 {
@@ -157,7 +157,7 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
 	
 	fd = open( p_pathfile , O_RDONLY , 00777 ) ;
 	if( fd == -1 )
-		return -1;
+		return 1;
 	
 	len = read( fd , fileline_buf , fileline_bufsize ) ;
 	

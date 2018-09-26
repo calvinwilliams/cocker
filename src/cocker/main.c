@@ -1,18 +1,18 @@
-#include "vhm_in.h"
+#include "cocker_in.h"
 
 static void usage()
 {
-	printf( "USAGE : vhm -s vtemplates\n" );
-	printf( "            -s vhosts\n" );
-	printf( "            -a create [ --vtemplate (vt_name) ] --vhost (vh_name) [ --host-name (host_name) ]\n" );
-	printf( "            -a destroy --vhost (vh_name)\n" );
-	printf( "            -a start --vhost (vh_name)\n" );
-	printf( "            -a stop --vhost (vh_name)\n" );
-	printf( "            -a install_test\n" );
+	printf( "USAGE : cocker -s images\n" );
+	printf( "               -s containers\n" );
+	printf( "               -a create [ --image (name) ] --container (name) [ --host-name (name) ]\n" );
+	printf( "               -a destroy --container (name)\n" );
+	printf( "               -a start --container (name)\n" );
+	printf( "               -a stop --container (name)\n" );
+	printf( "               -a install_test\n" );
 	return;
 }
 
-static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , char *argv[] )
+static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int argc , char *argv[] )
 {
 	int		i ;
 	
@@ -20,34 +20,53 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 	{
 		if( STRCMP( argv[i] , == , "-v" ) )
 		{
-			printf( "vhm v%s build %s %s\n" , _OPENVH_VERSION , __DATE__ , __TIME__ );
-			DestroyVhmEnvironment( & vhm_env );
+			printf( "cocker v%s build %s %s\n" , _COCKER_VERSION , __DATE__ , __TIME__ );
+			DestroyCockerEnvironment( & cocker_env );
 			exit(0);
 		}
 		else if( STRCMP( argv[i] , == , "-s" ) && i + 1 < argc )
 		{
-			vhm_env->cmd_para._show = argv[i+1] ;
+			cocker_env->cmd_para._show = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "-a" ) && i + 1 < argc )
 		{
-			vhm_env->cmd_para._action = argv[i+1] ;
+			cocker_env->cmd_para._action = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--vtemplate" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--image" ) && i + 1 < argc )
 		{
-			vhm_env->cmd_para.__vtemplate = argv[i+1] ;
+			cocker_env->cmd_para.__image = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--vhost" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--container" ) && i + 1 < argc )
 		{
-			vhm_env->cmd_para.__vhost = argv[i+1] ;
+			cocker_env->cmd_para.__container = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--host-name" ) && i + 1 < argc )
 		{
-			vhm_env->cmd_para.__host_name = argv[i+1] ;
+			cocker_env->cmd_para.__host_name = argv[i+1] ;
 			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--nat-postrouting" ) && i + 1 < argc )
+		{
+			cocker_env->cmd_para.__nat_postrouting = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--vip" ) && i + 1 < argc )
+		{
+			cocker_env->cmd_para.__vip = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--port-mapping" ) && i + 1 < argc )
+		{
+			cocker_env->cmd_para.__port_mapping = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--debug" ) )
+		{
+			cocker_env->cmd_para.__debug = argv[i] ;
 		}
 		else
 		{
@@ -56,134 +75,131 @@ static int ParseCommandParameters( struct VhmEnvironment *vhm_env , int argc , c
 		}
 	}
 	
-	if( vhm_env->cmd_para.__host_name == NULL )
-		vhm_env->cmd_para.__host_name = vhm_env->cmd_para.__vhost ;
-	
 	return 0;
 }
 
-static int ExecuteCommandParameters( struct VhmEnvironment *vhm_env )
+static int ExecuteCommandParameters( struct CockerEnvironment *cocker_env )
 {
 	int		nret = 0 ;
 	
-	if( getenv("OPENVH_HOME" ) )
+	if( getenv("COCKER_HOME" ) )
 	{
-		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "%s" , getenv("OPENVH_HOME" ) ) ;
+		nret = SnprintfAndMakeDir( cocker_env->cocker_home , sizeof(cocker_env->cocker_home)-1 , "%s" , getenv("COCKER_HOME" ) ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->openvh_home , nret );
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->cocker_home , nret );
 			return -1;
 		}
 	}
 	else
 	{
-		nret = SnprintfAndMakeDir( vhm_env->openvh_home , sizeof(vhm_env->openvh_home)-1 , "/var/openvh" ) ;
+		nret = SnprintfAndMakeDir( cocker_env->cocker_home , sizeof(cocker_env->cocker_home)-1 , "/var/cocker" ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->openvh_home , nret );
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->cocker_home , nret );
 			return -1;
 		}
 	}
 	
-	nret = SnprintfAndMakeDir( vhm_env->vtemplates_path_base , sizeof(vhm_env->vtemplates_path_base)-1 , "%s/vtemplate" , vhm_env->openvh_home ) ;
+	nret = SnprintfAndMakeDir( cocker_env->images_path_base , sizeof(cocker_env->images_path_base)-1 , "%s/image" , cocker_env->cocker_home ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->vtemplates_path_base , nret );
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->images_path_base , nret );
 		return -1;
 	}
 	
-	nret = SnprintfAndMakeDir( vhm_env->vhosts_path_base , sizeof(vhm_env->vhosts_path_base)-1 , "%s/vhost" , vhm_env->openvh_home ) ;
+	nret = SnprintfAndMakeDir( cocker_env->containers_path_base , sizeof(cocker_env->containers_path_base)-1 , "%s/container" , cocker_env->cocker_home ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , vhm_env->vhosts_path_base , nret );
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->containers_path_base , nret );
 		return -1;
 	}
 	
-	if( vhm_env->cmd_para._show )
+	if( cocker_env->cmd_para._show )
 	{
-		if( STRCMP( vhm_env->cmd_para._show , == , "vtemplates" ) )
+		if( STRCMP( cocker_env->cmd_para._show , == , "images" ) )
 		{
-			return -VhmShow_vtemplates( vhm_env );
+			return -DoShow_images( cocker_env );
 		}
-		else if( STRCMP( vhm_env->cmd_para._show , == , "vhosts" ) )
+		else if( STRCMP( cocker_env->cmd_para._show , == , "containers" ) )
 		{
-			return -VhmShow_vhosts( vhm_env );
+			return -DoShow_containers( cocker_env );
 		}
 		else
 		{
-			printf( "*** ERROR : show[%s] invalid\n" , vhm_env->cmd_para._show );
+			printf( "*** ERROR : show[%s] invalid\n" , cocker_env->cmd_para._show );
 			return -7;
 		}
 	}
-	else if( vhm_env->cmd_para._action )
+	else if( cocker_env->cmd_para._action )
 	{
-		if( STRCMP( vhm_env->cmd_para._action , == , "create" ) )
+		if( STRCMP( cocker_env->cmd_para._action , == , "create" ) )
 		{
-			if( vhm_env->cmd_para.__vhost == NULL ||  STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( cocker_env->cmd_para.__container == NULL ||  STRCMP( cocker_env->cmd_para.__container , == , "" ) )
 			{
-				printf( "*** ERROR : expect '--vhost' with action '-a create'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a create'\n" );
 				return -7;
 			}
 			
-			return -VhmAction_create( vhm_env );
+			return -DoAction_create( cocker_env );
 		}
-		else if( STRCMP( vhm_env->cmd_para._action , == , "start" ) )
+		else if( STRCMP( cocker_env->cmd_para._action , == , "start" ) )
 		{
-			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( cocker_env->cmd_para.__container == NULL || STRCMP( cocker_env->cmd_para.__container , == , "" ) )
 			{
-				printf( "*** ERROR : expect '--vhost' with action '-a start'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a start'\n" );
 				return -7;
 			}
 			
-			return -VhmAction_start( vhm_env );
+			return -DoAction_start( cocker_env );
 		}
-		else if( STRCMP( vhm_env->cmd_para._action , == , "stop" ) )
+		else if( STRCMP( cocker_env->cmd_para._action , == , "stop" ) )
 		{
-			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( cocker_env->cmd_para.__container == NULL || STRCMP( cocker_env->cmd_para.__container , == , "" ) )
 			{
-				printf( "*** ERROR : expect '--vhost' with action '-a stop'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a stop'\n" );
 				return -7;
 			}
 			
-			return -VhmAction_stop( vhm_env );
+			return -DoAction_stop( cocker_env );
 		}
-		else if( STRCMP( vhm_env->cmd_para._action , == , "destroy" ) )
+		else if( STRCMP( cocker_env->cmd_para._action , == , "destroy" ) )
 		{
-			if( vhm_env->cmd_para.__vhost == NULL || STRCMP( vhm_env->cmd_para.__vhost , == , "" ) )
+			if( cocker_env->cmd_para.__container == NULL || STRCMP( cocker_env->cmd_para.__container , == , "" ) )
 			{
-				printf( "*** ERROR : expect '--vhost' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
 				return -7;
 			}
 			
-			return -VhmAction_destroy( vhm_env );
+			return -DoAction_destroy( cocker_env );
 		}
-		else if( STRCMP( vhm_env->cmd_para._action , == , "install_test" ) )
+		else if( STRCMP( cocker_env->cmd_para._action , == , "install_test" ) )
 		{
-			return -VhmAction_install_test( vhm_env );
+			return -DoAction_install_test( cocker_env );
 		}
 		else
 		{
-			printf( "*** ERROR : action[%s] invalid\n" , vhm_env->cmd_para._action );
+			printf( "*** ERROR : action[%s] invalid\n" , cocker_env->cmd_para._action );
 			return -7;
 		}
 	}
 	else
 	{
-		printf( "*** ERROR : cmd para action[%s] invalid\n" , vhm_env->cmd_para._action );
+		printf( "*** ERROR : cmd para action[%s] invalid\n" , cocker_env->cmd_para._action );
 		return -7;
 	}
 }
 
 int main( int argc , char *argv[] )
 {
-	struct VhmEnvironment	*vhm_env = NULL ;
+	struct CockerEnvironment	*cocker_env = NULL ;
 	
 	int			nret = 0 ;
 	
-	nret = CreateVhmEnvironment( & vhm_env ) ;
+	nret = CreateCockerEnvironment( & cocker_env ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : CreateVhmEnvironment failed[%d]\n" , nret );
+		printf( "*** ERROR : CreateCockerEnvironment failed[%d]\n" , nret );
 		return -nret;
 	}
 	
@@ -193,21 +209,21 @@ int main( int argc , char *argv[] )
 		return 0;
 	}
 	
-	nret = ParseCommandParameters( vhm_env , argc , argv ) ;
+	nret = ParseCommandParameters( cocker_env , argc , argv ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : ParseCommandParameters failed[%d]\n" , nret );
 		return -nret;
 	}
 	
-	SetLogcFile( "%s/log/vhm.log" , getenv("HOME") );
+	SetLogcFile( "%s/log/cocker.log" , getenv("HOME") );
 	SetLogcLevel( LOG_DEBUG );
 	
-	NOTICELOGC( "---  vhm start --- v%s build %s %s" , _OPENVH_VERSION , __DATE__ , __TIME__ )
+	NOTICELOGC( "---  cocker start --- v%s build %s %s" , _COCKER_VERSION , __DATE__ , __TIME__ )
 	
-	nret = ExecuteCommandParameters( vhm_env ) ;
-	DestroyVhmEnvironment( & vhm_env );
-	NOTICELOGC( "---  vhm end --- v%s build %s %s" , _OPENVH_VERSION , __DATE__ , __TIME__ )
+	nret = ExecuteCommandParameters( cocker_env ) ;
+	DestroyCockerEnvironment( & cocker_env );
+	NOTICELOGC( "---  cocker end --- v%s build %s %s" , _COCKER_VERSION , __DATE__ , __TIME__ )
 	if( nret )
 	{
 		printf( "*** ERROR : ExecuteCommandParameters failed[%d]\n" , nret );

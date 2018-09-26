@@ -1,12 +1,12 @@
-#include "vhm_in.h"
+#include "cocker_in.h"
 
-int VhmShow_vhosts( struct VhmEnvironment *vhm_env )
+int DoShow_images( struct CockerEnvironment *cocker_env )
 {
 	DIR		*dir = NULL ;
 	struct dirent	*dirent = NULL ;
 	int		count ;
 	
-	dir = opendir( vhm_env->vhosts_path_base ) ;
+	dir = opendir( cocker_env->images_path_base ) ;
 	count = 0 ;
 	while(1)
 	{
@@ -21,7 +21,7 @@ int VhmShow_vhosts( struct VhmEnvironment *vhm_env )
 		
 		if( count == 0 )
 		{
-			printf( "vhost_name\n" );
+			printf( "image\n" );
 			printf( "--------------\n" );
 		}
 		

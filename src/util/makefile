@@ -14,13 +14,13 @@ c_FILE		=	\
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall
-LIB		=	libvh_util.so
+LIB		=	libcocker_util.so
 LIBINST		=	$(_LIBINST)
 HDER		= \
 			LOGC.h \
-			vh_util.h \
+			cocker_util.h \
 
-HDERINST	=	$(_HDERBASE)/openvh_in
+HDERINST	=	$(_HDERBASE)/cocker_in
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
@@ -47,6 +47,6 @@ PREMAKE		=
 include $(MKTPL2_HOME)/makeobj_$(MKTPL2_OS).inc
 
 ###### 目标文件依赖关系
-libvh_util.so		:	$(c_FILE_o)
+libcocker_util.so	:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(SOFLAGS) $(LFLAGS)
 
