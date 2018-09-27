@@ -1,5 +1,10 @@
 #!/bin/bash
 
+############################################################
+# cocker shell
+# copyright by calvin<calvinwilliams@163.com> 2018
+############################################################
+
 mkdir -p ../lib ../lib64
 
 ls -1 | while read EXEFILE ; do

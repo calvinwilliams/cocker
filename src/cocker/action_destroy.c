@@ -2,14 +2,18 @@
 
 int DoAction_destroy( struct CockerEnvironment *cocker_env )
 {
+	char		pid_str[ 20 + 1 ] ;
+	
+	char		container_vip_file[ PATH_MAX ] ;
+	
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
 	char		netns_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char		netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
-	char		vnetbr_name[ ETHERNET_NAME_MAX + 1 ] ;
 	
 	char		container_path_base[ PATH_MAX ] ;
 	char		rwlayer_path[ PATH_MAX ] ;
@@ -17,11 +21,24 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 	
 	int		nret = 0 ;
 	
-	nret = ReadFileLine( cocker_env->vip , sizeof(cocker_env->vip) , NULL , -1 , "%s/%s/vip" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	/* read pid file */
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	if( nret == 0 )
+	{
+		printf( "*** ERROR : container is already running\n" );
+		return 0;
+	}
+	
+	/* read vip file */
+	nret = ReadFileLine( cocker_env->vip , sizeof(cocker_env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/%s/vip" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
 	if( nret < 0 )
 	{
 		printf( "*** ERROR : ReadFileLine vip failed\n" );
 		return -1;
+	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "read file %s ok\n" , container_vip_file );
 	}
 	
 	if( cocker_env->vip[0] )
@@ -32,6 +49,14 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 		if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
 		{
 			printf( "*** ERROR : netns name overflow\n" );
+			return -1;
+		}
+		
+		memset( netbr_name , 0x00 , sizeof(netbr_name) );
+		len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
+		if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
+		{
+			printf( "*** ERROR : netbr name overflow\n" );
 			return -1;
 		}
 		
@@ -59,62 +84,98 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 			return -1;
 		}
 		
-		memset( vnetbr_name , 0x00 , sizeof(vnetbr_name) );
-		len = snprintf( vnetbr_name , sizeof(vnetbr_name)-1 , "vnetbr-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(vnetbr_name)-1) )
-		{
-			printf( "*** ERROR : vnetbr name overflow\n" );
-			return -1;
-		}
-		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , veth1_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , vnetbr_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , netbr_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , netns_name , veth0_sname ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , vnetbr_name , veth1_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , netbr_name , veth1_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delbr %s" , vnetbr_name ) ;
+		/*
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delbr %s" , netbr_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
 		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
+		*/
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link del %s" , veth1_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
 		/*
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ip link del %s" , netns_name , veth0_sname ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 		}
 		*/
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , netns_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 	}
 	
@@ -142,9 +203,17 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 	
 	if( access( rwlayer_path , W_OK ) == 0 && access( hostname_path , W_OK ) == 0 )
 	{
-		memset( cmd , 0x00 , sizeof(cmd) );
-		snprintf( cmd , sizeof(cmd)-1 , "rm -rf %s" , container_path_base );
-		system( cmd );
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , container_path_base ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
 	}
 	
 	printf( "OK\n" );

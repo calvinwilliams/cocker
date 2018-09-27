@@ -119,6 +119,37 @@ int SnprintfAndSystem( char *cmd_buf , int cmd_bufsize , char *cmd_format , ... 
 	return 0;
 }
 
+int SnprintfAndPopen( char *output_buf , int output_bufsize , char *cmd_buf , int cmd_bufsize , char *cmd_format , ... )
+{
+	char		*p_cmd = NULL ;
+	FILE		*popen_fp = NULL ;
+	va_list		valist ;
+	
+	int		nret = 0 ;
+	
+	va_start( valist , cmd_format );
+	p_cmd = SnprintfV( cmd_buf , cmd_bufsize , cmd_format , valist ) ;
+	va_end( valist );
+	if( p_cmd == NULL )
+		return -1;
+	
+	popen_fp = popen( p_cmd , "r" ) ;
+	if( popen_fp == NULL )
+		return -2;
+	
+	if( output_buf )
+	{
+		memset( output_buf , 0x00 , output_bufsize );
+		nret = fread( output_buf , output_bufsize , 1 , popen_fp ) ;
+		if( nret == -1 )
+			return -3;
+	}
+	
+	pclose( popen_fp );
+	
+	return 0;
+}
+
 int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... )
 {
 	char		*p_pathfile = NULL ;

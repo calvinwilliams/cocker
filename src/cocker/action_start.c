@@ -1,8 +1,8 @@
 #include "cocker_in.h"
 
 /* for debug
-$ mount -t overlay overlay -o lowerdir=/var/cocker/image/test/rlayer,upperdir=/var/cocker/container/test/rwlayer,workdir=/var/cocker/container/test/workdir /var/cocker/container/test/merged
-$ chroot /var/cocker/container/test/merged
+$ mount -t overlay overlay -o lowerdir=/var/cocker/images/test/rlayer,upperdir=/var/cocker/containers/test/rwlayer,workdir=/var/cocker/containers/test/workdir /var/cocker/containers/test/merged
+$ chroot /var/cocker/containers/test/merged
 $ mount -t proc proc /proc
 
 $ umount /proc
@@ -20,7 +20,9 @@ static int VHostEntry( void *p )
 	char				netns_path[ PATH_MAX ] ;
 	int				netns_fd ;
 	
+	char				container_hostname_file[ PATH_MAX ] ;
 	char				hostname[ HOST_NAME_MAX ] ;
+	char				container_images_file[ PATH_MAX ] ;
 	char				image[ PATH_MAX ] ;
 	char				mount_target[ PATH_MAX ] ;
 	char				mount_data[ 4096 ] ;
@@ -50,6 +52,10 @@ static int VHostEntry( void *p )
 			printf( "*** ERROR : setns failed , errno[%d]\n" , errno );
 			return -1;
 		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "setns %s ok\n" , netns_path );
+		}
 		
 		close( netns_fd );
 	}
@@ -59,19 +65,22 @@ static int VHostEntry( void *p )
 	setgid(0);
 	setgroups(0,NULL);
 	
-	/* setlocale */
-	setlocale( LC_ALL , "C" );
-	
 	/* sethostname */
-	nret = ReadFileLine( hostname , sizeof(hostname)-1 , NULL , -1 , "%s/%s/hostname" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , cocker_env->cmd_para.__container );
 		return -1;
 	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "read file %s ok\n" , container_hostname_file );
+	}
 	sethostname( hostname , strlen(hostname) );
-	
-	unshare( CLONE_NEWUSER );
+	if( cocker_env->cmd_para.__debug )
+	{
+		printf( "sethostname [%s] ok\n" , hostname );
+	}
 	
 	/* mount filesystem */
 	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/%s/images" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
@@ -79,6 +88,10 @@ static int VHostEntry( void *p )
 	{
 		printf( "*** ERROR : ReadFileLine images in container '%s' failed\n" , cocker_env->cmd_para.__container );
 		return -1;
+	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "read file %s ok\n" , container_images_file );
 	}
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
@@ -99,27 +112,42 @@ static int VHostEntry( void *p )
 		printf( "*** ERROR : snprintf failed\n" );
 		return -1;
 	}
-	
 	nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
 	if( nret == -1 )
 	{
 		printf( "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno );
 		return -1;
 	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "mount [%s][%s][%s][%d][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
+	}
 	
 	/* chroot */
 	chroot( mount_target );
+	if( cocker_env->cmd_para.__debug )
+	{
+		printf( "chroot [%s] ok\n" , mount_target );
+	}
 	chdir( "/root" );
+	if( cocker_env->cmd_para.__debug )
+	{
+		printf( "chdir [%s] ok\n" , "/root" );
+	}
 	
 	/* mount /proc */
 	mount( "proc" , "/proc" , "proc" , MS_MGC_VAL , NULL );
+	if( cocker_env->cmd_para.__debug )
+	{
+		printf( "mount [%s][%s][%s][%d][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
+	}
 	
 	/* execl */
 	nret = execl( "/bin/bash" , "bash" , "--login" , NULL ) ;
 	if( nret == -1 )
 	{
 		printf( "*** ERROR : execl failed , errno[%d]\n" , errno );
-		return -1;
+		exit(9);
 	}
 	
 	return 0;
@@ -127,27 +155,42 @@ static int VHostEntry( void *p )
 
 int DoAction_start( struct CockerEnvironment *cocker_env )
 {
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_pid_file[ PATH_MAX ] ;
+	
+	
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
 	char		netns_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char		netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
-	char		vnetbr_name[ ETHERNET_NAME_MAX + 1 ] ;
 	
 	pid_t		pid ;
 	char		pid_str[ 20 + 1 ] ;
-#if 0
-	int		status ;
-#endif
+	
 	int		nret = 0 ;
 	
-	nret = ReadFileLine( cocker_env->vip , sizeof(cocker_env->vip) , NULL , -1 , "%s/%s/vip" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	/* read pid file */
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	if( nret == 0 )
+	{
+		printf( "*** ERROR : container is already running\n" );
+		return 0;
+	}
+	
+	/* read vip file */
+	nret = ReadFileLine( cocker_env->vip , sizeof(cocker_env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/%s/vip" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
 	if( nret < 0 )
 	{
 		printf( "*** ERROR : ReadFileLine vip failed\n" );
 		return -1;
+	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "read file %s ok\n" , container_vip_file );
 	}
 	
 	if( cocker_env->vip[0] )
@@ -158,6 +201,14 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 		if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
 		{
 			printf( "*** ERROR : netns name overflow\n" );
+			return -1;
+		}
+		
+		memset( netbr_name , 0x00 , sizeof(netbr_name) );
+		len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
+		if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
+		{
+			printf( "*** ERROR : netbr name overflow\n" );
 			return -1;
 		}
 		
@@ -185,40 +236,50 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 			return -1;
 		}
 		
-		memset( vnetbr_name , 0x00 , sizeof(vnetbr_name) );
-		len = snprintf( vnetbr_name , sizeof(vnetbr_name)-1 , "vnetbr-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(vnetbr_name)-1) )
-		{
-			printf( "*** ERROR : vnetbr name overflow\n" );
-			return -1;
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , vnetbr_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , netbr_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 			return -1;
 		}
+		/*
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
+		*/
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , veth1_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed [%d], errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed [%d], errno[%d]\n" , cmd , nret , errno );
 			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , netns_name , veth0_sname ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , netns_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
 		}
 	}
 	
@@ -227,47 +288,44 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	if( pid == -1 )
 	{
 		printf( "*** ERROR : clone failed[%d] , errno[%d]\n" , pid , errno );
+		cocker_env->cmd_para.__forcely = "--force" ;
+		DoAction_stop( cocker_env );
 		return -1;
 	}
 	
 	/* write pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
-	nret = WriteFileLine( pid_str , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno );
+		cocker_env->cmd_para.__forcely = "--force" ;
+		DoAction_stop( cocker_env );
 		return -1;
+	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "write file %s ok\n" , container_pid_file );
 	}
 	
 	/* wait for container end */
-#if 0
 	while(1)
 	{
-		pid = waitpid( -1 , NULL , 0 ) ;
+		pid = waitpid( -1 , NULL , __WCLONE ) ;
 		if( pid == -1 )
 		{
 			if( errno == ECHILD )
 				break;
 			
 			printf( "*** ERROR : waitpid failed , errno[%d]\n" , errno ); fflush(stdout);
+			cocker_env->cmd_para.__forcely = "--force" ;
+			DoAction_stop( cocker_env );
 			return -1;
 		}
 	}
-#endif
-	while( wait(NULL) < 0 )
-	{
-		continue;
-	}
 	
-	/* kill clone process */
-	kill( pid , SIGKILL );
-	
-	/* cleanup pid file */
-	SnprintfAndUnlink( NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container );
-	
-	printf( "OK\n" );
-	
+	/* stop clone process for sync */
 	return 0;
 }
 

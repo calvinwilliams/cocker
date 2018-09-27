@@ -15,6 +15,7 @@ NOCLEAN_OBJ	=	\
 			cocker_ldd_and_cp_lib64.sh \
 			cocker_profile_template.sh \
 			cocker_etc_profile_template.sh \
+			cocker_install_test.sh \
 
 NOCLEAN_OBJINST	=	$(_BINBASE)
 

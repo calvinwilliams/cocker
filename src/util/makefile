@@ -8,7 +8,6 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
-			LOGC.c \
 			version.c \
 			file.c \
 
