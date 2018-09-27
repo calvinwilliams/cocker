@@ -1,3 +1,6 @@
+0.4.1		2018-09-27	calvin
+		* '-a install_test'实现由代码改成脚本
+
 0.4.0		2018-09-26	calvin
 		* 项目名改名为cocker
 		* 新增cocker命令行参数--nat-postrouting,--vip,--debug
