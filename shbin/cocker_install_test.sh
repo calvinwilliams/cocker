@@ -16,7 +16,7 @@ cd ${IMAGE_RLAYER_PATH_BASE}
 mkdir -p bin sbin lib lib64 etc root dev proc
 
 cd /bin
-cp bash tty ls cat echo rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet nc ${IMAGE_RLAYER_PATH_BASE}/bin/
+cp bash tty which ls cat echo rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc ${IMAGE_RLAYER_PATH_BASE}/bin/
 cd ${IMAGE_RLAYER_PATH_BASE}/bin/
 cocker_ldd_and_cp_lib64.sh
 

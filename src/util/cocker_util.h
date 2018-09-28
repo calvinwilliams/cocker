@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #define __USE_GNU
 #include <sched.h>
 
@@ -52,6 +53,10 @@ extern char	*_COCKER_VERSION ;
 #define ETHERNET_NAME_MAX	256
 #endif
 
+#ifndef NETNS_NAME_MAX
+#define NETNS_NAME_MAX		256
+#endif
+
 #ifndef IP_MAX
 #define IP_MAX			20
 #endif
@@ -61,6 +66,7 @@ extern char	*_COCKER_VERSION ;
  */
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist );
+char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... );
 
 int CheckAndMakeDir( char *path );
 
@@ -74,6 +80,12 @@ int SnprintfAndPopen( char *output_buf , int output_bufsize , char *cmd_buf , in
 
 int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
+
+/*
+ * string
+ */
+
+char *TrimEnter( char *str );
 
 #ifdef __cplusplus
 }

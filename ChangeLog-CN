@@ -1,3 +1,6 @@
+0.4.2		2018-09-27	calvin
+		* 新增cocker命令行参数--net，删除--nat-postrouting
+
 0.4.1		2018-09-27	calvin
 		* '-a install_test'实现由代码改成脚本
 

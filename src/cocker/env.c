@@ -39,6 +39,20 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 		}
 	}
 	
+	nret = SnprintfAndMakeDir( cocker_env->images_path_base , sizeof(cocker_env->images_path_base)-1 , "%s/images" , cocker_env->cocker_home ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->images_path_base , nret );
+		return -1;
+	}
+	
+	nret = SnprintfAndMakeDir( cocker_env->containers_path_base , sizeof(cocker_env->containers_path_base)-1 , "%s/containers" , cocker_env->cocker_home ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->containers_path_base , nret );
+		return -1;
+	}
+	
 	memset( netbr_name , 0x00 , sizeof(netbr_name) );
 	len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
@@ -64,6 +78,17 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s 166.88.0.1" , netbr_name ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , netbr_name ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );

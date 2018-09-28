@@ -14,6 +14,8 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	char		container_workdir_path[ PATH_MAX ] ;
 	char		container_images_file[ PATH_MAX ] ;
 	char		container_hostname_file[ PATH_MAX ] ;
+	char		container_rwlayer_net_file[ PATH_MAX ] ;
+	char		container_rwlayer_netns_file[ PATH_MAX ] ;
 	
 	char		netns_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
@@ -27,32 +29,6 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	/* preprocess input parameters */
 	if( cocker_env->cmd_para.__host_name == NULL )
 		cocker_env->cmd_para.__host_name = cocker_env->cmd_para.__container ;
-	
-	/*
-	if( cocker_env->cmd_para.__vip )
-	{
-		char	*p = NULL ;
-		
-		memset( cocker_env->vip , 0x00 , sizeof(cocker_env->vip) );
-		strncpy( cocker_env->vip , cocker_env->cmd_para.__vip , sizeof(cocker_env->vip)-1 );
-		
-		memset( cocker_env->vgateway , 0x00 , sizeof(cocker_env->vgateway) );
-		strncpy( cocker_env->vgateway , cocker_env->cmd_para.__vip , sizeof(cocker_env->vgateway)-1 );
-		p = strchr( cocker_env->vgateway , '.' ) ;
-		if( p )
-		{
-			p = strchr( p+1 , '.' ) ;
-			if( p )
-			{
-				p = strchr( p+1 , '.' ) ;
-				if( p )
-				{
-					strcpy( p , ".1" );
-				}
-			}
-		}
-	}
-	*/
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
@@ -157,7 +133,18 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	}
 	
 	/* create network */
-	if( cocker_env->vip[0] )
+	nret = WriteFileLine( cocker_env->cmd_para.__net , container_rwlayer_net_file , sizeof(container_rwlayer_net_file) , "%s/net" , container_path_base ) ;
+	if( nret )
+	{
+		printf( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno );
+		return -1;
+	}
+	else if( cocker_env->cmd_para.__debug )
+	{
+		printf( "write file [%s] ok\n" , container_rwlayer_net_file );
+	}
+	
+	if( STRCMP( cocker_env->net , == , "bridge" ) || STRCMP( cocker_env->cmd_para.__net , == , "custom" ) )
 	{
 		memset( netns_name , 0x00 , sizeof(netns_name) );
 		len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
@@ -199,20 +186,9 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 			return -1;
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link add %s type veth peer name %s" , veth1_name , veth0_name ) ;
-		if( nret )
+		if( STRCMP( cocker_env->cmd_para.__net , == , "bridge" ) )
 		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		if( cocker_env->cmd_para.__nat_postrouting )
-		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A POSTROUTING -o %s -j MASQUERADE" , cocker_env->cmd_para.__nat_postrouting ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link add %s type veth peer name %s" , veth1_name , veth0_name ) ;
 			if( nret )
 			{
 				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
@@ -222,112 +198,150 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 			{
 				printf( "system [%s] ok\n" , cmd );
 			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_if_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl addif %s %s" , netbr_name , veth1_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s 0.0.0.0" , veth1_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns add %s" , netns_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = WriteFileLine( netns_name , container_rwlayer_netns_file , sizeof(container_rwlayer_netns_file) , "%s/netns" , container_path_base ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : WriteFileLine netns failed[%d] , errno[%d]\n" , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "write file [%s] ok\n" , container_rwlayer_netns_file );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link set %s netns %s" , veth0_name , netns_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ip link set %s name %s" , netns_name , veth0_name , veth0_sname ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s %s" , netns_name , veth0_sname , cocker_env->cmd_para.__vip ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = SnprintfAndPopen( netbr_ip , sizeof(netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : SnprintfAndPopen [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			TrimEnter( netbr_ip );
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s route add default gw %s netmask 0.0.0.0 dev %s" , netns_name , netbr_ip , veth0_sname ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			/*
+			nret = WriteFileLine( cocker_env->vip , NULL , -1 , "%s/vgateway" , container_path_base ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			*/
 		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl addif %s %s" , netbr_name , veth1_name ) ;
-		if( nret )
+		else if( STRCMP( cocker_env->cmd_para.__net , == , "custom" ) )
 		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s 0.0.0.0" , veth1_name ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns add %s" , netns_name ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link set %s netns %s" , veth0_name , netns_name ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ip link set %s name %s" , netns_name , veth0_name , veth0_sname ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s %s" , netns_name , veth0_sname , cocker_env->cmd_para.__vip ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndPopen( netbr_ip , sizeof(netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : SnprintfAndPopen [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s route add default gw %s netmask 0.0.0.0 dev %s" , netns_name , netbr_ip , veth0_sname ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = WriteFileLine( cocker_env->vip , NULL , -1 , "%s/vip" , container_path_base ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = WriteFileLine( cocker_env->vip , NULL , -1 , "%s/vgateway" , container_path_base ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns add %s" , netns_name ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			nret = WriteFileLine( netns_name , container_rwlayer_netns_file , sizeof(container_rwlayer_netns_file) , "%s/netns" , container_path_base ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : WriteFileLine netns failed[%d] , errno[%d]\n" , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "write file [%s] ok\n" , container_rwlayer_netns_file );
+			}
 		}
 	}
 	

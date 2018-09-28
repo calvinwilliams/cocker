@@ -28,6 +28,20 @@ char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list
 	return p_path;
 }
 
+char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... )
+{
+	char		*p_path = NULL ;
+	va_list		valist ;
+	
+	va_start( valist , path_format );
+	p_path = SnprintfV( path_buf , path_bufsize , path_format , valist ) ;
+	va_end( valist );
+	if( p_path == NULL )
+		return NULL;
+	
+	return p_path;
+}
+
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... )
 {
 	char		*p_path = NULL ;
@@ -48,7 +62,7 @@ int CheckAndMakeDir( char *path )
 {
 	int		nret = 0 ;
 	
-	nret = access( path , W_OK ) ;
+	nret = access( path , F_OK ) ;
 	if( nret == -1 )
 	{
 		nret = mkdir( path , 00777 ) ;

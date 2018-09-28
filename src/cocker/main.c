@@ -5,7 +5,7 @@ static void usage()
 	printf( "USAGE : cocker -s images\n" );
 	printf( "               -s containers\n" );
 	printf( "               -a create [ --image (name) ] --container (name) [ --host-name (name) ]\n" );
-	printf( "               -a start --container (name)\n" );
+	printf( "               -a start --container (name) [ --attach ]\n" );
 	printf( "               -a stop --container (name) [ --forcely ]\n" );
 	printf( "               -a destroy --container (name) [ --forcely ]\n" );
 	printf( "               -a install_test\n" );
@@ -15,6 +15,8 @@ static void usage()
 static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int argc , char *argv[] )
 {
 	int		i ;
+	
+	int		nret = 0 ;
 	
 	for( i = 1 ; i < argc ; i++ )
 	{
@@ -54,9 +56,9 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 			cocker_env->cmd_para.__net = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--nat-postrouting" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--host-if-name" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__nat_postrouting = argv[i+1] ;
+			cocker_env->cmd_para.__host_if_name = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--vip" ) && i + 1 < argc )
@@ -69,6 +71,10 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 			cocker_env->cmd_para.__port_mapping = argv[i+1] ;
 			i++;
 		}
+		else if( STRCMP( argv[i] , == , "--attach" ) )
+		{
+			cocker_env->cmd_para.__attach = argv[i] ;
+		}
 		else if( STRCMP( argv[i] , == , "--debug" ) )
 		{
 			cocker_env->cmd_para.__debug = argv[i] ;
@@ -79,49 +85,71 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 		}
 		else
 		{
+			printf( "*** ERROR : invalid parameter '%s'\n" , argv[i] );
 			usage();
 			return -7;
 		}
 	}
 	
 	if( cocker_env->cmd_para.__net == NULL )
-		cocker_env->cmd_para.__net = "none" ;
+		cocker_env->cmd_para.__net = "host" ;
 	
-	if( ! ( STRCMP( cocker_env->cmd_para.__net , == , "none" ) || STRCMP( cocker_env->cmd_para.__net , == , "host" ) || STRCMP( cocker_env->cmd_para.__net , == , "bridge" ) ) )
+	if( ! ( STRCMP( cocker_env->cmd_para.__net , == , "host" ) || STRCMP( cocker_env->cmd_para.__net , == , "bridge" ) || STRCMP( cocker_env->cmd_para.__net , == , "custom" ) ) )
 	{
 		printf( "*** ERROR : '--net' value[%s] invalid\n" , cocker_env->cmd_para.__net );
 		return -7;
 	}
+	
+	if( cocker_env->cmd_para.__host_if_name )
+	{
+		memset( cocker_env->host_if_name , 0x00 , sizeof(cocker_env->host_if_name) );
+		strncpy( cocker_env->host_if_name , cocker_env->cmd_para.__host_if_name , sizeof(cocker_env->host_if_name)-1 );
+	}
+	else
+	{
+		struct ifaddrs		*ifa_base = NULL ;
+		struct ifaddrs		*ifa = NULL ;
+		
+		nret = getifaddrs( & ifa_base ) ;
+		if( nret == -1 )
+		{
+			printf( "*** ERROR : getifaddrs failed[%d] , errno[%d]\n" , nret , errno );
+			return -1;
+		}
+		
+		memset( cocker_env->host_if_name , 0x00 , sizeof(cocker_env->host_if_name) );
+		ifa = ifa_base ;
+		while( ifa )
+		{
+			if( ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET )
+			{
+				if( STRCMP( ifa->ifa_name , != , "lo" ) && STRCMP( ifa->ifa_name , != , "cocker0" ) && STRNCMP( ifa->ifa_name , != , "veth" , 4 ) )
+				{
+					strncpy( cocker_env->host_if_name , ifa->ifa_name , sizeof(cocker_env->host_if_name)-1 );
+					break;
+				}
+			}
+			
+			ifa = ifa->ifa_next ;
+		}
+		
+		freeifaddrs( ifa_base );
+		
+		if( cocker_env->host_if_name[0] == '\0' )
+		{
+			printf( "*** ERROR : host if name not found\n" );
+			return -1;
+		}
+	}
+	
+	memset( cocker_env->net , 0x00 , sizeof(cocker_env->net) );
+	strncpy( cocker_env->net , cocker_env->cmd_para.__net , sizeof(cocker_env->net)-1 );
 	
 	return 0;
 }
 
 static int ExecuteCommandParameters( struct CockerEnvironment *cocker_env )
 {
-	int		nret = 0 ;
-	
-	nret = SnprintfAndMakeDir( cocker_env->images_path_base , sizeof(cocker_env->images_path_base)-1 , "%s/images" , cocker_env->cocker_home ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->images_path_base , nret );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "mkdir %s ok\n" , cocker_env->images_path_base );
-	}
-	
-	nret = SnprintfAndMakeDir( cocker_env->containers_path_base , sizeof(cocker_env->containers_path_base)-1 , "%s/containers" , cocker_env->cocker_home ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->containers_path_base , nret );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "mkdir %s ok\n" , cocker_env->containers_path_base );
-	}
-	
 	if( cocker_env->cmd_para._show )
 	{
 		if( STRCMP( cocker_env->cmd_para._show , == , "images" ) )
@@ -170,6 +198,16 @@ static int ExecuteCommandParameters( struct CockerEnvironment *cocker_env )
 			
 			return -DoAction_stop( cocker_env );
 		}
+		else if( STRCMP( cocker_env->cmd_para._action , == , "kill" ) )
+		{
+			if( cocker_env->cmd_para.__container == NULL || STRCMP( cocker_env->cmd_para.__container , == , "" ) )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a kill'\n" );
+				return -7;
+			}
+			
+			return -DoAction_kill( cocker_env );
+		}
 		else if( STRCMP( cocker_env->cmd_para._action , == , "destroy" ) )
 		{
 			if( cocker_env->cmd_para.__container == NULL || STRCMP( cocker_env->cmd_para.__container , == , "" ) )
@@ -201,7 +239,7 @@ int main( int argc , char *argv[] )
 {
 	struct CockerEnvironment	*cocker_env = NULL ;
 	
-	int			nret = 0 ;
+	int				nret = 0 ;
 	
 	nret = CreateCockerEnvironment( & cocker_env ) ;
 	if( nret )
