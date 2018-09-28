@@ -289,7 +289,14 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	}
 	
 	/* create container */
-	pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)cocker_env ) ;
+	if( STRCMP( cocker_env->net , == , "host" ) )
+	{
+		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)cocker_env ) ;
+	}
+	else
+	{
+		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)cocker_env ) ;
+	}
 	if( pid == -1 )
 	{
 		printf( "*** ERROR : clone failed[%d] , errno[%d]\n" , pid , errno );

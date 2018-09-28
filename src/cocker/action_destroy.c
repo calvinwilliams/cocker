@@ -58,54 +58,54 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 		printf( "read file %s ok\n" , container_net_file );
 	}
 	
+	/* destroy network */
+	memset( netns_name , 0x00 , sizeof(netns_name) );
+	len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
+	{
+		printf( "*** ERROR : netns name overflow\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	
+	memset( netbr_name , 0x00 , sizeof(netbr_name) );
+	len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
+	{
+		printf( "*** ERROR : netbr name overflow\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	
+	memset( veth1_name , 0x00 , sizeof(veth1_name) );
+	len = snprintf( veth1_name , sizeof(veth1_name)-1 , "veth1-%s" , cocker_env->cmd_para.__container ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth1_name)-1) )
+	{
+		printf( "*** ERROR : veth1 name overflow\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	
+	memset( veth0_name , 0x00 , sizeof(veth0_name) );
+	len = snprintf( veth0_name , sizeof(veth0_name)-1 , "veth0-%s" , cocker_env->cmd_para.__container ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth0_name)-1) )
+	{
+		printf( "*** ERROR : veth0 name overflow\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	
+	memset( veth0_sname , 0x00 , sizeof(veth0_sname) );
+	len = snprintf( veth0_sname , sizeof(veth0_sname)-1 , "eth0" ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(veth0_sname)-1) )
+	{
+		printf( "*** ERROR : veth0 name overflow\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	
 	if( STRCMP( cocker_env->net , == , "bridge" ) || cocker_env->cmd_para.__forcely )
 	{
-		/* destroy network */
-		memset( netns_name , 0x00 , sizeof(netns_name) );
-		len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
-		{
-			printf( "*** ERROR : netns name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( netbr_name , 0x00 , sizeof(netbr_name) );
-		len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
-		{
-			printf( "*** ERROR : netbr name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth1_name , 0x00 , sizeof(veth1_name) );
-		len = snprintf( veth1_name , sizeof(veth1_name)-1 , "veth1-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth1_name)-1) )
-		{
-			printf( "*** ERROR : veth1 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth0_name , 0x00 , sizeof(veth0_name) );
-		len = snprintf( veth0_name , sizeof(veth0_name)-1 , "veth0-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_name)-1) )
-		{
-			printf( "*** ERROR : veth0 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth0_sname , 0x00 , sizeof(veth0_sname) );
-		len = snprintf( veth0_sname , sizeof(veth0_sname)-1 , "eth0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_sname)-1) )
-		{
-			printf( "*** ERROR : veth0 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_if_name ) ;
 		if( nret )
 		{

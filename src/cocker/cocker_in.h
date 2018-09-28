@@ -63,6 +63,8 @@ $ echo "1" >/proc/sys/net/ipv4/ip_forward
 /* for test
 $ cocker -a install_test --debug
 $ cocker -a create --image test --container test --host-name test --net bridge --vip 166.88.0.2 --debug
+$ cocker -a create --image test --container test --host-name test --net host --vip 166.88.0.2 --debug
+$ cocker -a create --image test --container test --host-name test --net custom --vip 166.88.0.2 --debug
 $ cocker -a start --container test --attach --debug
 $ cocker -a stop --container test --debug
 $ cocker -a stop --container test --debug --forcely
