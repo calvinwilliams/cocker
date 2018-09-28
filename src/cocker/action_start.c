@@ -29,7 +29,7 @@ static int VHostEntry( void *p )
 	
 	int				nret = 0 ;
 	
-	if( STRCMP( cocker_env->net , == , "bridge" ) || STRCMP( cocker_env->net , == , "custom" ) )
+	if( STRCMP( cocker_env->net , == , "BRIDGE" ) || STRCMP( cocker_env->net , == , "CUSTOM" ) )
 	{
 		/* setns */
 		memset( netns_path , 0x00 , sizeof(netns_path) );
@@ -76,6 +76,7 @@ static int VHostEntry( void *p )
 	{
 		printf( "read file %s ok\n" , container_hostname_file );
 	}
+	TrimEnter( hostname );
 	sethostname( hostname , strlen(hostname) );
 	if( cocker_env->cmd_para.__debug )
 	{
@@ -93,6 +94,7 @@ static int VHostEntry( void *p )
 	{
 		printf( "read file %s ok\n" , container_images_file );
 	}
+	TrimEnter( image );
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
 	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
@@ -186,6 +188,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
 	if( nret == 0 )
 	{
+		TrimEnter( pid_str );
 		pid = atoi(pid_str) ;
 		if( pid > 0 )
 		{
@@ -209,9 +212,10 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	{
 		printf( "read file %s ok\n" , container_net_file );
 	}
+	TrimEnter( cocker_env->net );
 	
 	/* up network */
-	if( STRCMP( cocker_env->net , == , "bridge" ) )
+	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
 	{
 		/* up network */
 		memset( netns_name , 0x00 , sizeof(netns_name) );
@@ -289,7 +293,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	}
 	
 	/* create container */
-	if( STRCMP( cocker_env->net , == , "host" ) )
+	if( STRCMP( cocker_env->net , == , "HOST" ) )
 	{
 		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)cocker_env ) ;
 	}
@@ -338,7 +342,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	}
 	
 	/* down network */
-	if( STRCMP( cocker_env->net , == , "bridge" ) )
+	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
 	{
 		/* down network */
 		memset( netns_name , 0x00 , sizeof(netns_name) );

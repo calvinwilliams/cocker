@@ -34,9 +34,9 @@ struct CockerEnvironment
 	char			images_path_base[ PATH_MAX ] ;
 	char			containers_path_base[ PATH_MAX ] ;
 	char			container_path_base[ PATH_MAX ] ;
-	char			net[ 16 ] ;
-	char			host_if_name[ 16 ] ;
-	char			vip[ IP_MAX ] ;
+	char			net[ NET_LEN_MAX ] ;
+	char			host_if_name[ ETHERNET_NAME_MAX ] ;
+	char			vip[ IP_LEN_MAX ] ;
 } ;
 
 /*
@@ -62,14 +62,14 @@ $ echo "1" >/proc/sys/net/ipv4/ip_forward
 
 /* for test
 $ cocker -a install_test --debug
-$ cocker -a create --image test --container test --host-name test --net bridge --vip 166.88.0.2 --debug
-$ cocker -a create --image test --container test --host-name test --net host --vip 166.88.0.2 --debug
-$ cocker -a create --image test --container test --host-name test --net custom --vip 166.88.0.2 --debug
-$ cocker -a start --container test --attach --debug
-$ cocker -a stop --container test --debug
-$ cocker -a stop --container test --debug --forcely
-$ cocker -a destroy --container test --debug
-$ cocker -a destroy --container test --debug --forcely
+$ cocker -s images && cocker -a create --image test --host-name test --net bridge --vip 166.88.0.2 --debug
+$ cocker -s images && cocker -a create --image test --host-name test --net host --vip 166.88.0.2 --debug
+$ cocker -s images && cocker -a create --image test --host-name test --net custom --vip 166.88.0.2 --debug
+$ cocker -s containers && cocker -a start --attach --debug --container test
+$ cocker -s containers && cocker -a stop --debug --container test
+$ cocker -s containers && cocker -a stop --debug --forcely --container test
+$ cocker -s containers && cocker -a destroy --debug --container test
+$ cocker -s containers && cocker -a destroy --debug --forcely --container test
 */
 
 #ifdef __cplusplus

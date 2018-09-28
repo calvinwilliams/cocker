@@ -21,7 +21,7 @@ char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list
 	}
 	
 	memset( p_path , 0x00 , path_size );
-	nret = vsnprintf( p_path , path_size , path_format , valist ) ;
+	nret = vsnprintf( p_path , path_size-1 , path_format , valist ) ;
 	if( SNPRINTF_OVERFLOW( nret , path_size ) )
 		return NULL;
 	

@@ -2,7 +2,7 @@
 
 int DoAction_destroy( struct CockerEnvironment *cocker_env )
 {
-	char		pid_str[ 20 + 1 ] ;
+	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	pid_t		pid ;
 	
 	char		container_net_file[ PATH_MAX ] ;
@@ -45,6 +45,7 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 			}
 		}
 	}
+	TrimEnter( pid_str );
 	
 	/* read net file */
 	nret = ReadFileLine( cocker_env->net , sizeof(cocker_env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , cocker_env->container_path_base ) ;
@@ -57,6 +58,7 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 	{
 		printf( "read file %s ok\n" , container_net_file );
 	}
+	TrimEnter( cocker_env->net );
 	
 	/* destroy network */
 	memset( netns_name , 0x00 , sizeof(netns_name) );
@@ -104,7 +106,7 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 			return -1;
 	}
 	
-	if( STRCMP( cocker_env->net , == , "bridge" ) || cocker_env->cmd_para.__forcely )
+	if( STRCMP( cocker_env->net , == , "BRIDGE" ) || cocker_env->cmd_para.__forcely )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_if_name ) ;
 		if( nret )
@@ -185,7 +187,7 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 			printf( "system [%s] ok\n" , cmd );
 		}
 	}
-	else if( STRCMP( cocker_env->net , == , "custom" ) )
+	else if( STRCMP( cocker_env->net , == , "CUSTOM" ) )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , netns_name ) ;
 		if( nret )

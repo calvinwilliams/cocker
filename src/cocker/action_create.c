@@ -5,7 +5,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
-	char		pid_str[ 20 + 1 ] ;
+	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	
 	char		container_path_base[ PATH_MAX ] ;
 	char		container_rwlayer_path[ PATH_MAX ] ;
@@ -22,7 +22,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	char		veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char		veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
-	char		netbr_ip[ IP_MAX ] ;
+	char		netbr_ip[ IP_LEN_MAX ] ;
 	
 	int		nret = 0 ;
 	
@@ -37,6 +37,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 		printf( "*** ERROR : container is already running\n" );
 		return 0;
 	}
+	TrimEnter( pid_str );
 	
 	/* create container folders and files */
 	nret = SnprintfAndMakeDir( container_path_base , sizeof(container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
@@ -133,7 +134,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 	}
 	
 	/* create network */
-	nret = WriteFileLine( cocker_env->cmd_para.__net , container_rwlayer_net_file , sizeof(container_rwlayer_net_file) , "%s/net" , container_path_base ) ;
+	nret = WriteFileLine( cocker_env->net , container_rwlayer_net_file , sizeof(container_rwlayer_net_file) , "%s/net" , container_path_base ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno );
@@ -144,7 +145,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 		printf( "write file [%s] ok\n" , container_rwlayer_net_file );
 	}
 	
-	if( STRCMP( cocker_env->net , == , "bridge" ) || STRCMP( cocker_env->cmd_para.__net , == , "custom" ) )
+	if( STRCMP( cocker_env->net , == , "BRIDGE" ) || STRCMP( cocker_env->net , == , "CUSTOM" ) )
 	{
 		memset( netns_name , 0x00 , sizeof(netns_name) );
 		len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
@@ -186,7 +187,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 			return -1;
 		}
 		
-		if( STRCMP( cocker_env->cmd_para.__net , == , "bridge" ) )
+		if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
 		{
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link add %s type veth peer name %s" , veth1_name , veth0_name ) ;
 			if( nret )
@@ -319,7 +320,7 @@ int DoAction_create( struct CockerEnvironment *cocker_env )
 			}
 			*/
 		}
-		else if( STRCMP( cocker_env->cmd_para.__net , == , "custom" ) )
+		else if( STRCMP( cocker_env->net , == , "CUSTOM" ) )
 		{
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns add %s" , netns_name ) ;
 			if( nret )

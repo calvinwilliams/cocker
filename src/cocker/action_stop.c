@@ -3,7 +3,7 @@
 static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no )
 {
 	char		container_pid_file[ PATH_MAX ] ;
-	char		pid_str[ 20 + 1 ] ;
+	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	pid_t		pid ;
 	
 	int		nret = 0 ;
@@ -26,6 +26,7 @@ static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no 
 		printf( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file );
 		return 0;
 	}
+	TrimEnter( pid_str );
 	
 	pid = atoi(pid_str) ;
 	

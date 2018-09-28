@@ -4,11 +4,12 @@ static void usage()
 {
 	printf( "USAGE : cocker -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create [ --image (name) ] --container (name) [ --host-name (name) ]\n" );
-	printf( "               -a start --container (name) [ --attach ]\n" );
-	printf( "               -a stop --container (name) [ --forcely ]\n" );
-	printf( "               -a destroy --container (name) [ --forcely ]\n" );
+	printf( "               -a create --image (images) [ --host-name (name) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-if-name (eth) ] [ --vip (ip) ]\n" );
+	printf( "               -a start --container (cid) [ --attach ]\n" );
+	printf( "               -a stop --container (cid) [ --forcely ]\n" );
+	printf( "               -a destroy --container (cid) [ --forcely ]\n" );
 	printf( "               -a install_test\n" );
+	printf( "                    --debug\n" );
 	return;
 }
 
@@ -92,13 +93,16 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 	}
 	
 	if( cocker_env->cmd_para.__net == NULL )
-		cocker_env->cmd_para.__net = "host" ;
+		cocker_env->cmd_para.__net = "BRIDGE" ;
 	
-	if( ! ( STRCMP( cocker_env->cmd_para.__net , == , "host" ) || STRCMP( cocker_env->cmd_para.__net , == , "bridge" ) || STRCMP( cocker_env->cmd_para.__net , == , "custom" ) ) )
+	if( ! ( STRCMP( cocker_env->cmd_para.__net , == , "BRIDGE" ) || STRCMP( cocker_env->cmd_para.__net , == , "HOST" ) || STRCMP( cocker_env->cmd_para.__net , == , "CUSTOM" ) ) )
 	{
 		printf( "*** ERROR : '--net' value[%s] invalid\n" , cocker_env->cmd_para.__net );
 		return -7;
 	}
+	
+	memset( cocker_env->net , 0x00 , sizeof(cocker_env->net) );
+	strncpy( cocker_env->net , cocker_env->cmd_para.__net , sizeof(cocker_env->net)-1 );
 	
 	if( cocker_env->cmd_para.__host_if_name )
 	{
@@ -142,9 +146,6 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 		}
 	}
 	
-	memset( cocker_env->net , 0x00 , sizeof(cocker_env->net) );
-	strncpy( cocker_env->net , cocker_env->cmd_para.__net , sizeof(cocker_env->net)-1 );
-	
 	return 0;
 }
 
@@ -170,9 +171,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *cocker_env )
 	{
 		if( STRCMP( cocker_env->cmd_para._action , == , "create" ) )
 		{
-			if( cocker_env->cmd_para.__container == NULL ||  STRCMP( cocker_env->cmd_para.__container , == , "" ) )
+			if( cocker_env->cmd_para.__image == NULL || STRCMP( cocker_env->cmd_para.__image , == , "" ) )
 			{
-				printf( "*** ERROR : expect '--container' with action '-a create'\n" );
+				printf( "*** ERROR : expect '--image' with action '-a create'\n" );
 				return -7;
 			}
 			

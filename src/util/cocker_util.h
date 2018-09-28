@@ -53,12 +53,20 @@ extern char	*_COCKER_VERSION ;
 #define ETHERNET_NAME_MAX	256
 #endif
 
+#ifndef NET_LEN_MAX
+#define NET_LEN_MAX		10
+#endif
+
 #ifndef NETNS_NAME_MAX
 #define NETNS_NAME_MAX		256
 #endif
 
-#ifndef IP_MAX
-#define IP_MAX			20
+#ifndef IP_LEN_MAX
+#define IP_LEN_MAX		20
+#endif
+
+#ifndef PID_LEN_MAX
+#define PID_LEN_MAX		20
 #endif
 
 /*
