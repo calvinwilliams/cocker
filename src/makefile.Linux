@@ -9,7 +9,8 @@ MAKEFILE_POSTFIX=.Linux
 
 ###### 子目录配置区
 DIROBJS		= \
-			vhm \
+			util \
+			cocker \
 
 ###### 加载mktpl模板库
 

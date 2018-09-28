@@ -1,0 +1,11 @@
+_HDERBASE	=	/usr/include
+_LIBBASE	=	/lib64
+_BINBASE	=	/bin
+
+_CFLAGS		=	-I. -I$(_HDERBASE) -I/usr/include
+_LFLAGS		=	-L. -L$(_LIBBASE) -L/usr/lib64 -L/usr/lib
+
+_HDERINST	=	$(_HDERBASE)
+_LIBINST	=	$(_LIBBASE)
+_BININST	=	$(_BINBASE)
+

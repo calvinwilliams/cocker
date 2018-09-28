@@ -1,3 +1,23 @@
+0.5.0		2018-09-28	calvin
+		* 支持单镜像多容器实例运行
+
+0.4.2		2018-09-27	calvin
+		* 新增cocker命令行参数--net，删除--nat-postrouting
+
+0.4.1		2018-09-27	calvin
+		* '-a install_test'实现由代码改成脚本
+
+0.4.0		2018-09-26	calvin
+		* 项目名改名为cocker
+		* 新增cocker命令行参数--nat-postrouting,--vip,--debug
+
+0.3.0		2018-09-26	calvin
+		* 加入网络支持
+
+0.2.0		2018-09-25	calvin
+		* 完成无网络版
+		* 增加-a install_test功能
+
 0.1.0		2018-09-23	calvin
 		* 创建
 
