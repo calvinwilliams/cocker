@@ -21,7 +21,7 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		
 		if( count == 0 )
 		{
-			printf( "image\n" );
+			printf( "image_id\n" );
 			printf( "--------------\n" );
 		}
 		

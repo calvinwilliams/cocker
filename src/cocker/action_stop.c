@@ -8,7 +8,11 @@ static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no 
 	
 	int		nret = 0 ;
 	
-	nret = SnprintfAndMakeDir( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	/* preprocess input parameters */
+	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
+	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
+	
+	nret = SnprintfAndMakeDir( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->container_path_base , nret );
@@ -20,7 +24,7 @@ static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no 
 	}
 	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file );

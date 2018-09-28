@@ -17,6 +17,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
+#include <sys/time.h>
+#include "openssl/md5.h"
 #define __USE_GNU
 #include <sched.h>
 
@@ -49,8 +51,12 @@ extern "C" {
 
 extern char	*_COCKER_VERSION ;
 
+#ifndef CONTAINER_NAME_MAX
+#define CONTAINER_NAME_MAX	10
+#endif
+
 #ifndef ETHERNET_NAME_MAX
-#define ETHERNET_NAME_MAX	256
+#define ETHERNET_NAME_MAX	16
 #endif
 
 #ifndef NET_LEN_MAX
@@ -94,6 +100,8 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
  */
 
 char *TrimEnter( char *str );
+
+void *GenerateContainerId( char *images_id , char *container_id );
 
 #ifdef __cplusplus
 }

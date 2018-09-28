@@ -17,6 +17,7 @@ c_FILE		=	\
 			action_destroy.c \
 			action_start.c \
 			action_stop.c \
+			util.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall
@@ -34,6 +35,7 @@ CFLAGS		=	$(_CFLAGS) \
 LFLAGS		=	$(_LFLAGS) \
 			-L$(_LIBBASE) \
 			-lcocker_util \
+			-lcrypto \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=

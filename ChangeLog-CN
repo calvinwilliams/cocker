@@ -1,3 +1,6 @@
+0.5.0		2018-09-28	calvin
+		* 支持单镜像多容器实例运行
+
 0.4.2		2018-09-27	calvin
 		* 新增cocker命令行参数--net，删除--nat-postrouting
 

@@ -17,14 +17,14 @@ static int VHostEntry( void *p )
 	
 	int				len ;
 	
-	char				netns_path[ PATH_MAX ] ;
+	char				netns_path[ PATH_MAX + 1 ] ;
 	int				netns_fd ;
 	
-	char				container_hostname_file[ PATH_MAX ] ;
-	char				hostname[ HOST_NAME_MAX ] ;
-	char				container_images_file[ PATH_MAX ] ;
-	char				image[ PATH_MAX ] ;
-	char				mount_target[ PATH_MAX ] ;
+	char				container_hostname_file[ PATH_MAX + 1 ] ;
+	char				hostname[ HOST_NAME_MAX + 1 ] ;
+	char				container_images_file[ PATH_MAX + 1 ] ;
+	char				image[ PATH_MAX + 1 ] ;
+	char				mount_target[ PATH_MAX + 1 ] ;
 	char				mount_data[ 4096 ] ;
 	
 	int				nret = 0 ;
@@ -33,7 +33,7 @@ static int VHostEntry( void *p )
 	{
 		/* setns */
 		memset( netns_path , 0x00 , sizeof(netns_path) );
-		len = snprintf( netns_path , sizeof(netns_path)-1 , "/var/run/netns/netns-%s" , cocker_env->cmd_para.__container ) ;
+		len = snprintf( netns_path , sizeof(netns_path)-1 , "/var/run/netns/%s" , cocker_env->netns_name ) ;
 		if( SNPRINTF_OVERFLOW(len,sizeof(netns_path)-1) )
 		{
 			printf( "*** ERROR : netns path overflow\n" );
@@ -66,10 +66,10 @@ static int VHostEntry( void *p )
 	setgroups(0,NULL);
 	
 	/* sethostname */
-	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , cocker_env->cmd_para.__container );
+		printf( "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , cocker_env->container_id );
 		return -1;
 	}
 	else if( cocker_env->cmd_para.__debug )
@@ -84,10 +84,10 @@ static int VHostEntry( void *p )
 	}
 	
 	/* mount filesystem */
-	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/%s/images" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/%s/images" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : ReadFileLine images in container '%s' failed\n" , cocker_env->cmd_para.__container );
+		printf( "*** ERROR : ReadFileLine images in container '%s' failed\n" , cocker_env->container_id );
 		return -1;
 	}
 	else if( cocker_env->cmd_para.__debug )
@@ -97,7 +97,7 @@ static int VHostEntry( void *p )
 	TrimEnter( image );
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );
@@ -106,9 +106,9 @@ static int VHostEntry( void *p )
 	
 	memset( mount_data , 0x00 , sizeof(mount_data) );
 	if( image[0] == '\0' )
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->containers_path_base,cocker_env->cmd_para.__container , cocker_env->containers_path_base,cocker_env->cmd_para.__container ) ;
+		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->containers_path_base,cocker_env->container_id , cocker_env->containers_path_base,cocker_env->container_id ) ;
 	else
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "lowerdir=%s/%s/rlayer,upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->images_path_base,image , cocker_env->containers_path_base,cocker_env->cmd_para.__container , cocker_env->containers_path_base,cocker_env->cmd_para.__container ) ;
+		len = snprintf( mount_data , sizeof(mount_data)-1 , "lowerdir=%s/%s/rlayer,upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->images_path_base,image , cocker_env->containers_path_base,cocker_env->container_id , cocker_env->containers_path_base,cocker_env->container_id ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );
@@ -163,12 +163,6 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
-	char		netns_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char		netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char		veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char		veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char		veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
-	
 	pid_t		pid ;
 	char		pid_str[ 20 + 1 ] ;
 	
@@ -176,16 +170,20 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	
 	int		nret = 0 ;
 	
-	Snprintf( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container );
+	/* preprocess input parameters */
+	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
+	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
+	
+	Snprintf( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id );
 	nret = access( cocker_env->container_path_base , F_OK ) ;
 	if( nret == -1 )
 	{
-		printf( "*** ERROR : container '%s' not found\n" , cocker_env->cmd_para.__container );
+		printf( "*** ERROR : container '%s' not found\n" , cocker_env->cmd_para.__container_id );
 		return -1;
 	}
 	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( nret == 0 )
 	{
 		TrimEnter( pid_str );
@@ -218,47 +216,9 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
 	{
 		/* up network */
-		memset( netns_name , 0x00 , sizeof(netns_name) );
-		len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
-		{
-			printf( "*** ERROR : netns name overflow\n" );
-			return -1;
-		}
+		GetEthernetName( cocker_env->container_id , cocker_env );
 		
-		memset( netbr_name , 0x00 , sizeof(netbr_name) );
-		len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
-		{
-			printf( "*** ERROR : netbr name overflow\n" );
-			return -1;
-		}
-		
-		memset( veth1_name , 0x00 , sizeof(veth1_name) );
-		len = snprintf( veth1_name , sizeof(veth1_name)-1 , "veth1-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth1_name)-1) )
-		{
-			printf( "*** ERROR : veth1 name overflow\n" );
-			return -1;
-		}
-		
-		memset( veth0_name , 0x00 , sizeof(veth0_name) );
-		len = snprintf( veth0_name , sizeof(veth0_name)-1 , "veth0-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_name)-1) )
-		{
-			printf( "*** ERROR : veth0 name overflow\n" );
-			return -1;
-		}
-		
-		memset( veth0_sname , 0x00 , sizeof(veth0_sname) );
-		len = snprintf( veth0_sname , sizeof(veth0_sname)-1 , "eth0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_sname)-1) )
-		{
-			printf( "*** ERROR : veth0 sname overflow\n" );
-			return -1;
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , veth1_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , cocker_env->eth_name ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed [%d], errno[%d]\n" , cmd , nret , errno );
@@ -269,7 +229,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , netns_name , veth0_sname ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , cocker_env->netns_name , cocker_env->veth_sname ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
@@ -280,7 +240,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , netns_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , cocker_env->netns_name ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
@@ -312,7 +272,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	/* write pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
-	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno );
@@ -345,52 +305,9 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
 	{
 		/* down network */
-		memset( netns_name , 0x00 , sizeof(netns_name) );
-		len = snprintf( netns_name , sizeof(netns_name)-1 , "netns-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netns_name)-1) )
-		{
-			printf( "*** ERROR : netns name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
+		GetEthernetName( cocker_env->container_id , cocker_env );
 		
-		memset( netbr_name , 0x00 , sizeof(netbr_name) );
-		len = snprintf( netbr_name , sizeof(netbr_name)-1 , "cocker0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
-		{
-			printf( "*** ERROR : netbr name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth1_name , 0x00 , sizeof(veth1_name) );
-		len = snprintf( veth1_name , sizeof(veth1_name)-1 , "veth1-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth1_name)-1) )
-		{
-			printf( "*** ERROR : veth1 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth0_name , 0x00 , sizeof(veth0_name) );
-		len = snprintf( veth0_name , sizeof(veth0_name)-1 , "veth0-%s" , cocker_env->cmd_para.__container ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_name)-1) )
-		{
-			printf( "*** ERROR : veth0 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		memset( veth0_sname , 0x00 , sizeof(veth0_sname) );
-		len = snprintf( veth0_sname , sizeof(veth0_sname)-1 , "eth0" ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(veth0_sname)-1) )
-		{
-			printf( "*** ERROR : veth0 name overflow\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , veth1_name ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , cocker_env->eth_name ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
@@ -402,7 +319,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 			printf( "system [%s] ok\n" , cmd );
 		}
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , netns_name , veth0_sname ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , cocker_env->netns_name , cocker_env->veth_sname ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
@@ -428,7 +345,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	
 	/* umount */
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged/proc" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged/proc" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );
@@ -451,7 +368,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	}
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->cmd_para.__container ) ;
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->container_id ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );

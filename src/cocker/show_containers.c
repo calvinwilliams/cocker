@@ -82,7 +82,6 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( pid_str , sizeof(pid_str) , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine pid failed[%d]\n" , nret );
 			memset( pid_str , 0x00 , sizeof(pid_str) );
 			memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
 			if( nret > 0 )
@@ -102,7 +101,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		
 		if( count == 0 )
 		{
-			printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , "container" , "images" , "hostname" , "net" , "netns" , "status" );
+			printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , "container_id" , "images" , "hostname" , "net" , "netns" , "status" );
 			printf( "---------------------------------------------------------------------------------------\n" );
 		}
 		
