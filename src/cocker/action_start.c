@@ -120,7 +120,7 @@ static int VHostEntry( void *p )
 	}
 	else if( cocker_env->cmd_para.__debug )
 	{
-		printf( "mount [%s][%s][%s][%d][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
+		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
 	}
 	
 	/* chroot */
@@ -139,7 +139,7 @@ static int VHostEntry( void *p )
 	mount( "proc" , "/proc" , "proc" , MS_MGC_VAL , NULL );
 	if( cocker_env->cmd_para.__debug )
 	{
-		printf( "mount [%s][%s][%s][%d][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
+		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
 	}
 	
 	/* execl */
