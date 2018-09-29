@@ -440,6 +440,17 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , cocker_env->netns_name ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
 	}
 	
 	/* cleanup pid file */
