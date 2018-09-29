@@ -17,6 +17,8 @@ c_FILE		=	\
 			action_destroy.c \
 			action_start.c \
 			action_stop.c \
+			action_vip.c \
+			action_port_mapping.c \
 			util.c \
 
 ###### 目标文件、安装目录配置区

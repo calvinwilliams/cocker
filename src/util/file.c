@@ -42,6 +42,30 @@ char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... )
 	return p_path;
 }
 
+int SnprintfAndCheckDir( char *path_buf , int path_bufsize , char *path_format , ... )
+{
+	char		*p_path = NULL ;
+	va_list		valist ;
+	struct stat	dir_stat ;
+	
+	int		nret = 0 ;
+	
+	va_start( valist , path_format );
+	p_path = SnprintfV( path_buf , path_bufsize , path_format , valist ) ;
+	va_end( valist );
+	if( p_path == NULL )
+		return -1;
+	
+	memset( & dir_stat , 0x00 , sizeof(struct stat) );
+	nret = stat( p_path , & dir_stat ) ;
+	if( nret == -1 )
+		return -1;
+	if( ! S_ISDIR(dir_stat.st_mode) )
+		return -2;
+	
+	return 0;
+}
+
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... )
 {
 	char		*p_path = NULL ;

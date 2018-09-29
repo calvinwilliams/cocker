@@ -51,6 +51,10 @@ extern "C" {
 
 extern char	*_COCKER_VERSION ;
 
+#ifndef IMAGE_NAME_MAX
+#define IMAGE_NAME_MAX		10
+#endif
+
 #ifndef CONTAINER_NAME_MAX
 #define CONTAINER_NAME_MAX	10
 #endif
@@ -84,6 +88,7 @@ char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... );
 
 int CheckAndMakeDir( char *path );
 
+int SnprintfAndCheckDir( char *path_buf , int path_bufsize , char *path_format , ... );
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... );
 int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *path_format , ... );
 

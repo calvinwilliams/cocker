@@ -122,7 +122,7 @@ static int VHostEntry( void *p )
 	}
 	else if( cocker_env->cmd_para.__debug )
 	{
-		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
+		printf( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
 	}
 	
 	/* chroot */
@@ -141,7 +141,7 @@ static int VHostEntry( void *p )
 	mount( "proc" , "/proc" , "proc" , MS_MGC_VAL , NULL );
 	if( cocker_env->cmd_para.__debug )
 	{
-		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
+		printf( "mount [%s][%s][%s][0x%X][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
 	}
 	
 	/* execl */
@@ -159,6 +159,10 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 {
 	char		container_pid_file[ PATH_MAX ] ;
 	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	
+	char		src_port_str[ 20 + 1 ] ;
 	
 	char		cmd[ 4096 ] ;
 	int		len ;
@@ -171,9 +175,6 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
-	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
-	
 	Snprintf( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id );
 	nret = access( cocker_env->container_path_base , F_OK ) ;
 	if( nret == -1 )
@@ -250,6 +251,77 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_eth ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
+		
+		nret = ReadFileLine( cocker_env->vip , sizeof(cocker_env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , cocker_env->container_path_base ) ;
+		if( nret < 0 )
+		{
+			printf( "*** ERROR : ReadFileLine net failed\n" );
+			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "read file %s ok\n" , container_vip_file );
+		}
+		TrimEnter( cocker_env->vip );
+		
+		memset( cocker_env->port_mapping , 0x00 , sizeof(cocker_env->port_mapping) );
+		nret = ReadFileLine( cocker_env->port_mapping , sizeof(cocker_env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , cocker_env->container_path_base ) ;
+		if( nret < 0 )
+		{
+			memset( cocker_env->port_mapping , 0x00 , sizeof(cocker_env->port_mapping) );
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "read file %s ok\n" , container_port_mapping_file );
+		}
+		TrimEnter( cocker_env->port_mapping );
+		
+		if( cocker_env->port_mapping[0] )
+		{
+			memset( src_port_str , 0x00 , sizeof(src_port_str) );
+			sscanf( cocker_env->port_mapping , "%[^:]:%d" , src_port_str , & (cocker_env->dst_port) );
+			cocker_env->src_port = atoi(src_port_str) ;
+			if( cocker_env->src_port <= 0 || cocker_env->dst_port <= 0 )
+			{
+				printf( "*** ERROR : file port_mapping value [%s] invalid\n" , cocker_env->port_mapping );
+				return -1;
+			}
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , cocker_env->host_eth , cocker_env->src_port , cocker_env->vip , cocker_env->dst_port ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			/*
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A POSTROUTING -s 166.88.0.0/16 -j SNAT --to-source 66.88.1.61" ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			*/
+		}
 	}
 	
 	/* create container */
@@ -306,6 +378,44 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	{
 		/* down network */
 		GetEthernetName( cocker_env->container_id , cocker_env );
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_eth ) ;
+		if( nret )
+		{
+			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+			return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "system [%s] ok\n" , cmd );
+		}
+		
+		if( cocker_env->port_mapping[0] )
+		{
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , cocker_env->host_eth , cocker_env->src_port , cocker_env->vip , cocker_env->dst_port ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			
+			/*
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -s 166.88.0.0/16 -j SNAT --to-source 66.88.1.61" ) ;
+			if( nret )
+			{
+				printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
+				return -1;
+			}
+			else if( cocker_env->cmd_para.__debug )
+			{
+				printf( "system [%s] ok\n" , cmd );
+			}
+			*/
+		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , cocker_env->eth_name ) ;
 		if( nret )

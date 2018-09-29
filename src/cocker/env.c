@@ -100,6 +100,10 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 		}
 	}
 	
+	memset( cmd , 0x00 , sizeof(cmd) );
+	SnprintfAndPopen( cocker_env->netbr_ip , sizeof(cocker_env->netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" );
+	TrimEnter( cocker_env->netbr_ip );
+	
 	(*pp_cocker_env) = cocker_env ;
 	
 	return 0;

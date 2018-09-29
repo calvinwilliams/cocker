@@ -16,9 +16,6 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
-	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
-	
 	Snprintf( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id );
 	nret = access( cocker_env->container_path_base , F_OK ) ;
 	if( nret == -1 )
@@ -62,16 +59,19 @@ int DoAction_destroy( struct CockerEnvironment *cocker_env )
 	{
 		GetEthernetName( cocker_env->container_id , cocker_env );
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_if_name ) ;
+		/*
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , cocker_env->host_eth ) ;
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
 		}
 		else if( cocker_env->cmd_para.__debug )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
+		*/
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , cocker_env->eth_name ) ;
 		if( nret )

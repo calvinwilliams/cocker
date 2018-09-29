@@ -9,9 +9,6 @@ static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no 
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
-	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
-	
 	nret = SnprintfAndMakeDir( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id ) ;
 	if( nret )
 	{
