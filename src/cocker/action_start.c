@@ -131,7 +131,6 @@ static int VHostEntry( void *p )
 	{
 		printf( "chroot [%s] ok\n" , mount_target );
 	}
-	chdir( "/root" );
 	if( cocker_env->cmd_para.__debug )
 	{
 		printf( "chdir [%s] ok\n" , "/root" );
@@ -143,6 +142,16 @@ static int VHostEntry( void *p )
 	{
 		printf( "mount [%s][%s][%s][0x%X][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
 	}
+	
+	/* mount /dev/pts */
+	mount( "devpts" , "/dev/pts" , "devpts" , MS_MGC_VAL , NULL );
+	if( cocker_env->cmd_para.__debug )
+	{
+		printf( "mount [%s][%s][%s][0x%X][%s] ok\n" , "devpts" , "/dev/pts" , "devpts" , MS_MGC_VAL , "(null)" );
+	}
+	
+	/* change /root */
+	chdir( "/root" );
 	
 	/* execl */
 	nret = execl( "/bin/bash" , "bash" , "--login" , NULL ) ;
@@ -344,7 +353,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	/* write pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
-	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
+	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/pid" , cocker_env->container_path_base , cocker_env->container_id ) ;
 	if( nret )
 	{
 		printf( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno );
@@ -466,7 +475,7 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	
 	/* umount */
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged/proc" , cocker_env->containers_path_base , cocker_env->container_id ) ;
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , cocker_env->container_path_base ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );
@@ -489,7 +498,30 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 	}
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->container_id ) ;
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/dev/pts" , cocker_env->container_path_base ) ;
+	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
+	{
+		printf( "*** ERROR : snprintf failed\n" );
+		if( ! cocker_env->cmd_para.__forcely )
+			return -1;
+	}
+	else
+	{
+		nret = umount( mount_target ) ;
+		if( nret == -1 )
+		{
+			printf( "*** ERROR : umount proc failed\n" );
+			if( ! cocker_env->cmd_para.__forcely )
+				return -1;
+		}
+		else if( cocker_env->cmd_para.__debug )
+		{
+			printf( "umount %s ok\n" , mount_target );
+		}
+	}
+	
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , cocker_env->container_path_base ) ;
 	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
 	{
 		printf( "*** ERROR : snprintf failed\n" );

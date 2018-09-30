@@ -31,5 +31,5 @@ cp /bin/cocker_profile_template.sh ${IMAGE_RLAYER_PATH_BASE}/root/.profile
 echo "root:x:0:0:root:/root:/bin/bash" >${IMAGE_RLAYER_PATH_BASE}/etc/passwd
 echo "root:x:0:" >${IMAGE_RLAYER_PATH_BASE}/etc/group
 
-mkdir -p ${IMAGE_RLAYER_PATH_BASE}/sbin/pts
+mkdir -p ${IMAGE_RLAYER_PATH_BASE}/dev/pts
 

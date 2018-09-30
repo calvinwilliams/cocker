@@ -18,9 +18,13 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <sys/time.h>
+#include <termios.h>
 #include "openssl/md5.h"
 #define __USE_GNU
 #include <sched.h>
+
+int ptmname_r(int fd, char * buf, size_t buflen);
+int ptsname_r(int fd, char * buf, size_t buflen);
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,6 +111,19 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
 char *TrimEnter( char *str );
 
 void *GenerateContainerId( char *images_id , char *container_id );
+
+/*
+ * socket
+ */
+
+int writen( int sock , char *send_buffer , int send_len , int *p_sent_len );
+int readn( int sock , char *recv_buffer , int recv_len , int *p_received_len );
+
+/*
+ * pts
+ */
+
+pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_winsize , int *p_ptm_fd );
 
 #ifdef __cplusplus
 }
