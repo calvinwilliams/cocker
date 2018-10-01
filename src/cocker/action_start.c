@@ -264,7 +264,7 @@ int DoAction_start( struct CockerEnvironment *env )
 		if( env->port_mapping[0] )
 		{
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
-			INTPR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			INTP( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTP( "system [%s] ok\n" , cmd )
 		}
 		
@@ -281,11 +281,11 @@ int DoAction_start( struct CockerEnvironment *env )
 		EIDTP( "system [%s] ok\n" , cmd )
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , env->netbr_name , env->veth1_name ) ;
-		INTPFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		INTP( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTP( "system [%s] ok\n" , cmd )
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link del %s" , env->veth1_name ) ;
-		INTPFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		INTP( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTP( "system [%s] ok\n" , cmd )
 	}
 	
