@@ -7,13 +7,22 @@
 extern "C" {
 #endif
 
+struct CockerInitEnvironment
+{
+	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
+	
+	int			listen_sock ;
+	struct sockaddr_un	listen_addr ;
+	int			accepted_sock ;
+	struct sockaddr_un	accepted_addr ;
+	
+	int			ptm_fd ;
+	pid_t			bash_pid ;
+} ;
 
-
-
-
-
-
-
+int server( struct CockerInitEnvironment *env );
+int process( struct CockerInitEnvironment *env );
+int pts_bridge( struct CockerInitEnvironment *env );
 
 #ifdef __cplusplus
 }

@@ -44,7 +44,7 @@ static int VHostEntry( void *p )
 	
 	/* sethostname */
 	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , env->containers_path_base , env->container_id ) ;
-	INTPRx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->container_id )
+	INTPx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->container_id )
 	EIDTP( "read file %s ok\n" , container_hostname_file )
 	
 	TrimEnter( hostname );
@@ -54,7 +54,7 @@ static int VHostEntry( void *p )
 	
 	/* mount filesystem */
 	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/%s/images" , env->containers_path_base , env->container_id ) ;
-	INTPRx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->container_id )
+	INTPx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->container_id )
 	EIDTP( "read file %s ok\n" , container_images_file )
 	
 	TrimEnter( image );
@@ -97,7 +97,7 @@ static int VHostEntry( void *p )
 	chdir( "/root" );
 	
 	/* execl */
-	nret = execl( "/bin/bash" , "bash" , "--login" , NULL ) ;
+	nret = execl( "/bin/cockerinit" , "cockerinit" , "--container" , env->containers_path_base,env->container_id , NULL ) ;
 	I1TPRx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
 	return 0;
@@ -116,6 +116,7 @@ int DoAction_start( struct CockerEnvironment *env )
 	int		len ;
 	
 	pid_t		pid ;
+	int		null_fd ;
 	char		pid_str[ 20 + 1 ] ;
 	
 	char		mount_target[ PATH_MAX ] ;
@@ -147,10 +148,9 @@ int DoAction_start( struct CockerEnvironment *env )
 	
 	TrimEnter( env->net );
 	
-	/* up network */
+	/* create network */
 	if( STRCMP( env->net , == , "BRIDGE" ) )
 	{
-		/* up network */
 		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
 		ILTPR1( "*** ERROR : ReadFileLine net failed\n" )
 		EIDTP( "read file %s ok\n" , container_vip_file )
@@ -221,6 +221,38 @@ int DoAction_start( struct CockerEnvironment *env )
 		}
 	}
 	
+	signal( SIGCLD , SIG_IGN );
+	signal( SIGCHLD , SIG_IGN );
+	
+	pid = fork() ;
+	if( pid == -1 )
+	{
+		printf( "*** ERROR : fork failed , errno[%d]\n" , errno );
+		goto _END ;
+	}
+	else if( pid > 0 )
+	{
+		printf( "OK\n" );
+		
+		return 0;
+	}
+	
+	signal( SIGCLD , SIG_DFL );
+	signal( SIGCHLD , SIG_DFL );
+	
+	setsid();
+	
+	null_fd = open( "/dev/null" , O_RDWR ) ;
+	if( null_fd == -1 )
+	{
+		printf( "*** ERROR : open /dev/null failed , errno[%d]\n" , errno );
+		goto _END ;
+	}
+	
+	dup2( null_fd , 0 );
+	dup2( null_fd , 1 );
+	dup2( null_fd , 2 );
+	
 	/* create container */
 	if( STRCMP( env->net , == , "HOST" ) )
 	{
@@ -236,7 +268,7 @@ int DoAction_start( struct CockerEnvironment *env )
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
 	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base , env->container_id ) ;
-	INTPR1( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno )
+	INTPx( goto _END , "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTP( "write file %s ok\n" , container_pid_file )
 	
 	/* wait for container end */
@@ -249,14 +281,15 @@ int DoAction_start( struct CockerEnvironment *env )
 				break;
 			
 			printf( "*** ERROR : waitpid failed , errno[%d]\n" , errno ); fflush(stdout);
-			return -1;
+			exit(1);
 		}
 	}
 	
-	/* down network */
+_END :
+	
+	/* destroy network */
 	if( STRCMP( env->net , == , "BRIDGE" ) )
 	{
-		/* down network */
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
 		INTP( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTP( "system [%s] ok\n" , cmd )

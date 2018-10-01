@@ -80,7 +80,7 @@ int DoAction_create( struct CockerEnvironment *env )
 	INTPR1( "*** ERROR : WriteFileLine hostname failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTP( "write file %s ok\n" , container_hostname_file )
 	
-	/* create network */
+	/* create network-namespace */
 	nret = WriteFileLine( env->net , container_rwlayer_net_file , sizeof(container_rwlayer_net_file) , "%s/net" , env->container_path_base ) ;
 	INTPR1( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTP( "write file [%s] ok\n" , container_rwlayer_net_file )

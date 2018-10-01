@@ -19,6 +19,8 @@
 #include <ifaddrs.h>
 #include <sys/time.h>
 #include <termios.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include "openssl/md5.h"
 #define __USE_GNU
 #include <sched.h>
@@ -28,6 +30,14 @@ int ptsname_r(int fd, char * buf, size_t buflen);
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef MAX
+#define MAX(_a_,_b_) ( (_a_)>(_b_)?(_a_):(_b_) )
+#endif
+
+#ifndef MIN
+#define MIN(_a_,_b_) ( (_a_)<(_b_)?(_a_):(_b_) )
 #endif
 
 #ifndef STRCMP
@@ -52,8 +62,6 @@ extern "C" {
 #ifndef OVERLAY_RET
 #define OVERLAY_RET(_ret_,_inframe_ret_)	((_inframe_ret_)<0?-(_ret_)+(_inframe_ret_):(_ret_)+(_inframe_ret_))
 #endif
-
-extern char	*_COCKER_VERSION ;
 
 #ifndef IMAGE_NAME_MAX
 #define IMAGE_NAME_MAX		10
@@ -87,6 +95,12 @@ extern char	*_COCKER_VERSION ;
  * statement macro
  */
 
+#define INTx(_return_statement_,...) \
+	if( nret ) \
+	{ \
+		_return_statement_; \
+	} \
+
 #define INTP(...) \
 	if( nret ) \
 	{ \
@@ -107,11 +121,11 @@ extern char	*_COCKER_VERSION ;
 		return (_return_val_); \
 	} \
 
-#define INTPRx(_return_statement_,...) \
+#define INTPx(_return_statement_,...) \
 	if( nret ) \
 	{ \
 		printf( __VA_ARGS__ ); \
-		(_return_statement_); \
+		_return_statement_; \
 	} \
 
 #define INTPFR1(...) \
@@ -132,7 +146,7 @@ extern char	*_COCKER_VERSION ;
 #define ILTx(_return_statement_) \
 	if( nret < 0 ) \
 	{ \
-		(_return_statement_); \
+		_return_statement_; \
 	} \
 
 #define I0TPR1(...) \
@@ -166,7 +180,7 @@ extern char	*_COCKER_VERSION ;
 	if( nret == -1 ) \
 	{ \
 		printf( __VA_ARGS__ ); \
-		(_return_statement_); \
+		_return_statement_; \
 	} \
 
 #define IxTPR1(_condition_exp_,...) \
@@ -195,7 +209,7 @@ extern char	*_COCKER_VERSION ;
 	if( (_condition_exp_) ) \
 	{ \
 		printf( __VA_ARGS__ ); \
-		(_return_statement_); \
+		_return_statement_; \
 	} \
 
 #define IDTP(...) \
@@ -212,6 +226,8 @@ extern char	*_COCKER_VERSION ;
 	{ \
 		printf( __VA_ARGS__ ); \
 	} \
+
+extern char		*_COCKER_VERSION ;
 
 /*
  * file

@@ -86,16 +86,16 @@ $ echo "1" >/proc/sys/net/ipv4/ip_forward
 $ cocker -a install_test --debug
 $ cocker -s images
 $ cocker -s containers
-$ cocker -a create --debug --image-id test --host-name test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container-id test
-$ cocker -a create --debug --image-id test --host-name test --net HOST --vip 166.88.0.2
-$ cocker -a create --debug --image-id test --host-name test --net CUSTOM --vip 166.88.0.2
-$ cocker -a start --debug --attach --container-id test
-$ cocker -a stop --debug --container-id test
-$ cocker -a stop --debug --forcely --container-id test
-$ cocker -a destroy --debug --container-id test
-$ cocker -a destroy --debug --forcely --container-id test
-$ cocker -a vip --debug --vip 166.88.0.3 --container-id test
-$ cocker -a port_mapping --debug --port-mapping 19528:9528 --container-id test
+$ cocker -a create --debug --image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container test
+$ cocker -a create --debug --image test --host test --net HOST --vip 166.88.0.2
+$ cocker -a create --debug --image test --host test --net CUSTOM --vip 166.88.0.2
+$ cocker -a start --debug --attach --container test
+$ cocker -a stop --debug --container test
+$ cocker -a stop --debug --forcely --container test
+$ cocker -a destroy --debug --container test
+$ cocker -a destroy --debug --forcely --container test
+$ cocker -a vip --debug --vip 166.88.0.3 --container test
+$ cocker -a port_mapping --debug --port-mapping 19528:9528 --container test
 */
 
 #ifdef __cplusplus

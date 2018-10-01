@@ -40,7 +40,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	
 	TrimEnter( env->net );
 	
-	/* destroy network */
+	/* destroy network-namespace */
 	if( STRCMP( env->net , == , "BRIDGE" ) || env->cmd_para.__forcely )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , env->netns_name ) ;
