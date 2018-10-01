@@ -217,7 +217,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->image_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--image-id' with action '-a create'\n" );
+				printf( "*** ERROR : expect '--image' with action '-a create'\n" );
 				return -7;
 			}
 			
@@ -233,7 +233,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a start'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a start'\n" );
 				return -7;
 			}
 			
@@ -243,7 +243,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a stop'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a stop'\n" );
 				return -7;
 			}
 			
@@ -253,7 +253,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a kill'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a kill'\n" );
 				return -7;
 			}
 			
@@ -263,7 +263,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
 				return -7;
 			}
 			
@@ -273,7 +273,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
 				return -7;
 			}
 			
@@ -289,7 +289,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
 				return -7;
 			}
 			
@@ -300,6 +300,16 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			}
 			
 			return -DoAction_port_mapping( env );
+		}
+		else if( STRCMP( env->cmd_para._action , == , "attach" ) )
+		{
+			if( env->container_id[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a attach'\n" );
+				return -7;
+			}
+			
+			return -DoAction_attach( env );
 		}
 		else if( STRCMP( env->cmd_para._action , == , "install_test" ) )
 		{

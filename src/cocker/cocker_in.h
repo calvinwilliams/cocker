@@ -75,6 +75,7 @@ int DoAction_stop( struct CockerEnvironment *env );
 int DoAction_kill( struct CockerEnvironment *env );
 int DoAction_vip( struct CockerEnvironment *env );
 int DoAction_port_mapping( struct CockerEnvironment *env );
+int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_install_test( struct CockerEnvironment *env );
 
 /* depend on
