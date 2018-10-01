@@ -9,7 +9,6 @@
 DIROBJS		= \
 			util \
 			cocker \
-			cockerinit \
 
 ###### ╪стьmktplдё╟Е©Б
 include $(MKTPL2_HOME)/makedir_$(MKTPL2_OS).inc

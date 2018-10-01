@@ -1,8 +1,8 @@
 #include "cocker_in.h"
 
-int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
+int CreateCockerEnvironment( struct CockerEnvironment **pp_env )
 {
-	struct CockerEnvironment	*cocker_env = NULL ;
+	struct CockerEnvironment	*env = NULL ;
 	
 	char				netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char				cmd[ 4096 ] ;
@@ -10,46 +10,46 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 	
 	int				nret = 0 ;
 	
-	cocker_env = (struct CockerEnvironment *)malloc( sizeof(struct CockerEnvironment) ) ;
-	if( cocker_env == NULL )
+	env = (struct CockerEnvironment *)malloc( sizeof(struct CockerEnvironment) ) ;
+	if( env == NULL )
 	{
 		printf( "*** ERROR : malloc failed , errno[%d]\n" , errno );
 		return 1;
 	}
-	memset( cocker_env , 0x00 , sizeof(struct CockerEnvironment) );
+	memset( env , 0x00 , sizeof(struct CockerEnvironment) );
 	
 	if( getenv("COCKER_HOME" ) )
 	{
-		nret = SnprintfAndMakeDir( cocker_env->cocker_home , sizeof(cocker_env->cocker_home)-1 , "%s" , getenv("COCKER_HOME" ) ) ;
+		nret = SnprintfAndMakeDir( env->cocker_home , sizeof(env->cocker_home)-1 , "%s" , getenv("COCKER_HOME" ) ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->cocker_home , nret );
-			free( cocker_env );
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->cocker_home , nret );
+			free( env );
 			return -1;
 		}
 	}
 	else
 	{
-		nret = SnprintfAndMakeDir( cocker_env->cocker_home , sizeof(cocker_env->cocker_home)-1 , "/var/cocker" ) ;
+		nret = SnprintfAndMakeDir( env->cocker_home , sizeof(env->cocker_home)-1 , "/var/cocker" ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->cocker_home , nret );
-			free( cocker_env );
+			printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->cocker_home , nret );
+			free( env );
 			return -1;
 		}
 	}
 	
-	nret = SnprintfAndMakeDir( cocker_env->images_path_base , sizeof(cocker_env->images_path_base)-1 , "%s/images" , cocker_env->cocker_home ) ;
+	nret = SnprintfAndMakeDir( env->images_path_base , sizeof(env->images_path_base)-1 , "%s/images" , env->cocker_home ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->images_path_base , nret );
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->images_path_base , nret );
 		return -1;
 	}
 	
-	nret = SnprintfAndMakeDir( cocker_env->containers_path_base , sizeof(cocker_env->containers_path_base)-1 , "%s/containers" , cocker_env->cocker_home ) ;
+	nret = SnprintfAndMakeDir( env->containers_path_base , sizeof(env->containers_path_base)-1 , "%s/containers" , env->cocker_home ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->containers_path_base , nret );
+		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->containers_path_base , nret );
 		return -1;
 	}
 	
@@ -58,7 +58,7 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 	if( SNPRINTF_OVERFLOW(len,sizeof(netbr_name)-1) )
 	{
 		printf( "*** ERROR : netbr name overflow\n" );
-		free( cocker_env );
+		free( env );
 		return -1;
 	}
 	
@@ -69,10 +69,10 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 		if( nret )
 		{
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			free( cocker_env );
+			free( env );
 			return -1;
 		}
-		else if( cocker_env->cmd_para.__debug )
+		else if( env->cmd_para.__debug )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
@@ -83,7 +83,7 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 			return -1;
 		}
-		else if( cocker_env->cmd_para.__debug )
+		else if( env->cmd_para.__debug )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
@@ -94,25 +94,25 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
 			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
 			return -1;
 		}
-		else if( cocker_env->cmd_para.__debug )
+		else if( env->cmd_para.__debug )
 		{
 			printf( "system [%s] ok\n" , cmd );
 		}
 	}
 	
 	memset( cmd , 0x00 , sizeof(cmd) );
-	SnprintfAndPopen( cocker_env->netbr_ip , sizeof(cocker_env->netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" );
-	TrimEnter( cocker_env->netbr_ip );
+	SnprintfAndPopen( env->netbr_ip , sizeof(env->netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" );
+	TrimEnter( env->netbr_ip );
 	
-	(*pp_cocker_env) = cocker_env ;
+	(*pp_env) = env ;
 	
 	return 0;
 }
 
-void DestroyCockerEnvironment( struct CockerEnvironment **pp_cocker_env )
+void DestroyCockerEnvironment( struct CockerEnvironment **pp_env )
 {
-	free( (*pp_cocker_env) );
-	(*pp_cocker_env) = NULL ;
+	free( (*pp_env) );
+	(*pp_env) = NULL ;
 	
 	return;
 }

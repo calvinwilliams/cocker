@@ -84,6 +84,136 @@ extern char	*_COCKER_VERSION ;
 #endif
 
 /*
+ * statement macro
+ */
+
+#define INTP(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+	} \
+
+#define INTPR1(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return -1; \
+	} \
+
+#define INTPRX(_return_val_,...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return (_return_val_); \
+	} \
+
+#define INTPRx(_return_statement_,...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		(_return_statement_); \
+	} \
+
+#define INTPFR1(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		if( ! env->cmd_para.__forcely ) \
+			return -1; \
+	} \
+
+#define ILTPR1(...) \
+	if( nret < 0 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return -1; \
+	} \
+
+#define ILTx(_return_statement_) \
+	if( nret < 0 ) \
+	{ \
+		(_return_statement_); \
+	} \
+
+#define I0TPR1(...) \
+	if( nret == 0 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return -1; \
+	} \
+
+#define I1TP(...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+	} \
+
+#define I1TPR1(...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return -1; \
+	} \
+
+#define I1TPRX(_return_val_,...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return (_return_val_); \
+	} \
+
+#define I1TPRx(_return_statement_,...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		(_return_statement_); \
+	} \
+
+#define IxTPR1(_condition_exp_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return -1; \
+	} \
+
+#define IxTPFR1(_condition_exp_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		if( ! env->cmd_para.__forcely ) \
+			return -1; \
+	} \
+
+#define IxTPRX(_condition_exp_,_return_val_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		return (_return_val_); \
+	} \
+
+#define IxTPx(_condition_exp_,_return_statement_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+		(_return_statement_); \
+	} \
+
+#define IDTP(...) \
+	if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+	} \
+
+#define E \
+	else \
+
+#define EIDTP(...) \
+	else if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); \
+	} \
+
+/*
  * file
  */
 

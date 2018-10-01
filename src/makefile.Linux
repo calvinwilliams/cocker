@@ -11,7 +11,6 @@ MAKEFILE_POSTFIX=.Linux
 DIROBJS		= \
 			util \
 			cocker \
-			cockerinit \
 
 ###### ╪стьmktplдё╟Е©Б
 
