@@ -195,15 +195,24 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 
 static int ExecuteCommandParameters( struct CockerEnvironment *env )
 {
+	int		nret = 0 ;
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
 	if( env->cmd_para._show )
 	{
 		if( STRCMP( env->cmd_para._show , == , "images" ) )
 		{
-			return -DoShow_images( env );
+			INFOLOGC( "--- call DoShow_images ---" )
+			nret = DoShow_images( env ) ;
+			INFOLOGC( "--- DoShow_images return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._show , == , "containers" ) )
 		{
-			return -DoShow_containers( env );
+			INFOLOGC( "--- call DoShow_containers ---" )
+			nret = DoShow_containers( env ) ;
+			INFOLOGC( "--- DoShow_containers return[%d] ---" , nret )
 		}
 		else
 		{
@@ -227,7 +236,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_create( env );
+			INFOLOGC( "--- call DoAction_create ---" )
+			nret = DoAction_create( env ) ;
+			INFOLOGC( "--- DoAction_create return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "start" ) )
 		{
@@ -237,7 +248,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_start( env );
+			INFOLOGC( "--- call DoAction_start ---" )
+			nret = DoAction_start( env ) ;
+			INFOLOGC( "--- DoAction_start return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "stop" ) )
 		{
@@ -247,7 +260,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_stop( env );
+			INFOLOGC( "--- call DoAction_stop ---" )
+			nret = DoAction_stop( env ) ;
+			INFOLOGC( "--- DoAction_stop return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "kill" ) )
 		{
@@ -257,7 +272,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_kill( env );
+			INFOLOGC( "--- call DoAction_kill ---" )
+			nret = DoAction_kill( env ) ;
+			INFOLOGC( "--- DoAction_kill return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "destroy" ) )
 		{
@@ -267,7 +284,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_destroy( env );
+			INFOLOGC( "--- call DoAction_destroy ---" )
+			nret = DoAction_destroy( env ) ;
+			INFOLOGC( "--- DoAction_destroy return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "vip" ) )
 		{
@@ -283,7 +302,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_vip( env );
+			INFOLOGC( "--- call DoAction_vip ---" )
+			nret = DoAction_vip( env ) ;
+			INFOLOGC( "--- DoAction_vip return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "port_mapping" ) )
 		{
@@ -299,7 +320,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_port_mapping( env );
+			INFOLOGC( "--- call DoAction_port_mapping ---" )
+			nret = DoAction_port_mapping( env ) ;
+			INFOLOGC( "--- DoAction_port_mapping return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "attach" ) )
 		{
@@ -309,7 +332,9 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			return -DoAction_attach( env );
+			INFOLOGC( "--- call DoAction_attach ---" )
+			nret = DoAction_attach( env ) ;
+			INFOLOGC( "--- DoAction_attach return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "install_test" ) )
 		{
@@ -326,6 +351,8 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		printf( "*** ERROR : cmd para action[%s] invalid\n" , env->cmd_para._action );
 		return -7;
 	}
+	
+	return -nret;
 }
 
 int main( int argc , char *argv[] )

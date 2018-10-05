@@ -42,6 +42,7 @@ struct CockerEnvironment
 	char			vip[ IP_LEN_MAX + 1 ] ;
 	char			port_mapping[ 20+1+20 + 1 ] ;
 	
+	char			image_path_base[ PATH_MAX + 1 ] ;
 	char			container_path_base[ PATH_MAX + 1 ] ;
 	
 	int			src_port ;
@@ -52,6 +53,8 @@ struct CockerEnvironment
 	char			veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char			veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
 	char			veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
+	
+	int			alive_pipe[ 2 ] ;
 } ;
 
 /*
@@ -79,24 +82,30 @@ int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_install_test( struct CockerEnvironment *env );
 
 /* depend on
-$ sudo yum install -y bridge-utils
-$ echo "1" >/proc/sys/net/ipv4/ip_forward
+sudo yum install -y telnet
+sudo yum install -y nmap-ncat
+sudo yum install -y bridge-utils
+yum install -y man-pages
+yum install -y man-pages-zh-CN
+echo "1" >/proc/sys/net/ipv4/ip_forward
+	or add net.ipv4.ip_forward=1 to /etc/sysctl.com and run sysctl -p
 */
 
 /* for test
-$ cocker -a install_test --debug
-$ cocker -s images
-$ cocker -s containers
-$ cocker -a create --debug --image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container test
-$ cocker -a create --debug --image test --host test --net HOST --vip 166.88.0.2
-$ cocker -a create --debug --image test --host test --net CUSTOM --vip 166.88.0.2
-$ cocker -a start --debug --attach --container test
-$ cocker -a stop --debug --container test
-$ cocker -a stop --debug --forcely --container test
-$ cocker -a destroy --debug --container test
-$ cocker -a destroy --debug --forcely --container test
-$ cocker -a vip --debug --vip 166.88.0.3 --container test
-$ cocker -a port_mapping --debug --port-mapping 19528:9528 --container test
+cocker -a install_test --debug
+cocker -s images
+cocker -s containers
+cocker -a create --debug --image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container test
+cocker -a create --debug --image test --host test --net HOST --vip 166.88.0.2
+cocker -a create --debug --image test --host test --net CUSTOM --vip 166.88.0.2
+cocker -a start --debug --attach --container test
+cocker -a start --debug --container test
+cocker -a attach --debug --container test
+cocker -a stop --debug --container test
+cocker -a destroy --debug --container test
+cocker -a destroy --debug --forcely --container test
+cocker -a vip --debug --vip 166.88.0.3 --container test
+cocker -a port_mapping --debug --port-mapping 19528:9528 --container test
 */
 
 #ifdef __cplusplus

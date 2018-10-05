@@ -16,7 +16,7 @@ static int tcp_bridge( int connected_sock )
 		nret = select( connected_sock+1 , & read_fds , NULL , NULL , NULL ) ;
 		if( nret == -1 )
 		{
-			printf( "*** ERROR : select failed , errno[%d]\n" , errno );
+			E( "*** ERROR : select failed , errno[%d]\n" , errno )
 			return -1;
 		}
 		
@@ -25,14 +25,14 @@ static int tcp_bridge( int connected_sock )
 			len = read( 0 , buf , sizeof(buf)-1 ) ;
 			if( len == -1 )
 			{
-				printf( "*** ERROR : read 0 failed , errno[%d]\n" , errno );
+				E( "*** ERROR : read 0 failed , errno[%d]\n" , errno )
 				return -1;
 			}
 			
 			nret = writen( connected_sock , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
-				printf( "*** ERROR : writen connected_sock failed , errno[%d]\n" , errno );
+				E( "*** ERROR : writen connected_sock failed , errno[%d]\n" , errno )
 				return -1;
 			}
 		}
@@ -42,14 +42,14 @@ static int tcp_bridge( int connected_sock )
 			len = read( connected_sock , buf , sizeof(buf)-1 ) ;
 			if( len == -1 )
 			{
-				printf( "*** ERROR : read connected_sock failed , errno[%d]\n" , errno );
+				E( "*** ERROR : read connected_sock failed , errno[%d]\n" , errno )
 				return -1;
 			}
 			
 			nret = writen( 1 , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
-				printf( "*** ERROR : writen 1 failed , errno[%d]\n" , errno );
+				E( "*** ERROR : writen 1 failed , errno[%d]\n" , errno )
 				return -1;
 			}
 		}
@@ -68,34 +68,34 @@ int DoAction_attach( struct CockerEnvironment *env )
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TPR1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->container_id )
 	
-	Snprintf( container_merge_path , sizeof(container_merge_path)-1 , "%s/%merge" , env->container_path_base );
+	Snprintf( container_merge_path , sizeof(container_merge_path)-1 , "%s/merged" , env->container_path_base );
 	nret = access( container_merge_path , F_OK ) ;
-	I1TPR1( "*** ERROR : rwlayer not exist in container '%s'\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : merged not exist in container '%s'\n" , env->cmd_para.__container_id )
 	
 	/* client connect to cockerinit */
 	connected_sock = socket( AF_UNIX , SOCK_STREAM , 0 ) ;
 	if( connected_sock == -1 )
 	{
-		printf( "*** ERROR : socket failed , errno[%d]\n" , errno );
+		E( "*** ERROR : socket failed , errno[%d]\n" , errno )
 		return -1;
 	}
 	
 	memset( & connected_addr , 0x00 , sizeof(struct sockaddr_un) );
-	connected_addr.sun_family = AF_INET;
+	connected_addr.sun_family = AF_UNIX ;
 	snprintf( connected_addr.sun_path , sizeof(connected_addr.sun_path)-1 , "%s/dev/cocker.sock" , container_merge_path );
 	nret = connect( connected_sock , (struct sockaddr *) & connected_addr , sizeof(struct sockaddr_un) ) ;
 	if( nret == -1 )
 	{
-		printf( "*** ERROR : connect failed , errno[%d]\n" , errno );
+		E( "*** ERROR : connect[%s] failed , errno[%d]\n" , connected_addr.sun_path , errno )
 		return -1;
 	}
 	else
 	{
-		printf( "connect ok\n" );
+		E( "connect[%s] ok\n" , connected_addr.sun_path )
 	}
 	
 	tcp_bridge( connected_sock );

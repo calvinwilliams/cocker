@@ -11,14 +11,14 @@ int process( struct CockerInitEnvironment *env )
 	nret = tcgetattr( STDIN_FILENO , & origin_termios ) ;
 	if( nret == -1 )
 	{
-		printf( "tcgetattr STDIN_FILENO for origin failed , errno[%d]\n" , errno );
+		ERRORLOGC( "*** ERROR : tcgetattr STDIN_FILENO for origin failed , errno[%d]\n" , errno )
 		exit(1);
 	}
 	
 	nret = ioctl( STDIN_FILENO , TIOCGWINSZ , & origin_winsize ) ;
 	if( nret == -1 )
 	{
-		printf( "ioctl STDIN_FILENO for origin failed , errno[%d]\n" , errno );
+		ERRORLOGC( "*** ERROR : ioctl STDIN_FILENO for origin failed , errno[%d]\n" , errno )
 		exit(1);
 	}
 	
@@ -29,12 +29,12 @@ int process( struct CockerInitEnvironment *env )
 	env->bash_pid = pty_fork( & origin_termios , & origin_winsize , & (env->ptm_fd) ) ;
 	if( env->bash_pid == -1 )
 	{
-		printf( "pty_fork failed , errno[%d]\n" , errno );
+		ERRORLOGC( "*** ERROR : pty_fork failed , errno[%d]\n" , errno )
 		exit(9);
 	}
 	else if( env->bash_pid == 0 )
 	{
-		printf( "pty_fork child\n" );
+		INFOLOGC( "pty_fork child\n" )
 		
 		nret = tcgetattr( STDIN_FILENO , & ptm_termios ) ;
 		if( nret == -1 )
@@ -67,7 +67,7 @@ int process( struct CockerInitEnvironment *env )
 	}
 	else
 	{
-		printf( "pty_fork parent\n" );
+		INFOLOGC( "pty_fork parent\n" )
 		
 		pts_bridge( env );
 		

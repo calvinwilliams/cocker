@@ -16,9 +16,9 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TPR1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , env->container_id ) ;
@@ -28,15 +28,15 @@ int DoAction_destroy( struct CockerEnvironment *env )
 		if( pid > 0 )
 		{
 			nret = kill( pid , 0 ) ;
-			I0TPR1( "*** ERROR : container is already running\n" )
+			I0TER1( "*** ERROR : container is already running\n" )
 		}
 	}
 	TrimEnter( pid_str );
 	
 	/* read net file */
 	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
-	ILTPR1( "*** ERROR : ReadFileLine net failed\n" )
-	EIDTP( "read file %s ok\n" , container_net_file )
+	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+	EIDTE( "read file %s ok\n" , container_net_file )
 	
 	TrimEnter( env->net );
 	
@@ -44,31 +44,31 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	if( STRCMP( env->net , == , "BRIDGE" ) || env->cmd_para.__forcely )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , env->netns_name ) ;
-		INTPFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTP( "system [%s] ok\n" , cmd )
+		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTE( "system [%s] ok\n" , cmd )
 	}
 	else if( STRCMP( env->net , == , "CUSTOM" ) )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , env->netns_name ) ;
-		INTPFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTP( "system [%s] ok\n" , cmd )
+		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTE( "system [%s] ok\n" , cmd )
 	}
 	
 	/* destroy container folders and files */
 	nret = snprintf( container_path_base , sizeof(container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id ) ;
-	IxTPFR1( SNPRINTF_OVERFLOW( nret , sizeof(container_path_base)-1 ) , "*** ERROR : snprintf overflow" )
+	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(container_path_base)-1 ) , "*** ERROR : snprintf overflow" )
 	
 	nret = snprintf( rwlayer_path , sizeof(rwlayer_path)-1 , "%s/rwlayer" , container_path_base ) ;
-	IxTPFR1( SNPRINTF_OVERFLOW( nret , sizeof(rwlayer_path)-1 ) , "snprintf overflow\n" )
+	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(rwlayer_path)-1 ) , "snprintf overflow\n" )
 	
 	nret = snprintf( hostname_path , sizeof(hostname_path)-1 , "%s/hostname" , container_path_base ) ;
-	IxTPFR1( SNPRINTF_OVERFLOW( nret , sizeof(hostname_path)-1 ) , "snprintf overflow\n" )
+	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(hostname_path)-1 ) , "snprintf overflow\n" )
 	
 	if( access( rwlayer_path , W_OK ) == 0 && access( hostname_path , W_OK ) == 0 )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , container_path_base ) ;
-		INTPFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTP( "system [%s] ok\n" , cmd )
+		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTE( "system [%s] ok\n" , cmd )
 	}
 	
 	printf( "OK\n" );

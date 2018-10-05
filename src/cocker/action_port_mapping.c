@@ -7,14 +7,14 @@ int DoAction_port_mapping( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TPR1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	/* modify port mapping */
 	nret = WriteFileLine( env->port_mapping , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
-	INTPR1( "*** ERROR : WriteFileLine port_mapping failed[%d] , errno[%d]\n" , nret , errno )
-	EIDTP( "write file [%s] ok\n" , container_port_mapping_file )
+	INTER1( "*** ERROR : WriteFileLine port_mapping failed[%d] , errno[%d]\n" , nret , errno )
+	EIDTE( "write file [%s] ok\n" , container_port_mapping_file )
 	
 	return 0;	
 }

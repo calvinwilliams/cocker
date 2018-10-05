@@ -13,7 +13,7 @@ fi
 IMAGE_RLAYER_PATH_BASE=$1
 
 cd ${IMAGE_RLAYER_PATH_BASE}
-mkdir -p bin sbin lib lib64 etc root dev proc
+mkdir -p bin sbin lib lib64 etc root dev proc var
 
 cd /bin
 cp bash tty which ls cat echo rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc ${IMAGE_RLAYER_PATH_BASE}/bin/

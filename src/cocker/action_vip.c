@@ -7,14 +7,14 @@ int DoAction_vip( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TPR1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	/* modify vip */
 	nret = WriteFileLine( env->vip , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
-	INTPR1( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno )
-	EIDTP( "write file [%s] ok\n" , container_vip_file )
+	INTER1( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno )
+	EIDTE( "write file [%s] ok\n" , container_vip_file )
 	
 	return 0;	
 }

@@ -11,6 +11,8 @@ struct CockerInitEnvironment
 {
 	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
 	
+	int			alive_pipe_0 ;
+	
 	int			listen_sock ;
 	struct sockaddr_un	listen_addr ;
 	int			accepted_sock ;

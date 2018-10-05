@@ -25,6 +25,8 @@
 #define __USE_GNU
 #include <sched.h>
 
+#include "LOGC.h"
+
 int ptmname_r(int fd, char * buf, size_t buflen);
 int ptsname_r(int fd, char * buf, size_t buflen);
 
@@ -95,51 +97,69 @@ extern "C" {
  * statement macro
  */
 
+#define I( ... ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
+#define E(...) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
 #define INTx(_return_statement_,...) \
 	if( nret ) \
 	{ \
 		_return_statement_; \
 	} \
 
-#define INTP(...) \
+#define INTE(...) \
 	if( nret ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 	} \
 
-#define INTPR1(...) \
+#define INTER1(...) \
 	if( nret ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return -1; \
 	} \
 
-#define INTPRX(_return_val_,...) \
+#define INTERX(_return_val_,...) \
 	if( nret ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return (_return_val_); \
 	} \
 
-#define INTPx(_return_statement_,...) \
+#define INTEx(_return_statement_,...) \
 	if( nret ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		_return_statement_; \
 	} \
 
-#define INTPFR1(...) \
+#define INTEFR1(...) \
 	if( nret ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		if( ! env->cmd_para.__forcely ) \
 			return -1; \
 	} \
 
-#define ILTPR1(...) \
+#define ILTER1(...) \
 	if( nret < 0 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return -1; \
 	} \
 
@@ -149,92 +169,122 @@ extern "C" {
 		_return_statement_; \
 	} \
 
-#define I0TPR1(...) \
+#define I0TER1(...) \
 	if( nret == 0 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return -1; \
 	} \
 
-#define I1TP(...) \
+#define I1TE(...) \
 	if( nret == -1 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 	} \
 
-#define I1TPR1(...) \
+#define I1TER1(...) \
 	if( nret == -1 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return -1; \
 	} \
 
-#define I1TPRX(_return_val_,...) \
+#define I1TERX(_return_val_,...) \
 	if( nret == -1 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return (_return_val_); \
 	} \
 
-#define I1TPRx(_return_statement_,...) \
+#define I1TERx(_return_statement_,...) \
 	if( nret == -1 ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		_return_statement_; \
 	} \
 
-#define IxTPR1(_condition_exp_,...) \
+#define IxTER1(_condition_exp_,...) \
 	if( (_condition_exp_) ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return -1; \
 	} \
 
-#define IxTPFR1(_condition_exp_,...) \
+#define IxTEFR1(_condition_exp_,...) \
 	if( (_condition_exp_) ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		if( ! env->cmd_para.__forcely ) \
 			return -1; \
 	} \
 
-#define IxTPRX(_condition_exp_,_return_val_,...) \
+#define IxTERX(_condition_exp_,_return_val_,...) \
 	if( (_condition_exp_) ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		return (_return_val_); \
 	} \
 
-#define IxTPx(_condition_exp_,_return_statement_,...) \
+#define IxTEx(_condition_exp_,_return_statement_,...) \
 	if( (_condition_exp_) ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 		_return_statement_; \
 	} \
 
-#define IDTP(...) \
+#define IDTI(...) \
 	if( env->cmd_para.__debug ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
 	} \
 
-#define E \
-	else \
+#define IDTE(...) \
+	if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
 
-#define EIDTP(...) \
+#define EIDTI(...) \
 	else if( env->cmd_para.__debug ) \
 	{ \
-		printf( __VA_ARGS__ ); \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
+#define EIDTE(...) \
+	else if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
 	} \
 
 extern char		*_COCKER_VERSION ;
 
 /*
- * file
+ * string
  */
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist );
 char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... );
+
+char *TrimEnter( char *str );
+
+void *GenerateContainerId( char *images_id , char *container_id );
+
+/*
+ * file
+ */
 
 int CheckAndMakeDir( char *path );
 
@@ -249,14 +299,6 @@ int SnprintfAndPopen( char *output_buf , int output_bufsize , char *cmd_buf , in
 
 int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
-
-/*
- * string
- */
-
-char *TrimEnter( char *str );
-
-void *GenerateContainerId( char *images_id , char *container_id );
 
 /*
  * socket
