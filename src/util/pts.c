@@ -11,7 +11,8 @@ pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_wins
 	
 	int		nret = 0 ;
 	
-	ptm_fd = open( "/dev/ptmx" , O_RDWR ) ;
+	ptm_fd = open( "/dev/pts/ptmx" , O_RDWR ) ;
+INFOLOGC( "LIHUA - open[/dev/pts/ptmx] return[%d]\n" , ptm_fd )
 	if( ptm_fd == -1 )
 		return -1;
 	
@@ -64,27 +65,27 @@ pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_wins
 		{
 			nret = tcsetattr( pts_fd , TCSANOW , p_origin_termios ) ;
 			if( nret == -1 )
-				exit(31);
+				return -24;
 		}
 		
 		if( p_origin_winsize )
 		{
 			nret = ioctl( pts_fd , TIOCSWINSZ , p_origin_winsize ) ;
 			if( nret == -1 )
-				exit(32);
+				return -25;
 		}
 		
 		nret = dup2( pts_fd , STDIN_FILENO ) ;
 		if( nret == -1 )
-			exit(33);
+			return -26;
 		
 		nret = dup2( pts_fd , STDOUT_FILENO ) ;
 		if( nret == -1 )
-			exit(34);
+			return -27;
 		
 		nret = dup2( pts_fd , STDERR_FILENO ) ;
 		if( nret == -1 )
-			exit(35);
+			return -28;
 		
 		if( pts_fd != STDIN_FILENO && pts_fd != STDOUT_FILENO && pts_fd != STDERR_FILENO )
 			close( pts_fd );

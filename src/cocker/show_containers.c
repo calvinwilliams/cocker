@@ -16,6 +16,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 	char		netns[ NETNS_NAME_MAX ] ;
 	char		container_pid_file[ PATH_MAX ] ;
 	char		pid_str[ PID_LEN_MAX ] ;
+	pid_t		pid ;
 	char		status[ 40 ] ;
 	
 	int		nret = 0 ;
@@ -96,7 +97,16 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		else
 		{
 			TrimEnter( pid_str );
-			Snprintf( status , sizeof(status) , "RUNNING(%s)" , pid_str );
+			pid = atoi(pid_str) ;
+			nret = kill( pid , 0 ) ;
+			if( nret == -1 )
+			{
+				Snprintf( status , sizeof(status) , "EXPECTION(%s)" , pid_str );
+			}
+			else
+			{
+				Snprintf( status , sizeof(status) , "RUNNING(%s)" , pid_str );
+			}
 		}
 		
 		if( count == 0 )

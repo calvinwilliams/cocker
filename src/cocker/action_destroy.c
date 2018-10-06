@@ -9,10 +9,6 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	
 	char		cmd[ 4096 ] ;
 
-	char		container_path_base[ PATH_MAX ] ;
-	char		rwlayer_path[ PATH_MAX ] ;
-	char		hostname_path[ PATH_MAX ] ;
-	
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
@@ -31,7 +27,14 @@ int DoAction_destroy( struct CockerEnvironment *env )
 			I0TER1( "*** ERROR : container is already running\n" )
 		}
 	}
+	
 	TrimEnter( pid_str );
+	
+	/* clean container resouce */
+	if( env->cmd_para.__forcely )
+	{
+		CleanContainerResource( env );
+	}
 	
 	/* read net file */
 	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
@@ -55,21 +58,9 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	}
 	
 	/* destroy container folders and files */
-	nret = snprintf( container_path_base , sizeof(container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id ) ;
-	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(container_path_base)-1 ) , "*** ERROR : snprintf overflow" )
-	
-	nret = snprintf( rwlayer_path , sizeof(rwlayer_path)-1 , "%s/rwlayer" , container_path_base ) ;
-	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(rwlayer_path)-1 ) , "snprintf overflow\n" )
-	
-	nret = snprintf( hostname_path , sizeof(hostname_path)-1 , "%s/hostname" , container_path_base ) ;
-	IxTEFR1( SNPRINTF_OVERFLOW( nret , sizeof(hostname_path)-1 ) , "snprintf overflow\n" )
-	
-	if( access( rwlayer_path , W_OK ) == 0 && access( hostname_path , W_OK ) == 0 )
-	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , container_path_base ) ;
-		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
-	}
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , env->container_path_base ) ;
+	INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+	EIDTE( "system [%s] ok\n" , cmd )
 	
 	printf( "OK\n" );
 	

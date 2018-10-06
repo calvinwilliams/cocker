@@ -46,6 +46,7 @@ int server( struct CockerInitEnvironment *env )
 		timeout.tv_sec = 1 ;
 		timeout.tv_usec = 0 ;
 		nret = select( MAX(env->alive_pipe_0,env->listen_sock)+1 , & read_fds , NULL , NULL , & timeout ) ;
+INFOLOGC( "LIHUA - select return[%d]\n" , nret )
 		if( nret == -1 )
 		{
 			return -1;
@@ -58,7 +59,7 @@ _WAITPID :
 			{
 				if( errno == ECHILD )
 				{
-					INFOLOGC( "waitpid ...\n" )
+					INFOLOGC( "waitpid ECHILD\n" )
 				}
 				else
 				{

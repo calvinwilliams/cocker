@@ -2,7 +2,7 @@
 
 static unsigned char	stack_bottom[ 1024 * 1024 ] = {0} ;
 
-static int VHostEntry( void *p )
+static int CloneEntry( void *p )
 {
 	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
 	
@@ -115,6 +115,121 @@ static int VHostEntry( void *p )
 	exit(9);
 }
 
+int CleanContainerResource( struct CockerEnvironment *env )
+{
+	char		cmd[ 4096 ] ;
+	int		len ;
+	
+	char		container_pid_file[ PATH_MAX ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	
+	char		src_port_str[ 20 + 1 ] ;
+	
+	char		mount_target[ PATH_MAX ] ;
+	
+	int		nret = 0 ;
+	
+	/* read net file */
+	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+	EIDTI( "read file %s ok\n" , container_net_file )
+	
+	TrimEnter( env->net );
+	
+	/* destroy network */
+	if( STRCMP( env->net , == , "BRIDGE" ) )
+	{
+		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
+		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+		EIDTI( "read file %s ok\n" , container_vip_file )
+		
+		TrimEnter( env->vip );
+		
+		memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
+		nret = ReadFileLine( env->port_mapping , sizeof(env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
+		ILTx( (memset( env->port_mapping,0x00,sizeof(env->port_mapping))) )
+		EIDTI( "read file %s ok\n" , container_port_mapping_file )
+		
+		TrimEnter( env->port_mapping );
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		if( env->port_mapping[0] )
+		{
+			memset( src_port_str , 0x00 , sizeof(src_port_str) );
+			sscanf( env->port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			env->src_port = atoi(src_port_str) ;
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , env->port_mapping )
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
+			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			EIDTE( "system [%s] ok\n" , cmd )
+		}
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , env->netns_name , env->veth0_sname ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo down" , env->netns_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , env->netbr_name , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link del %s" , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+	}
+	
+	/* cleanup pid file */
+	nret = unlink( container_pid_file ) ;
+	INTE( "*** ERROR : unlink %s failed\n" , container_pid_file )
+	EIDTI( "unlink %s ok\n" , container_pid_file )
+	
+	/* umount */
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		nret = umount( mount_target ) ;
+		I1TE( "*** ERROR : umount proc failed\n" )
+		EIDTI( "umount %s ok\n" , mount_target )
+	}
+	
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/dev/pts" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		nret = umount( mount_target ) ;
+		I1TE( "*** ERROR : umount proc failed\n" )
+		EIDTI( "umount %s ok\n" , mount_target )
+	}
+	
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		nret = umount( mount_target ) ;
+		I1TE( "*** ERROR : umount merged failed\n" )
+		EIDTI( "umount %s ok\n" , mount_target )
+	}
+	
+	return 0;
+}
+
 int DoAction_start( struct CockerEnvironment *env )
 {
 	char		container_pid_file[ PATH_MAX ] ;
@@ -125,13 +240,10 @@ int DoAction_start( struct CockerEnvironment *env )
 	char		src_port_str[ 20 + 1 ] ;
 	
 	char		cmd[ 4096 ] ;
-	int		len ;
 	
 	pid_t		pid ;
 	int		null_fd ;
 	char		pid_str[ 20 + 1 ] ;
-	
-	char		mount_target[ PATH_MAX ] ;
 	
 	int		nret = 0 ;
 	
@@ -288,11 +400,11 @@ int DoAction_start( struct CockerEnvironment *env )
 	
 	if( STRCMP( env->net , == , "HOST" ) )
 	{
-		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
+		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
 	}
 	else
 	{
-		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)env ) ;
+		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)env ) ;
 	}
 	IxTEx( (pid==-1) , exit(9) , "*** ERROR : clone failed[%d] , errno[%d]\n" , pid , errno )
 	EIDTI( "clone success\n" )
@@ -324,76 +436,7 @@ int DoAction_start( struct CockerEnvironment *env )
 	
 _END :
 	
-	/* destroy network */
-	if( STRCMP( env->net , == , "BRIDGE" ) )
-	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-		
-		if( env->port_mapping[0] )
-		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
-			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-			EIDTE( "system [%s] ok\n" , cmd )
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , env->veth1_name ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , env->netns_name , env->veth0_sname ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo down" , env->netns_name ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , env->netbr_name , env->veth1_name ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link del %s" , env->veth1_name ) ;
-		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTI( "system [%s] ok\n" , cmd )
-	}
-	
-	/* cleanup pid file */
-	nret = unlink( container_pid_file ) ;
-	INTE( "*** ERROR : unlink %s failed\n" , container_pid_file )
-	EIDTI( "unlink %s ok\n" , container_pid_file )
-	
-	/* umount */
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , env->container_path_base ) ;
-	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
-	else
-	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount proc failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
-	}
-	
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/dev/pts" , env->container_path_base ) ;
-	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
-	else
-	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount proc failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
-	}
-	
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
-	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
-	else
-	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount merged failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
-	}
+	CleanContainerResource( env );
 	
 	return 0;
 }

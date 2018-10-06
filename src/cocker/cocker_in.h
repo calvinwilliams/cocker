@@ -69,6 +69,8 @@ struct CockerEnvironment
 int CreateCockerEnvironment( struct CockerEnvironment **pp_env );
 void DestroyCockerEnvironment( struct CockerEnvironment **pp_env );
 
+int CleanContainerResource( struct CockerEnvironment *env );
+
 int DoShow_images( struct CockerEnvironment *env );
 int DoShow_containers( struct CockerEnvironment *env );
 int DoAction_create( struct CockerEnvironment *env );
@@ -106,6 +108,11 @@ cocker -a destroy --debug --container test
 cocker -a destroy --debug --forcely --container test
 cocker -a vip --debug --vip 166.88.0.3 --container test
 cocker -a port_mapping --debug --port-mapping 19528:9528 --container test
+
+ps -ef | grep -v grep | grep cockerinit | awk '{print $2}' | xargs kill -9
+
+sudo cp ~/src/cocker/src/cockerinit/cockerinit /var/cocker/images/test/rlayer/bin/
+sudo cp ~/src/cocker/src/util/libcocker_util.so /var/cocker/images/test/rlayer/lib64/
 */
 
 #ifdef __cplusplus
