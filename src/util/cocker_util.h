@@ -18,12 +18,28 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <sys/time.h>
+#include <termios.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include "openssl/md5.h"
 #define __USE_GNU
 #include <sched.h>
 
+#include "LOGC.h"
+
+int ptmname_r(int fd, char * buf, size_t buflen);
+int ptsname_r(int fd, char * buf, size_t buflen);
+
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef MAX
+#define MAX(_a_,_b_) ( (_a_)>(_b_)?(_a_):(_b_) )
+#endif
+
+#ifndef MIN
+#define MIN(_a_,_b_) ( (_a_)<(_b_)?(_a_):(_b_) )
 #endif
 
 #ifndef STRCMP
@@ -49,7 +65,9 @@ extern "C" {
 #define OVERLAY_RET(_ret_,_inframe_ret_)	((_inframe_ret_)<0?-(_ret_)+(_inframe_ret_):(_ret_)+(_inframe_ret_))
 #endif
 
-extern char	*_COCKER_VERSION ;
+#ifndef IMAGE_NAME_MAX
+#define IMAGE_NAME_MAX		10
+#endif
 
 #ifndef CONTAINER_NAME_MAX
 #define CONTAINER_NAME_MAX	10
@@ -76,14 +94,201 @@ extern char	*_COCKER_VERSION ;
 #endif
 
 /*
- * file
+ * statement macro
+ */
+
+#define I( ... ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
+#define E(...) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
+#define INTx(_return_statement_,...) \
+	if( nret ) \
+	{ \
+		_return_statement_; \
+	} \
+
+#define INTE(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
+#define INTER1(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
+#define INTERX(_return_val_,...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return (_return_val_); \
+	} \
+
+#define INTEx(_return_statement_,...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		_return_statement_; \
+	} \
+
+#define INTEFR1(...) \
+	if( nret ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		if( ! env->cmd_para.__forcely ) \
+			return -1; \
+	} \
+
+#define ILTER1(...) \
+	if( nret < 0 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
+#define ILTx(_return_statement_) \
+	if( nret < 0 ) \
+	{ \
+		_return_statement_; \
+	} \
+
+#define I0TER1(...) \
+	if( nret == 0 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
+#define I1TE(...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
+#define I1TER1(...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
+#define I1TERX(_return_val_,...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return (_return_val_); \
+	} \
+
+#define I1TERx(_return_statement_,...) \
+	if( nret == -1 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		_return_statement_; \
+	} \
+
+#define IxTER1(_condition_exp_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
+#define IxTEFR1(_condition_exp_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		if( ! env->cmd_para.__forcely ) \
+			return -1; \
+	} \
+
+#define IxTERX(_condition_exp_,_return_val_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return (_return_val_); \
+	} \
+
+#define IxTEx(_condition_exp_,_return_statement_,...) \
+	if( (_condition_exp_) ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		_return_statement_; \
+	} \
+
+#define IDTI(...) \
+	if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
+#define IDTE(...) \
+	if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
+#define EIDTI(...) \
+	else if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
+#define EIDTE(...) \
+	else if( env->cmd_para.__debug ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+	} \
+
+extern char		*_COCKER_VERSION ;
+
+/*
+ * string
  */
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist );
 char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... );
 
+char *TrimEnter( char *str );
+
+void *GenerateContainerId( char *images_id , char *container_id );
+
+/*
+ * file
+ */
+
 int CheckAndMakeDir( char *path );
 
+int SnprintfAndCheckDir( char *path_buf , int path_bufsize , char *path_format , ... );
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... );
 int SnprintfAndMakeDir( char *path_buf , int path_bufsize , char *path_format , ... );
 
@@ -96,12 +301,17 @@ int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , 
 int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 
 /*
- * string
+ * socket
  */
 
-char *TrimEnter( char *str );
+int writen( int sock , char *send_buffer , int send_len , int *p_sent_len );
+int readn( int sock , char *recv_buffer , int recv_len , int *p_received_len );
 
-void *GenerateContainerId( char *images_id , char *container_id );
+/*
+ * pts
+ */
+
+pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_winsize , int *p_ptm_fd );
 
 #ifdef __cplusplus
 }

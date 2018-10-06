@@ -1,19 +1,18 @@
 #include "cocker_in.h"
 
-/* for debug
-$ mount -t overlay overlay -o lowerdir=/var/cocker/images/test/rlayer,upperdir=/var/cocker/containers/test/rwlayer,workdir=/var/cocker/containers/test/workdir /var/cocker/containers/test/merged
-$ chroot /var/cocker/containers/test/merged
-$ mount -t proc proc /proc
-
-$ umount /proc
-$ umount /var/cocker/container/test/merged
-*/
-
 static unsigned char	stack_bottom[ 1024 * 1024 ] = {0} ;
 
-static int VHostEntry( void *p )
+static int	g_TERM_flag = 0 ;
+
+static void sig_proc( int sig_no )
 {
-	struct CockerEnvironment	*cocker_env = (struct CockerEnvironment *)p ;
+	g_TERM_flag = 1 ;
+	return;
+}
+
+static int CloneEntry( void *p )
+{
+	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
 	
 	int				len ;
 	
@@ -27,35 +26,28 @@ static int VHostEntry( void *p )
 	char				mount_target[ PATH_MAX + 1 ] ;
 	char				mount_data[ 4096 ] ;
 	
+	char				fd_str[ 20 + 1 ] ;
+	
 	int				nret = 0 ;
 	
-	if( STRCMP( cocker_env->net , == , "BRIDGE" ) || STRCMP( cocker_env->net , == , "CUSTOM" ) )
+	signal( SIGTERM , SIG_DFL );
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
+	if( STRCMP( env->net , == , "BRIDGE" ) || STRCMP( env->net , == , "CUSTOM" ) )
 	{
 		/* setns */
 		memset( netns_path , 0x00 , sizeof(netns_path) );
-		len = snprintf( netns_path , sizeof(netns_path)-1 , "/var/run/netns/%s" , cocker_env->netns_name ) ;
-		if( SNPRINTF_OVERFLOW(len,sizeof(netns_path)-1) )
-		{
-			printf( "*** ERROR : netns path overflow\n" );
-			return -1;
-		}
+		len = snprintf( netns_path , sizeof(netns_path)-1 , "/var/run/netns/%s" , env->netns_name ) ;
+		IxTEx( SNPRINTF_OVERFLOW(len,sizeof(netns_path)-1) , exit(9) , "*** ERROR : netns path overflow\n" )
+		
 		netns_fd = open( netns_path , O_RDONLY ) ;
-		if( netns_fd == -1 )
-		{
-			printf( "*** ERROR : open netns path failed , errno[%d]\n" , errno );
-			return -1;
-		}
+		IxTEx( (netns_fd==-1) , exit(9) , "*** ERROR : open netns path failed , errno[%d]\n" , errno )
 		
 		nret = setns( netns_fd , CLONE_NEWNET ) ;
-		if( nret == -1 )
-		{
-			printf( "*** ERROR : setns failed , errno[%d]\n" , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "setns %s ok\n" , netns_path );
-		}
+		IxTEx( nret == -1 , exit(9) , "*** ERROR : setns failed , errno[%d]\n" , errno )
+		EIDTI( "setns %s ok\n" , netns_path )
 		
 		close( netns_fd );
 	}
@@ -66,124 +58,247 @@ static int VHostEntry( void *p )
 	setgroups(0,NULL);
 	
 	/* sethostname */
-	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , cocker_env->container_id );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "read file %s ok\n" , container_hostname_file );
-	}
+	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
+	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->container_id )
+	EIDTI( "read file %s ok\n" , container_hostname_file )
+	
 	TrimEnter( hostname );
 	sethostname( hostname , strlen(hostname) );
-	if( cocker_env->cmd_para.__debug )
-	{
-		printf( "sethostname [%s] ok\n" , hostname );
-	}
+	
+	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
-	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/%s/images" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : ReadFileLine images in container '%s' failed\n" , cocker_env->container_id );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "read file %s ok\n" , container_images_file );
-	}
+	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/images" , env->container_path_base ) ;
+	INTEx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->container_id )
+	EIDTI( "read file %s ok\n" , container_images_file )
+	
 	TrimEnter( image );
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
-	{
-		printf( "*** ERROR : snprintf failed\n" );
-		return -1;
-	}
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
+	IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
 	
 	memset( mount_data , 0x00 , sizeof(mount_data) );
 	if( image[0] == '\0' )
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->containers_path_base,cocker_env->container_id , cocker_env->containers_path_base,cocker_env->container_id ) ;
+		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
 	else
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "lowerdir=%s/%s/rlayer,upperdir=%s/%s/rwlayer,workdir=%s/%s/workdir" , cocker_env->images_path_base,image , cocker_env->containers_path_base,cocker_env->container_id , cocker_env->containers_path_base,cocker_env->container_id ) ;
-	if( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) )
-	{
-		printf( "*** ERROR : snprintf failed\n" );
-		return -1;
-	}
+		len = snprintf( mount_data , sizeof(mount_data)-1 , "lowerdir=%s/%s/rlayer,upperdir=%s/rwlayer,workdir=%s/workdir" , env->images_path_base , image , env->container_path_base , env->container_path_base ) ;
+	IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) , exit(9) , "*** ERROR : snprintf overflow\n" )
+	
 	nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
-	if( nret == -1 )
-	{
-		printf( "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data );
-	}
+	I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )
+	EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data )
 	
 	/* chroot */
-	chroot( mount_target );
-	if( cocker_env->cmd_para.__debug )
+	nret = chroot( mount_target ) ;
+	if( env->cmd_para.__debug )
 	{
-		printf( "chroot [%s] ok\n" , mount_target );
-	}
-	chdir( "/root" );
-	if( cocker_env->cmd_para.__debug )
-	{
-		printf( "chdir [%s] ok\n" , "/root" );
+		I( "chroot [%s] ok\n" , mount_target )
 	}
 	
 	/* mount /proc */
 	mount( "proc" , "/proc" , "proc" , MS_MGC_VAL , NULL );
-	if( cocker_env->cmd_para.__debug )
+	IDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" )
+	
+	/* mount /dev/pts */
+	mount( "devpts" , "/dev/pts" , "devpts" , MS_MGC_VAL , NULL );
+	IDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "devpts" , "/dev/pts" , "devpts" , MS_MGC_VAL , "(null)" )
+	
+	/* change /root */
+	I( "chdir [%s] ...\n" , "/root" )
+	nret = chdir( "/root" ) ;
+	if( env->cmd_para.__debug )
 	{
-		printf( "mount [%s][%s][%s][%u][%s] ok\n" , "proc" , "/proc" , "proc" , MS_MGC_VAL , "(null)" );
+		I( "chdir [%s] ok\n" , "/root" )
 	}
+	
+	/* save alive pipe fd */
+	Snprintf( fd_str , sizeof(fd_str) , "%d" , env->alive_pipe[0] );
+	setenv( "COCKER_ALIVE_PIPE" , fd_str , 1 );
+	
+	close( env->alive_pipe[1] );
 	
 	/* execl */
-	nret = execl( "/bin/bash" , "bash" , "--login" , NULL ) ;
-	if( nret == -1 )
-	{
-		printf( "*** ERROR : execl failed , errno[%d]\n" , errno );
-		exit(9);
-	}
+	nret = execl( "/bin/cockerinit" , "cockerinit" , "--container" , env->container_id , NULL ) ;
+	I1TERx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
-	return 0;
+	exit(9);
 }
 
-int DoAction_start( struct CockerEnvironment *cocker_env )
+int CleanContainerResource( struct CockerEnvironment *env )
 {
-	char		container_pid_file[ PATH_MAX ] ;
-	char		container_net_file[ PATH_MAX + 1 ] ;
-	
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
-	pid_t		pid ;
-	char		pid_str[ 20 + 1 ] ;
+	char		container_pid_file[ PATH_MAX ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	
+	char		pid_str[ PID_LEN_MAX + 1 ] ;
+	
+	char		src_port_str[ 20 + 1 ] ;
 	
 	char		mount_target[ PATH_MAX ] ;
 	
 	int		nret = 0 ;
 	
-	/* preprocess input parameters */
-	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
-	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
-	
-	Snprintf( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id );
-	nret = access( cocker_env->container_path_base , F_OK ) ;
-	if( nret == -1 )
+	/* read pid file */
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
+	INTE( "*** ERROR : ReadFileLine pid failed\n" )
+	if( nret == 0 )
 	{
-		printf( "*** ERROR : container '%s' not found\n" , cocker_env->cmd_para.__container_id );
-		return -1;
+		/* cleanup pid file */
+		nret = unlink( container_pid_file ) ;
+		INTE( "*** ERROR : unlink %s failed\n" , container_pid_file )
+		EIDTI( "unlink %s ok\n" , container_pid_file )
 	}
 	
+	/* read net file */
+	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+	EIDTI( "read file net ok\n" )
+	
+	TrimEnter( env->net );
+	
+	/* destroy network */
+	if( STRCMP( env->net , == , "BRIDGE" ) )
+	{
+		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
+		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+		EIDTI( "read file %s ok\n" , container_vip_file )
+		
+		TrimEnter( env->vip );
+		
+		memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
+		nret = ReadFileLine( env->port_mapping , sizeof(env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
+		ILTx( (memset( env->port_mapping,0x00,sizeof(env->port_mapping))) )
+		EIDTI( "read file %s ok\n" , container_port_mapping_file )
+		
+		TrimEnter( env->port_mapping );
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		if( env->port_mapping[0] )
+		{
+			memset( src_port_str , 0x00 , sizeof(src_port_str) );
+			sscanf( env->port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			env->src_port = atoi(src_port_str) ;
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , env->port_mapping )
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
+			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			EIDTI( "system [%s] ok\n" , cmd )
+		}
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , env->netns_name , env->veth0_sname ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo down" , env->netns_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl delif %s %s" , env->netbr_name , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link del %s" , env->veth1_name ) ;
+		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+	}
+	
+	/* umount */
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount /proc failed , errno[%d]\n" , errno )
+			EIDTI( "umount /proc ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
+	}
+	
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/dev/pts" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount /dev/pts failed , errno[%d]\n" , errno )
+			EIDTI( "umount /dev/pts ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
+	}
+	
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
+	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
+	else
+	{
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount merged failed , errno[%d]\n" , errno )
+			EIDTI( "umount merged ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
+	}
+	
+	return 0;
+}
+
+int DoAction_start( struct CockerEnvironment *env )
+{
+	char		container_pid_file[ PATH_MAX ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	
+	char		src_port_str[ 20 + 1 ] ;
+	
+	char		cmd[ 4096 ] ;
+	
+	pid_t		pid ;
+	int		null_fd ;
+	char		pid_str[ 20 + 1 ] ;
+	
+	int		nret = 0 ;
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
+	/* preprocess input parameters */
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	nret = access( env->container_path_base , F_OK ) ;
+	INTER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/pid" , env->container_path_base ) ;
 	if( nret == 0 )
 	{
 		TrimEnter( pid_str );
@@ -191,204 +306,194 @@ int DoAction_start( struct CockerEnvironment *cocker_env )
 		if( pid > 0 )
 		{
 			nret = kill( pid , 0 ) ;
-			if( nret == 0 )
-			{
-				printf( "*** ERROR : container is already running\n" );
-				return 0;
-			}
+			I0TER1( "*** ERROR : container is already running\n" )
 		}
 	}
 	
 	/* read net file */
-	nret = ReadFileLine( cocker_env->net , sizeof(cocker_env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , cocker_env->container_path_base ) ;
-	if( nret < 0 )
-	{
-		printf( "*** ERROR : ReadFileLine net failed\n" );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "read file %s ok\n" , container_net_file );
-	}
-	TrimEnter( cocker_env->net );
+	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+	EIDTI( "read file %s ok\n" , container_net_file )
 	
-	/* up network */
-	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
+	TrimEnter( env->net );
+	
+	/* create network */
+	if( STRCMP( env->net , == , "BRIDGE" ) )
 	{
-		/* up network */
-		GetEthernetName( cocker_env->container_id , cocker_env );
+		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
+		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+		EIDTI( "read file %s ok\n" , container_vip_file )
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , cocker_env->eth_name ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed [%d], errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
+		TrimEnter( env->vip );
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , cocker_env->netns_name , cocker_env->veth_sname ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
+		memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
+		nret = ReadFileLine( env->port_mapping , sizeof(env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
+		ILTx( (memset( env->port_mapping,0x00,sizeof(env->port_mapping))) )
+		EIDTI( "read file %s ok\n" , container_port_mapping_file )
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , cocker_env->netns_name ) ;
-		if( nret )
+		TrimEnter( env->port_mapping );
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link add %s type veth peer name %s" , env->veth1_name , env->veth0_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "brctl addif %s %s" , env->netbr_name , env->veth1_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s 0.0.0.0" , env->veth1_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link set %s netns %s" , env->veth0_name , env->netns_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ip link set %s name %s" , env->netns_name , env->veth0_name , env->veth0_sname ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s %s" , env->netns_name , env->veth0_sname , env->vip ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s route add default gw %s netmask 0.0.0.0 dev %s" , env->netns_name , env->netbr_ip , env->veth0_sname ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s up" , env->veth1_name ) ;
+		INTER1( "*** ERROR : system [%s] failed [%d], errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s up" , env->netns_name , env->veth0_sname ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig lo up" , env->netns_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
+		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+		EIDTI( "system [%s] ok\n" , cmd )
+		
+		if( env->port_mapping[0] )
 		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
+			memset( src_port_str , 0x00 , sizeof(src_port_str) );
+			sscanf( env->port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			env->src_port = atoi(src_port_str) ;
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , env->port_mapping )
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
+			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			EIDTI( "system [%s] ok\n" , cmd )
 		}
 	}
 	
-	/* create container */
-	if( STRCMP( cocker_env->net , == , "HOST" ) )
-	{
-		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)cocker_env ) ;
-	}
-	else
-	{
-		pid = clone( VHostEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)cocker_env ) ;
-	}
+	signal( SIGCLD , SIG_IGN );
+	signal( SIGCHLD , SIG_IGN );
+	signal( SIGTERM , sig_proc );
+	
+	pid = fork() ;
 	if( pid == -1 )
 	{
-		printf( "*** ERROR : clone failed[%d] , errno[%d]\n" , pid , errno );
-		cocker_env->cmd_para.__forcely = "--force" ;
-		DoAction_stop( cocker_env );
-		return -1;
+		E( "*** ERROR : fork failed , errno[%d]\n" , errno )
+		goto _END ;
 	}
+	else if( pid > 0 )
+	{
+		if( env->cmd_para.__attach )
+		{
+			sleep(1);
+			exit( -DoAction_attach(env) ) ;
+		}
+		else
+		{
+			printf( "OK\n" );
+		}
+		
+		return 0;
+	}
+	
+	signal( SIGCLD , SIG_DFL );
+	signal( SIGCHLD , SIG_DFL );
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
+	setsid();
+	
+	null_fd = open( "/dev/null" , O_RDWR ) ;
+	if( null_fd == -1 )
+	{
+		E( "*** ERROR : open /dev/null failed , errno[%d]\n" , errno )
+		goto _END ;
+	}
+	
+	dup2( null_fd , 0 );
+	dup2( null_fd , 1 );
+	dup2( null_fd , 2 );
+	
+	/* create alive pipe */
+	nret = pipe( env->alive_pipe ) ;
+	INTEx( goto _END , "*** ERROR : pipe failed[%d] , errno[%d]\n" , nret , errno )
+	EIDTI( "create alive pipe ok\n" )
 	
 	/* write pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
-	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , pid );
-	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( nret )
+	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , getpid() );
+	nret = WriteFileLine( pid_str , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
+	INTEx( goto _END , "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno )
+	EIDTI( "write file %s ok\n" , container_pid_file )
+	
+	/* create container */
+	if( STRCMP( env->net , == , "HOST" ) )
 	{
-		printf( "*** ERROR : WriteFileLine failed[%d] , errno[%d]\n" , nret , errno );
-		cocker_env->cmd_para.__forcely = "--force" ;
-		DoAction_stop( cocker_env );
-		return -1;
+		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
 	}
-	else if( cocker_env->cmd_para.__debug )
+	else
 	{
-		printf( "write file %s ok\n" , container_pid_file );
+		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS|CLONE_NEWNET , (void*)env ) ;
 	}
+	IxTEx( (pid==-1) , exit(9) , "*** ERROR : clone failed[%d] , errno[%d]\n" , pid , errno )
+	EIDTI( "clone success\n" )
+	
+	close( env->alive_pipe[0] );
 	
 	/* wait for container end */
 	while(1)
 	{
+		IDTI( "waitpid __WCLONE ...\n" )
 		pid = waitpid( -1 , NULL , __WCLONE ) ;
 		if( pid == -1 )
 		{
-			if( errno == ECHILD )
+			if( g_TERM_flag == 1 )
+			{
+				I( "waitpid interrupted by SIGTERM\n" )
 				break;
+			}
 			
-			printf( "*** ERROR : waitpid failed , errno[%d]\n" , errno ); fflush(stdout);
-			cocker_env->cmd_para.__forcely = "--force" ;
-			DoAction_stop( cocker_env );
-			return -1;
+			E( "*** ERROR : waitpid __WCLONE failed , errno[%d]\n" , errno )
+			exit(1);
+		}
+		else if( pid > 0 )
+		{
+			I( "waitpid __WCLONE return[%d]\n" , pid )
+			break;
 		}
 	}
+	/*
+	while( wait(NULL) < 0 )
+	{
+		continue;
+	}
+	*/
 	
-	/* down network */
-	if( STRCMP( cocker_env->net , == , "BRIDGE" ) )
-	{
-		/* down network */
-		GetEthernetName( cocker_env->container_id , cocker_env );
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , cocker_env->eth_name ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s down" , cocker_env->netns_name , cocker_env->veth_sname ) ;
-		if( nret )
-		{
-			printf( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "system [%s] ok\n" , cmd );
-		}
-	}
+_END :
 	
-	/* cleanup pid file */
-	nret = unlink( container_pid_file ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : unlink %s failed\n" , container_pid_file );
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "unlink %s ok\n" , container_pid_file );
-	}
+	close( env->alive_pipe[1] );
 	
-	/* umount */
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged/proc" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
-	{
-		printf( "*** ERROR : snprintf failed\n" );
-		if( ! cocker_env->cmd_para.__forcely )
-			return -1;
-	}
-	else
-	{
-		nret = umount( mount_target ) ;
-		if( nret == -1 )
-		{
-			printf( "*** ERROR : umount proc failed\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "umount %s ok\n" , mount_target );
-		}
-	}
-	
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/%s/merged" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) )
-	{
-		printf( "*** ERROR : snprintf failed\n" );
-		if( ! cocker_env->cmd_para.__forcely )
-			return -1;
-	}
-	else
-	{
-		nret = umount( mount_target ) ;
-		if( nret == -1 )
-		{
-			printf( "*** ERROR : umount merged failed\n" );
-			if( ! cocker_env->cmd_para.__forcely )
-				return -1;
-		}
-		else if( cocker_env->cmd_para.__debug )
-		{
-			printf( "umount %s ok\n" , mount_target );
-		}
-	}
+	CleanContainerResource( env );
 	
 	return 0;
 }

@@ -4,16 +4,18 @@ static void usage()
 {
 	printf( "USAGE : cocker -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create --image-id (image-id) [ --container-id (cid) ] [ --host-name (name) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-if-name (eth) ] [ --vip (ip) ]\n" );
-	printf( "               -a start --container-id (cid) [ --attach ]\n" );
-	printf( "               -a stop --container-id (cid) [ --forcely ]\n" );
-	printf( "               -a destroy --container-id (cid) [ --forcely ]\n" );
+	printf( "               -a create --image (id) [ --container (id) ] [ --host (name) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "               -a start --container (id) [ --attach ]\n" );
+	printf( "               -a stop --container (id) [ --forcely ]\n" );
+	printf( "               -a destroy --container (id) [ --forcely ]\n" );
+	printf( "               -a vip --container (id) --vip (ip)\n" );
+	printf( "               -a port_mapping --container (id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a install_test\n" );
 	printf( "                    --debug\n" );
 	return;
 }
 
-static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int argc , char *argv[] )
+static int ParseCommandParameters( struct CockerEnvironment *env , int argc , char *argv[] )
 {
 	int		i ;
 	
@@ -24,65 +26,65 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 		if( STRCMP( argv[i] , == , "-v" ) )
 		{
 			printf( "cocker v%s build %s %s\n" , _COCKER_VERSION , __DATE__ , __TIME__ );
-			DestroyCockerEnvironment( & cocker_env );
+			DestroyCockerEnvironment( & env );
 			exit(0);
 		}
 		else if( STRCMP( argv[i] , == , "-s" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para._show = argv[i+1] ;
+			env->cmd_para._show = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "-a" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para._action = argv[i+1] ;
+			env->cmd_para._action = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--image-id" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--image" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__image_id = argv[i+1] ;
+			env->cmd_para.__image_id = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--container-id" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--container" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__container_id = argv[i+1] ;
+			env->cmd_para.__container_id = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--host-name" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--host" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__host_name = argv[i+1] ;
+			env->cmd_para.__host_name = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--net" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__net = argv[i+1] ;
+			env->cmd_para.__net = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--host-if-name" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--host-eth" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__host_if_name = argv[i+1] ;
+			env->cmd_para.__host_eth = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--vip" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__vip = argv[i+1] ;
+			env->cmd_para.__vip = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--port-mapping" ) && i + 1 < argc )
 		{
-			cocker_env->cmd_para.__port_mapping = argv[i+1] ;
+			env->cmd_para.__port_mapping = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--attach" ) )
 		{
-			cocker_env->cmd_para.__attach = argv[i] ;
+			env->cmd_para.__attach = argv[i] ;
 		}
 		else if( STRCMP( argv[i] , == , "--debug" ) )
 		{
-			cocker_env->cmd_para.__debug = argv[i] ;
+			env->cmd_para.__debug = argv[i] ;
 		}
 		else if( STRCMP( argv[i] , == , "--forcely" ) )
 		{
-			cocker_env->cmd_para.__forcely = argv[i] ;
+			env->cmd_para.__forcely = argv[i] ;
 		}
 		else
 		{
@@ -92,22 +94,37 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 		}
 	}
 	
-	if( cocker_env->cmd_para.__net == NULL )
-		cocker_env->cmd_para.__net = "BRIDGE" ;
-	
-	if( ! ( STRCMP( cocker_env->cmd_para.__net , == , "BRIDGE" ) || STRCMP( cocker_env->cmd_para.__net , == , "HOST" ) || STRCMP( cocker_env->cmd_para.__net , == , "CUSTOM" ) ) )
+	memset( env->net , 0x00 , sizeof(env->net) );
+	if( env->cmd_para.__image_id )
 	{
-		printf( "*** ERROR : '--net' value[%s] invalid\n" , cocker_env->cmd_para.__net );
+		strncpy( env->image_id , env->cmd_para.__image_id , sizeof(env->image_id)-1 );
+	}
+	
+	memset( env->net , 0x00 , sizeof(env->net) );
+	if( env->cmd_para.__container_id )
+	{
+		strncpy( env->container_id , env->cmd_para.__container_id , sizeof(env->container_id)-1 );
+	}
+	
+	if( env->cmd_para.__net == NULL )
+		env->cmd_para.__net = "BRIDGE" ;
+	
+	if( ! ( STRCMP( env->cmd_para.__net , == , "BRIDGE" ) || STRCMP( env->cmd_para.__net , == , "HOST" ) || STRCMP( env->cmd_para.__net , == , "CUSTOM" ) ) )
+	{
+		printf( "*** ERROR : '--net' value[%s] invalid\n" , env->cmd_para.__net );
 		return -7;
 	}
 	
-	memset( cocker_env->net , 0x00 , sizeof(cocker_env->net) );
-	strncpy( cocker_env->net , cocker_env->cmd_para.__net , sizeof(cocker_env->net)-1 );
-	
-	if( cocker_env->cmd_para.__host_if_name )
+	memset( env->net , 0x00 , sizeof(env->net) );
+	if( env->cmd_para.__net )
 	{
-		memset( cocker_env->host_if_name , 0x00 , sizeof(cocker_env->host_if_name) );
-		strncpy( cocker_env->host_if_name , cocker_env->cmd_para.__host_if_name , sizeof(cocker_env->host_if_name)-1 );
+		strncpy( env->net , env->cmd_para.__net , sizeof(env->net)-1 );
+	}
+	
+	if( env->cmd_para.__host_eth )
+	{
+		memset( env->host_eth_name , 0x00 , sizeof(env->host_eth_name) );
+		strncpy( env->host_eth_name , env->cmd_para.__host_eth , sizeof(env->host_eth_name)-1 );
 	}
 	else
 	{
@@ -121,7 +138,7 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 			return -1;
 		}
 		
-		memset( cocker_env->host_if_name , 0x00 , sizeof(cocker_env->host_if_name) );
+		memset( env->host_eth_name , 0x00 , sizeof(env->host_eth_name) );
 		ifa = ifa_base ;
 		while( ifa )
 		{
@@ -129,7 +146,7 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 			{
 				if( STRCMP( ifa->ifa_name , != , "lo" ) && STRCMP( ifa->ifa_name , != , "cocker0" ) && STRNCMP( ifa->ifa_name , != , "veth" , 4 ) )
 				{
-					strncpy( cocker_env->host_if_name , ifa->ifa_name , sizeof(cocker_env->host_if_name)-1 );
+					strncpy( env->host_eth_name , ifa->ifa_name , sizeof(env->host_eth_name)-1 );
 					break;
 				}
 			}
@@ -139,119 +156,214 @@ static int ParseCommandParameters( struct CockerEnvironment *cocker_env , int ar
 		
 		freeifaddrs( ifa_base );
 		
-		if( cocker_env->host_if_name[0] == '\0' )
+		if( env->host_eth_name[0] == '\0' )
 		{
 			printf( "*** ERROR : host if name not found\n" );
 			return -1;
 		}
 	}
 	
+	memset( env->vip , 0x00 , sizeof(env->vip) );
+	if( env->cmd_para.__vip )
+	{
+		strncpy( env->vip , env->cmd_para.__vip , sizeof(env->vip)-1 );
+	}
+	
+	memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
+	if( env->cmd_para.__port_mapping )
+	{
+		strncpy( env->port_mapping , env->cmd_para.__port_mapping , sizeof(env->port_mapping)-1 );
+	}
+	
+	memset( env->netns_name , 0x00 , sizeof(env->netns_name) );
+	snprintf( env->netns_name , sizeof(env->netns_name) , "netns%s" , env->container_id );
+	
+	memset( env->netbr_name , 0x00 , sizeof(env->netbr_name) );
+	snprintf( env->netbr_name , sizeof(env->netbr_name) , "cocker0" );
+	
+	memset( env->veth1_name , 0x00 , sizeof(env->veth1_name) );
+	snprintf( env->veth1_name , sizeof(env->veth1_name) , "eth%s" , env->container_id );
+	
+	memset( env->veth0_name , 0x00 , sizeof(env->veth0_name) );
+	snprintf( env->veth0_name , sizeof(env->veth0_name) , "veth%s" , env->container_id );
+	
+	memset( env->veth0_sname , 0x00 , sizeof(env->veth0_sname) );
+	snprintf( env->veth0_sname , sizeof(env->veth0_sname) , "eth0" );
+	
 	return 0;
 }
 
-static int ExecuteCommandParameters( struct CockerEnvironment *cocker_env )
+static int ExecuteCommandParameters( struct CockerEnvironment *env )
 {
-	if( cocker_env->cmd_para._show )
+	int		nret = 0 ;
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
+	if( env->cmd_para._show )
 	{
-		if( STRCMP( cocker_env->cmd_para._show , == , "images" ) )
+		if( STRCMP( env->cmd_para._show , == , "images" ) )
 		{
-			return -DoShow_images( cocker_env );
+			INFOLOGC( "--- call DoShow_images ---" )
+			nret = DoShow_images( env ) ;
+			INFOLOGC( "--- DoShow_images return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._show , == , "containers" ) )
+		else if( STRCMP( env->cmd_para._show , == , "containers" ) )
 		{
-			return -DoShow_containers( cocker_env );
+			INFOLOGC( "--- call DoShow_containers ---" )
+			nret = DoShow_containers( env ) ;
+			INFOLOGC( "--- DoShow_containers return[%d] ---" , nret )
 		}
 		else
 		{
-			printf( "*** ERROR : show[%s] invalid\n" , cocker_env->cmd_para._show );
+			printf( "*** ERROR : show[%s] invalid\n" , env->cmd_para._show );
 			return -7;
 		}
 	}
-	else if( cocker_env->cmd_para._action )
+	else if( env->cmd_para._action )
 	{
-		if( STRCMP( cocker_env->cmd_para._action , == , "create" ) )
+		if( STRCMP( env->cmd_para._action , == , "create" ) )
 		{
-			if( cocker_env->cmd_para.__image_id == NULL || STRCMP( cocker_env->cmd_para.__image_id , == , "" ) )
+			if( env->image_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--image-id' with action '-a create'\n" );
+				printf( "*** ERROR : expect '--image' with action '-a create'\n" );
 				return -7;
 			}
 			
-			if( cocker_env->cmd_para.__net && STRCMP( cocker_env->cmd_para.__net , == , "BRIDGE" ) && cocker_env->cmd_para.__vip == NULL )
+			if( STRCMP( env->net , == , "BRIDGE" ) && env->vip[0] == '\0' )
 			{
 				printf( "*** ERROR : expect '--vip' with action '-a create'\n" );
 				return -7;
 			}
 			
-			return -DoAction_create( cocker_env );
+			INFOLOGC( "--- call DoAction_create ---" )
+			nret = DoAction_create( env ) ;
+			INFOLOGC( "--- DoAction_create return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._action , == , "start" ) )
+		else if( STRCMP( env->cmd_para._action , == , "start" ) )
 		{
-			if( cocker_env->cmd_para.__container_id == NULL || STRCMP( cocker_env->cmd_para.__container_id , == , "" ) )
+			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a start'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a start'\n" );
 				return -7;
 			}
 			
-			return -DoAction_start( cocker_env );
+			INFOLOGC( "--- call DoAction_start ---" )
+			nret = DoAction_start( env ) ;
+			INFOLOGC( "--- DoAction_start return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._action , == , "stop" ) )
+		else if( STRCMP( env->cmd_para._action , == , "stop" ) )
 		{
-			if( cocker_env->cmd_para.__container_id == NULL || STRCMP( cocker_env->cmd_para.__container_id , == , "" ) )
+			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a stop'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a stop'\n" );
 				return -7;
 			}
 			
-			return -DoAction_stop( cocker_env );
+			INFOLOGC( "--- call DoAction_stop ---" )
+			nret = DoAction_stop( env ) ;
+			INFOLOGC( "--- DoAction_stop return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._action , == , "kill" ) )
+		else if( STRCMP( env->cmd_para._action , == , "kill" ) )
 		{
-			if( cocker_env->cmd_para.__container_id == NULL || STRCMP( cocker_env->cmd_para.__container_id , == , "" ) )
+			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a kill'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a kill'\n" );
 				return -7;
 			}
 			
-			return -DoAction_kill( cocker_env );
+			INFOLOGC( "--- call DoAction_kill ---" )
+			nret = DoAction_kill( env ) ;
+			INFOLOGC( "--- DoAction_kill return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._action , == , "destroy" ) )
+		else if( STRCMP( env->cmd_para._action , == , "destroy" ) )
 		{
-			if( cocker_env->cmd_para.__container_id == NULL || STRCMP( cocker_env->cmd_para.__container_id , == , "" ) )
+			if( env->container_id[0] == '\0' )
 			{
-				printf( "*** ERROR : expect '--container-id' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
 				return -7;
 			}
 			
-			return -DoAction_destroy( cocker_env );
+			INFOLOGC( "--- call DoAction_destroy ---" )
+			nret = DoAction_destroy( env ) ;
+			INFOLOGC( "--- DoAction_destroy return[%d] ---" , nret )
 		}
-		else if( STRCMP( cocker_env->cmd_para._action , == , "install_test" ) )
+		else if( STRCMP( env->cmd_para._action , == , "vip" ) )
 		{
-			return -DoAction_install_test( cocker_env );
+			if( env->container_id[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
+				return -7;
+			}
+			
+			if( env->vip[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--vip' with action '-a destroy'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_vip ---" )
+			nret = DoAction_vip( env ) ;
+			INFOLOGC( "--- DoAction_vip return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "port_mapping" ) )
+		{
+			if( env->container_id[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
+				return -7;
+			}
+			
+			if( env->port_mapping[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--port-mapping' with action '-a destroy'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_port_mapping ---" )
+			nret = DoAction_port_mapping( env ) ;
+			INFOLOGC( "--- DoAction_port_mapping return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "attach" ) )
+		{
+			if( env->container_id[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a attach'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_attach ---" )
+			nret = DoAction_attach( env ) ;
+			INFOLOGC( "--- DoAction_attach return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "install_test" ) )
+		{
+			return -DoAction_install_test( env );
 		}
 		else
 		{
-			printf( "*** ERROR : action[%s] invalid\n" , cocker_env->cmd_para._action );
+			printf( "*** ERROR : action[%s] invalid\n" , env->cmd_para._action );
 			return -7;
 		}
 	}
 	else
 	{
-		printf( "*** ERROR : cmd para action[%s] invalid\n" , cocker_env->cmd_para._action );
+		printf( "*** ERROR : cmd para action[%s] invalid\n" , env->cmd_para._action );
 		return -7;
 	}
+	
+	return -nret;
 }
 
 int main( int argc , char *argv[] )
 {
-	struct CockerEnvironment	*cocker_env = NULL ;
+	struct CockerEnvironment	*env = NULL ;
 	
 	int				nret = 0 ;
 	
-	nret = CreateCockerEnvironment( & cocker_env ) ;
+	nret = CreateCockerEnvironment( & env ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : CreateCockerEnvironment failed[%d]\n" , nret );
 		return -nret;
 	}
 	
@@ -261,18 +373,16 @@ int main( int argc , char *argv[] )
 		return 0;
 	}
 	
-	nret = ParseCommandParameters( cocker_env , argc , argv ) ;
+	nret = ParseCommandParameters( env , argc , argv ) ;
 	if( nret )
 	{
-		printf( "*** ERROR : ParseCommandParameters failed[%d]\n" , nret );
 		return -nret;
 	}
 	
-	nret = ExecuteCommandParameters( cocker_env ) ;
-	DestroyCockerEnvironment( & cocker_env );
+	nret = ExecuteCommandParameters( env ) ;
+	DestroyCockerEnvironment( & env );
 	if( nret )
 	{
-		printf( "*** ERROR : ExecuteCommandParameters failed[%d]\n" , nret );
 		return -nret;
 	}
 	

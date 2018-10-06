@@ -1,6 +1,6 @@
 #include "cocker_in.h"
 
-static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no )
+static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 {
 	char		container_pid_file[ PATH_MAX ] ;
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
@@ -9,46 +9,46 @@ static int _DoAction_kill( struct CockerEnvironment *cocker_env , int signal_no 
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	memset( cocker_env->container_id , 0x00 , sizeof(cocker_env->container_id) );
-	strncpy( cocker_env->container_id , cocker_env->cmd_para.__container_id , sizeof(cocker_env->container_id)-1 );
-	
-	nret = SnprintfAndMakeDir( cocker_env->container_path_base , sizeof(cocker_env->container_path_base)-1 , "%s/%s" , cocker_env->containers_path_base , cocker_env->cmd_para.__container_id ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , cocker_env->container_path_base , nret );
-		return -1;
-	}
-	else if( cocker_env->cmd_para.__debug )
-	{
-		printf( "mkdir %s ok\n" , cocker_env->container_path_base );
-	}
+	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id ) ;
+	INTER1( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->container_path_base , nret )
 	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , cocker_env->container_id ) ;
-	if( nret )
-	{
-		printf( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file );
-		return 0;
-	}
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
+	INTER1( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file )
+	
 	TrimEnter( pid_str );
 	
+	/* stop container */
 	pid = atoi(pid_str) ;
-	
-	/* kill clone process */
-	kill( pid , signal_no );
-	
-	printf( "OK\n" );
+	if( pid > 0 )
+	{
+		nret = kill( pid , 0 ) ;
+		if( nret == 0 )
+		{
+			/* kill clone process */
+			kill( pid , signal_no );
+			printf( "OK\n" );
+		}
+		else
+		{
+			printf( "*** ERROR : container is not running\n" );
+		}
+	}
+	else
+	{
+		printf( "pid[%s] invalid\n" , pid_str );
+	}
 	
 	return 0;
 }
 
-int DoAction_stop( struct CockerEnvironment *cocker_env )
+int DoAction_stop( struct CockerEnvironment *env )
 {
-	return _DoAction_kill( cocker_env , SIGTERM );
+	return _DoAction_kill( env , SIGTERM );
 }
 
-int DoAction_kill( struct CockerEnvironment *cocker_env )
+int DoAction_kill( struct CockerEnvironment *env )
 {
-	return _DoAction_kill( cocker_env , SIGKILL );
+	return _DoAction_kill( env , SIGKILL );
 }
 

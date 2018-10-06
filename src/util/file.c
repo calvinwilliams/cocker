@@ -1,45 +1,27 @@
 #include "cocker_util.h"
 
-char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist )
-{
-	static char		path[ 4096 ] = "" ;
-	
-	static char		*p_path = NULL ;
-	static int		path_size = 0 ;
-	
-	int			nret = 0 ;
-	
-	if( path_buf == NULL )
-	{
-		p_path = path ;
-		path_size = sizeof(path)-1 ;
-	}
-	else
-	{
-		p_path = path_buf ;
-		path_size = path_bufsize ;
-	}
-	
-	memset( p_path , 0x00 , path_size );
-	nret = vsnprintf( p_path , path_size-1 , path_format , valist ) ;
-	if( SNPRINTF_OVERFLOW( nret , path_size ) )
-		return NULL;
-	
-	return p_path;
-}
-
-char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... )
+int SnprintfAndCheckDir( char *path_buf , int path_bufsize , char *path_format , ... )
 {
 	char		*p_path = NULL ;
 	va_list		valist ;
+	struct stat	dir_stat ;
+	
+	int		nret = 0 ;
 	
 	va_start( valist , path_format );
 	p_path = SnprintfV( path_buf , path_bufsize , path_format , valist ) ;
 	va_end( valist );
 	if( p_path == NULL )
-		return NULL;
+		return -1;
 	
-	return p_path;
+	memset( & dir_stat , 0x00 , sizeof(struct stat) );
+	nret = stat( p_path , & dir_stat ) ;
+	if( nret == -1 )
+		return -1;
+	if( ! S_ISDIR(dir_stat.st_mode) )
+		return -2;
+	
+	return 0;
 }
 
 int SnprintfAndChangeDir( char *path_buf , int path_bufsize , char *path_format , ... )

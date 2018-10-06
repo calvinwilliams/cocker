@@ -1,3 +1,9 @@
+0.7.0		2018-10-06	calvin
+		* 新增'-a attach'使得cocker容器更像主机，同步调整了create,start,stop,destroy等action
+
+0.6.0		2018-09-29	calvin
+		* 支持容器端口映射
+
 0.5.0		2018-09-28	calvin
 		* 支持单镜像多容器实例运行
 
