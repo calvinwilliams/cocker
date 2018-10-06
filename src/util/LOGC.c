@@ -40,7 +40,7 @@ TLS char	_g_logc_cust_label3[ LOGC_MAXLEN_CUST_LABEL + 1 ] = "" ;
 TLS char	_g_logc_cust_label4[ LOGC_MAXLEN_CUST_LABEL + 1 ] = "" ;
 TLS char	_g_logc_cust_label5[ LOGC_MAXLEN_CUST_LABEL + 1 ] = "" ;
 
-static const char _logc_level_itoa[][6] = { "DEBUG" , "INFO" , "WARN" , "ERROR" , "FATAL" } ;
+static const char _logc_level_itoa[][7] = { "DEBUG" , "INFO" , "NOTICE" , "WARN" , "ERROR" , "FATAL" } ;
 
 /* 设置日志文件名 */
 void SetLogcFile( char *format , ... )

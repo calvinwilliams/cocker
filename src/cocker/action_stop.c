@@ -17,12 +17,27 @@ static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 	INTER1( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file )
 	
 	TrimEnter( pid_str );
+	
+	/* stop container */
 	pid = atoi(pid_str) ;
-	
-	/* kill clone process */
-	kill( pid , signal_no );
-	
-	printf( "OK\n" );
+	if( pid > 0 )
+	{
+		nret = kill( pid , 0 ) ;
+		if( nret == 0 )
+		{
+			/* kill clone process */
+			kill( pid , signal_no );
+			printf( "OK\n" );
+		}
+		else
+		{
+			printf( "*** ERROR : container is not running\n" );
+		}
+	}
+	else
+	{
+		printf( "pid[%s] invalid\n" , pid_str );
+	}
 	
 	return 0;
 }

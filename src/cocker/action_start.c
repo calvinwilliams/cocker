@@ -2,6 +2,14 @@
 
 static unsigned char	stack_bottom[ 1024 * 1024 ] = {0} ;
 
+static int	g_TERM_flag = 0 ;
+
+static void sig_proc( int sig_no )
+{
+	g_TERM_flag = 1 ;
+	return;
+}
+
 static int CloneEntry( void *p )
 {
 	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
@@ -21,6 +29,8 @@ static int CloneEntry( void *p )
 	char				fd_str[ 20 + 1 ] ;
 	
 	int				nret = 0 ;
+	
+	signal( SIGTERM , SIG_DFL );
 	
 	SetLogcFile( "/var/cocker/cocker.log" );
 	SetLogcLevel( LOGCLEVEL_INFO );
@@ -55,7 +65,7 @@ static int CloneEntry( void *p )
 	TrimEnter( hostname );
 	sethostname( hostname , strlen(hostname) );
 	
-	IDTE( "sethostname [%s] ok\n" , hostname )
+	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
 	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/images" , env->container_path_base ) ;
@@ -125,16 +135,29 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	char		container_vip_file[ PATH_MAX + 1 ] ;
 	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
+	char		pid_str[ PID_LEN_MAX + 1 ] ;
+	
 	char		src_port_str[ 20 + 1 ] ;
 	
 	char		mount_target[ PATH_MAX ] ;
 	
 	int		nret = 0 ;
 	
+	/* read pid file */
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
+	INTE( "*** ERROR : ReadFileLine pid failed\n" )
+	if( nret == 0 )
+	{
+		/* cleanup pid file */
+		nret = unlink( container_pid_file ) ;
+		INTE( "*** ERROR : unlink %s failed\n" , container_pid_file )
+		EIDTI( "unlink %s ok\n" , container_pid_file )
+	}
+	
 	/* read net file */
 	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
-	EIDTI( "read file %s ok\n" , container_net_file )
+	EIDTI( "read file net ok\n" )
 	
 	TrimEnter( env->net );
 	
@@ -167,7 +190,7 @@ int CleanContainerResource( struct CockerEnvironment *env )
 			
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-			EIDTE( "system [%s] ok\n" , cmd )
+			EIDTI( "system [%s] ok\n" , cmd )
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , env->veth1_name ) ;
@@ -191,20 +214,23 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		EIDTI( "system [%s] ok\n" , cmd )
 	}
 	
-	/* cleanup pid file */
-	nret = unlink( container_pid_file ) ;
-	INTE( "*** ERROR : unlink %s failed\n" , container_pid_file )
-	EIDTI( "unlink %s ok\n" , container_pid_file )
-	
 	/* umount */
 	memset( mount_target , 0x00 , sizeof(mount_target) );
 	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , env->container_path_base ) ;
 	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
 	else
 	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount proc failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount /proc failed , errno[%d]\n" , errno )
+			EIDTI( "umount /proc ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
 	}
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
@@ -212,9 +238,17 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
 	else
 	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount proc failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount /dev/pts failed , errno[%d]\n" , errno )
+			EIDTI( "umount /dev/pts ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
 	}
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
@@ -222,9 +256,17 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	IxTER1( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , "*** ERROR : snprintf overflow\n" )
 	else
 	{
-		nret = umount( mount_target ) ;
-		I1TE( "*** ERROR : umount merged failed\n" )
-		EIDTI( "umount %s ok\n" , mount_target )
+		while(1)
+		{
+			nret = umount( mount_target ) ;
+			I1TE( "*** ERROR : umount merged failed , errno[%d]\n" , errno )
+			EIDTI( "umount merged ok\n" )
+			if( nret == 0 )
+				break;
+			if( nret == -1 && errno != EBUSY )
+				break;
+			sleep(1);
+		}
 	}
 	
 	return 0;
@@ -256,7 +298,7 @@ int DoAction_start( struct CockerEnvironment *env )
 	INTER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->container_path_base ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/pid" , env->container_path_base ) ;
 	if( nret == 0 )
 	{
 		TrimEnter( pid_str );
@@ -350,6 +392,7 @@ int DoAction_start( struct CockerEnvironment *env )
 	
 	signal( SIGCLD , SIG_IGN );
 	signal( SIGCHLD , SIG_IGN );
+	signal( SIGTERM , sig_proc );
 	
 	pid = fork() ;
 	if( pid == -1 )
@@ -359,16 +402,24 @@ int DoAction_start( struct CockerEnvironment *env )
 	}
 	else if( pid > 0 )
 	{
-		printf( "OK\n" );
+		if( env->cmd_para.__attach )
+		{
+			sleep(1);
+			exit( -DoAction_attach(env) ) ;
+		}
+		else
+		{
+			printf( "OK\n" );
+		}
 		
 		return 0;
 	}
 	
-	SetLogcFile( "/var/cocker/cocker.log" );
-	SetLogcLevel( LOGCLEVEL_INFO );
-	
 	signal( SIGCLD , SIG_DFL );
 	signal( SIGCHLD , SIG_DFL );
+	
+	SetLogcFile( "/var/cocker/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
 	
 	setsid();
 	
@@ -396,8 +447,6 @@ int DoAction_start( struct CockerEnvironment *env )
 	EIDTI( "write file %s ok\n" , container_pid_file )
 	
 	/* create container */
-	signal( SIGTERM , SIG_DFL );
-	
 	if( STRCMP( env->net , == , "HOST" ) )
 	{
 		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
@@ -412,13 +461,18 @@ int DoAction_start( struct CockerEnvironment *env )
 	close( env->alive_pipe[0] );
 	
 	/* wait for container end */
-	/*
 	while(1)
 	{
 		IDTI( "waitpid __WCLONE ...\n" )
 		pid = waitpid( -1 , NULL , __WCLONE ) ;
 		if( pid == -1 )
 		{
+			if( g_TERM_flag == 1 )
+			{
+				I( "waitpid interrupted by SIGTERM\n" )
+				break;
+			}
+			
 			E( "*** ERROR : waitpid __WCLONE failed , errno[%d]\n" , errno )
 			exit(1);
 		}
@@ -428,13 +482,16 @@ int DoAction_start( struct CockerEnvironment *env )
 			break;
 		}
 	}
-	*/
+	/*
 	while( wait(NULL) < 0 )
 	{
 		continue;
 	}
+	*/
 	
 _END :
+	
+	close( env->alive_pipe[1] );
 	
 	CleanContainerResource( env );
 	

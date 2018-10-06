@@ -6,6 +6,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	pid_t		pid ;
 	
 	char		container_net_file[ PATH_MAX ] ;
+	char		container_pid_file[ PATH_MAX ] ;
 	
 	char		cmd[ 4096 ] ;
 
@@ -16,8 +17,10 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	nret = access( env->container_path_base , F_OK ) ;
 	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
+	TrimEnter( pid_str );
+	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , env->container_id ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->container_id ) ;
 	if( nret == 0 )
 	{
 		pid = atoi(pid_str) ;
@@ -28,8 +31,6 @@ int DoAction_destroy( struct CockerEnvironment *env )
 		}
 	}
 	
-	TrimEnter( pid_str );
-	
 	/* clean container resouce */
 	if( env->cmd_para.__forcely )
 	{
@@ -39,7 +40,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	/* read net file */
 	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
-	EIDTE( "read file %s ok\n" , container_net_file )
+	EIDTE( "read file net ok\n" )
 	
 	TrimEnter( env->net );
 	
