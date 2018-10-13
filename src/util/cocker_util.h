@@ -93,6 +93,10 @@ extern "C" {
 #define PID_LEN_MAX		20
 #endif
 
+#ifndef CGROUP_PATH
+#define CGROUP_PATH		"/sys/fs/cgroup"
+#endif
+
 /*
  * statement macro
  */

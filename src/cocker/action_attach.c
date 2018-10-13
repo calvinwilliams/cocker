@@ -60,7 +60,7 @@ static int tcp_bridge( int connected_sock )
 
 int DoAction_attach( struct CockerEnvironment *env )
 {
-	char			container_merge_path[ PATH_MAX + 1 ] ;
+	char			container_merge_path[ PATH_MAX ] ;
 	
 	int			connected_sock ;
 	struct sockaddr_un	connected_addr ;

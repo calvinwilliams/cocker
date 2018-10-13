@@ -19,6 +19,9 @@ struct CommandParameter
 	char			*__host_eth ;
 	char			*__vip ;
 	char			*__port_mapping ;
+	char			*__cpus ;
+	char			*__cpu_quota ;
+	char			*__mem_limit ;
 	
 	char			*__attach ;
 	
@@ -29,10 +32,11 @@ struct CommandParameter
 struct CockerEnvironment
 {
 	struct CommandParameter	cmd_para ;
+	unsigned char		cgroup_enable ;
 	
-	char			cocker_home[ PATH_MAX + 1 ] ;
-	char			images_path_base[ PATH_MAX + 1 ] ;
-	char			containers_path_base[ PATH_MAX + 1 ] ;
+	char			cocker_home[ PATH_MAX ] ;
+	char			images_path_base[ PATH_MAX ] ;
+	char			containers_path_base[ PATH_MAX ] ;
 	char			netbr_ip[ IP_LEN_MAX + 1 ] ;
 	
 	char			image_id[ IMAGE_NAME_MAX + 1 ] ;
@@ -42,8 +46,8 @@ struct CockerEnvironment
 	char			vip[ IP_LEN_MAX + 1 ] ;
 	char			port_mapping[ 20+1+20 + 1 ] ;
 	
-	char			image_path_base[ PATH_MAX + 1 ] ;
-	char			container_path_base[ PATH_MAX + 1 ] ;
+	char			image_path_base[ PATH_MAX ] ;
+	char			container_path_base[ PATH_MAX ] ;
 	
 	int			src_port ;
 	int			dst_port ;
@@ -100,8 +104,7 @@ cocker -s containers
 cocker -a create --debug --image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container test
 cocker -a create --debug --image test --host test --net HOST --vip 166.88.0.2
 cocker -a create --debug --image test --host test --net CUSTOM --vip 166.88.0.2
-cocker -a start --debug --attach --container test
-cocker -a start --debug --container test
+cocker -a start --debug --cpus 1 --cpu-quota 30% --mem-limit 100M --attach --container test
 cocker -a attach --debug --container test
 cocker -a stop --debug --container test
 cocker -a destroy --debug --container test
@@ -113,6 +116,8 @@ ps -ef | grep -v grep | grep cockerinit | awk '{print $2}' | xargs kill -9
 
 sudo cp ~/src/cocker/src/cockerinit/cockerinit /var/cocker/images/test/rlayer/bin/
 sudo cp ~/src/cocker/src/util/libcocker_util.so /var/cocker/images/test/rlayer/lib64/
+
+echo "let S=0 ; while [ 1 ] ; do let S++; done" >test.sh
 */
 
 #ifdef __cplusplus

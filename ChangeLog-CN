@@ -1,3 +1,9 @@
+0.8.0		2018-10-13	calvin
+		* 新增基于cgroup的系统资源限制
+		  支持CPU亲缘性参数'--cpus (cpu_num)'
+		  支持CPU使用限制'--cpu-quota (percent%)'
+		  支持内存使用限制'--mem-limit (num|numM)'
+
 0.7.0		2018-10-06	calvin
 		* 新增'-a attach'使得cocker容器更像主机，同步调整了create,start,stop,destroy等action
 

@@ -2,7 +2,7 @@
 
 int DoAction_port_mapping( struct CockerEnvironment *env )
 {
-	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX ] ;
 	
 	int		nret = 0 ;
 	
