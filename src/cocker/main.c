@@ -4,14 +4,15 @@ static void usage()
 {
 	printf( "USAGE : cocker -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create --image (id) [ --container (id) ] [ --host (name) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
-	printf( "               -a start --container (id) [ --attach ]\n" );
+	printf( "               -a create --image (id) [ --container (id) ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "               -a start --container (id) [ cgroup options ] [ --attach ]\n" );
 	printf( "               -a stop --container (id) [ --forcely ]\n" );
 	printf( "               -a destroy --container (id) [ --forcely ]\n" );
 	printf( "               -a vip --container (id) --vip (ip)\n" );
 	printf( "               -a port_mapping --container (id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a install_test\n" );
 	printf( "                    --debug\n" );
+	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
 	return;
 }
 
@@ -72,6 +73,21 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 		else if( STRCMP( argv[i] , == , "--port-mapping" ) && i + 1 < argc )
 		{
 			env->cmd_para.__port_mapping = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--cpus" ) && i + 1 < argc )
+		{
+			env->cmd_para.__cpus = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--cpu-quota" ) && i + 1 < argc )
+		{
+			env->cmd_para.__cpu_quota = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--mem-limit" ) && i + 1 < argc )
+		{
+			env->cmd_para.__mem_limit = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--attach" ) )
@@ -189,6 +205,9 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 	
 	memset( env->veth0_sname , 0x00 , sizeof(env->veth0_sname) );
 	snprintf( env->veth0_sname , sizeof(env->veth0_sname) , "eth0" );
+	
+	if( env->cmd_para.__cpus || env->cmd_para.__cpu_quota || env->cmd_para.__mem_limit )
+		env->cgroup_enable = 1 ;
 	
 	return 0;
 }
