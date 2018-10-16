@@ -6,15 +6,15 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 	struct dirent	*dirent = NULL ;
 	int		count ;
 	
-	char		container_images_file[ PATH_MAX ] ;
+	char		container_images_file[ PATH_MAX + 1 ] ;
 	char		images[ 4096 ] ;
-	char		container_hostname_file[ PATH_MAX ] ;
+	char		container_hostname_file[ PATH_MAX + 1 ] ;
 	char		hostname[ HOST_NAME_MAX ] ;
-	char		container_net_file[ PATH_MAX ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
 	char		net[ NET_LEN_MAX ] ;
-	char		container_netns_file[ PATH_MAX ] ;
-	char		netns[ NETNS_NAME_MAX ] ;
-	char		container_pid_file[ PATH_MAX ] ;
+	char		container_netns_file[ PATH_MAX + 1 ] ;
+	char		netns[ NETNS_NAME_LEN_MAX ] ;
+	char		container_pid_file[ PATH_MAX + 1 ] ;
 	char		pid_str[ PID_LEN_MAX ] ;
 	pid_t		pid ;
 	char		status[ 40 ] ;

@@ -14,30 +14,31 @@ static int CloneEntry( void *p )
 {
 	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
 	
+	char				net[ NET_LEN_MAX + 1 ] ;
 	int				len ;
 	
-	char				netns_path[ PATH_MAX ] ;
+	char				netns_path[ PATH_MAX + 1 ] ;
 	int				netns_fd ;
 	
-	char				container_hostname_file[ PATH_MAX ] ;
+	char				container_hostname_file[ PATH_MAX + 1 ] ;
 	char				hostname[ HOST_NAME_MAX + 1 ] ;
-	char				container_images_file[ PATH_MAX ] ;
-	char				image[ PATH_MAX ] ;
-	char				mount_target[ PATH_MAX ] ;
+	char				container_images_file[ PATH_MAX + 1 ] ;
+	char				image[ PATH_MAX + 1 ] ;
+	char				mount_target[ PATH_MAX + 1 ] ;
 	char				mount_data[ 4096 ] ;
 	
 	char				cmd[ 4096 ] ;
 	
 	char				pid_str[ 20 + 1 ] ;
-	char				cgroup_cpuset_cpus_file[ PATH_MAX ] ;
-	char				cgroup_cpuset_mems_file[ PATH_MAX ] ;
-	char				cgroup_cpuset_tasks_file[ PATH_MAX ] ;
-	char				cgroup_cpu_cfs_period_us_file[ PATH_MAX ] ;
-	char				cgroup_cpu_cfs_quota_us_file[ PATH_MAX ] ;
-	char				cgroup_cpu_tasks_file[ PATH_MAX ] ;
-	char				cgroup_memory_limit_in_bytes_file[ PATH_MAX ] ;
-	char				cgroup_memory_memsw_limit_in_bytes_file[ PATH_MAX ] ;
-	char				cgroup_memory_tasks_file[ PATH_MAX ] ;
+	char				cgroup_cpuset_cpus_file[ PATH_MAX + 1 ] ;
+	char				cgroup_cpuset_mems_file[ PATH_MAX + 1 ] ;
+	char				cgroup_cpuset_tasks_file[ PATH_MAX + 1 ] ;
+	char				cgroup_cpu_cfs_period_us_file[ PATH_MAX + 1 ] ;
+	char				cgroup_cpu_cfs_quota_us_file[ PATH_MAX + 1 ] ;
+	char				cgroup_cpu_tasks_file[ PATH_MAX + 1 ] ;
+	char				cgroup_memory_limit_in_bytes_file[ PATH_MAX + 1 ] ;
+	char				cgroup_memory_memsw_limit_in_bytes_file[ PATH_MAX + 1 ] ;
+	char				cgroup_memory_tasks_file[ PATH_MAX + 1 ] ;
 	
 	char				fd_str[ 20 + 1 ] ;
 	
@@ -48,7 +49,7 @@ static int CloneEntry( void *p )
 	SetLogcFile( "/var/cocker/cocker.log" );
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
-	if( STRCMP( env->net , == , "BRIDGE" ) || STRCMP( env->net , == , "CUSTOM" ) )
+	if( STRCMP( net , == , "BRIDGE" ) || STRCMP( net , == , "CUSTOM" ) )
 	{
 		/* setns */
 		memset( netns_path , 0x00 , sizeof(netns_path) );
@@ -72,7 +73,7 @@ static int CloneEntry( void *p )
 	
 	/* sethostname */
 	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
-	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->container_id )
+	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->cmd_para.__container_id )
 	EIDTI( "read file %s ok\n" , container_hostname_file )
 	
 	TrimEnter( hostname );
@@ -82,7 +83,7 @@ static int CloneEntry( void *p )
 	
 	/* mount filesystem */
 	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/images" , env->container_path_base ) ;
-	INTEx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->container_id )
+	INTEx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->cmd_para.__container_id )
 	EIDTI( "read file %s ok\n" , container_images_file )
 	
 	TrimEnter( image );
@@ -110,32 +111,32 @@ static int CloneEntry( void *p )
 	{
 		if( env->cmd_para.__cpus )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_cpus_file , sizeof(cgroup_cpuset_cpus_file) , "%s/cpuset/cocker_%s/cpuset.cpus" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_cpus_file , sizeof(cgroup_cpuset_cpus_file) , "%s/cpuset/cocker_%s/cpuset.cpus" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.cpus failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpuset_cpus_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpuset_cpus_file )
 			
-			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpuset/cocker_%s/cpuset.mems" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpuset/cocker_%s/cpuset.mems" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.mems failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpuset_mems_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpuset_mems_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_cpuset_tasks_file , sizeof(cgroup_cpuset_tasks_file) , "%s/cpuset/cocker_%s/tasks" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_cpuset_tasks_file , sizeof(cgroup_cpuset_tasks_file) , "%s/cpuset/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.tasks failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpuset_tasks_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpuset_tasks_file )
 		}
 		
 		if( env->cmd_para.__cpu_quota )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( "1000000" , cgroup_cpu_cfs_period_us_file , sizeof(cgroup_cpu_cfs_period_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_period_us" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( "1000000" , cgroup_cpu_cfs_period_us_file , sizeof(cgroup_cpu_cfs_period_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_period_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine cpu.cfs_period_us failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpu_cfs_period_us_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpu_cfs_period_us_file )
 			
 			if( env->cmd_para.__cpu_quota[strlen(env->cmd_para.__cpu_quota)-1] == '%' )
 			{
@@ -143,37 +144,37 @@ static int CloneEntry( void *p )
 				
 				memset( buf , 0x00 , sizeof(buf) );
 				snprintf( buf , sizeof(buf)-1 , "%d" , 1000000/100*atoi(env->cmd_para.__cpu_quota) );
-				nret = WriteFileLine( buf , cgroup_cpu_cfs_quota_us_file , sizeof(cgroup_cpu_cfs_quota_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->container_id ) ;
+				nret = WriteFileLine( buf , cgroup_cpu_cfs_quota_us_file , sizeof(cgroup_cpu_cfs_quota_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			}
 			else
 			{
-				nret = WriteFileLine( env->cmd_para.__cpu_quota , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->container_id ) ;
+				nret = WriteFileLine( env->cmd_para.__cpu_quota , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			}
 			INTER1( "*** ERROR : WriteFileLine cpu.cfs_quota_us failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpu_cfs_quota_us_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpu_cfs_quota_us_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_cpu_tasks_file , sizeof(cgroup_cpu_tasks_file) , "%s/cpu,cpuacct/cocker_%s/tasks" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_cpu_tasks_file , sizeof(cgroup_cpu_tasks_file) , "%s/cpu,cpuacct/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine cpu.tasks failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_cpu_tasks_file )
+			EIDTI( "write file %s ok\n" , cgroup_cpu_tasks_file )
 		}
 		
 		if( env->cmd_para.__mem_limit )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/memory/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_limit_in_bytes_file , sizeof(cgroup_memory_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.limit_in_bytes" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_limit_in_bytes_file , sizeof(cgroup_memory_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.limit_in_bytes failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_memory_limit_in_bytes_file )
+			EIDTI( "write file %s ok\n" , cgroup_memory_limit_in_bytes_file )
 			
-			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_memsw_limit_in_bytes_file , sizeof(cgroup_memory_memsw_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.memsw.limit_in_bytes" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_memsw_limit_in_bytes_file , sizeof(cgroup_memory_memsw_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.memsw.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.memsw.limit_in_bytes failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_memory_memsw_limit_in_bytes_file )
+			EIDTI( "write file %s ok\n" , cgroup_memory_memsw_limit_in_bytes_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_memory_tasks_file , sizeof(cgroup_memory_tasks_file) , "%s/memory/cocker_%s/tasks" , CGROUP_PATH , env->container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_memory_tasks_file , sizeof(cgroup_memory_tasks_file) , "%s/memory/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.tasks failed[%d] , errno[%d]\n" , nret , errno )
-			EIDTE( "write file %s ok\n" , cgroup_memory_tasks_file )
+			EIDTI( "write file %s ok\n" , cgroup_memory_tasks_file )
 		}
 	}
 	
@@ -207,7 +208,7 @@ static int CloneEntry( void *p )
 	close( env->alive_pipe[1] );
 	
 	/* execl */
-	nret = execl( "/bin/cockerinit" , "cockerinit" , "--container" , env->container_id , NULL ) ;
+	nret = execl( "/bin/cockerinit" , "cockerinit" , "--container" , env->cmd_para.__container_id , NULL ) ;
 	I1TERx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
 	exit(9);
@@ -215,19 +216,23 @@ static int CloneEntry( void *p )
 
 int CleanContainerResource( struct CockerEnvironment *env )
 {
+	char		net[ NET_LEN_MAX + 1 ] ;
+	char		vip[ IP_LEN_MAX + 1 ] ;
+	
 	char		cmd[ 4096 ] ;
 	int		len ;
 	
-	char		container_pid_file[ PATH_MAX ] ;
-	char		container_net_file[ PATH_MAX ] ;
-	char		container_vip_file[ PATH_MAX ] ;
-	char		container_port_mapping_file[ PATH_MAX ] ;
+	char		container_pid_file[ PATH_MAX + 1 ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	
+	char		port_mapping[ PORT_MAP_LEN_MAX + 1 ] ;
 	char		src_port_str[ 20 + 1 ] ;
 	
-	char		mount_target[ PATH_MAX ] ;
+	char		mount_target[ PATH_MAX + 1 ] ;
 	
 	int		nret = 0 ;
 	
@@ -243,40 +248,40 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	}
 	
 	/* read net file */
-	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file net ok\n" )
 	
-	TrimEnter( env->net );
+	TrimEnter( net );
 	
 	/* destroy network */
-	if( STRCMP( env->net , == , "BRIDGE" ) )
+	if( STRCMP( net , == , "BRIDGE" ) )
 	{
-		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
+		nret = ReadFileLine( vip , sizeof(vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
 		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 		EIDTI( "read file %s ok\n" , container_vip_file )
 		
-		TrimEnter( env->vip );
+		TrimEnter( vip );
 		
-		memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
-		nret = ReadFileLine( env->port_mapping , sizeof(env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
-		ILTx( (memset( env->port_mapping,0x00,sizeof(env->port_mapping))) )
+		memset( port_mapping , 0x00 , sizeof(port_mapping) );
+		nret = ReadFileLine( port_mapping , sizeof(port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
+		ILTx( (memset( port_mapping,0x00,sizeof(port_mapping))) )
 		EIDTI( "read file %s ok\n" , container_port_mapping_file )
 		
-		TrimEnter( env->port_mapping );
+		TrimEnter( port_mapping );
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D POSTROUTING -o %s -j MASQUERADE" , env->host_eth_name ) ;
 		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
-		if( env->port_mapping[0] )
+		if( port_mapping[0] )
 		{
 			memset( src_port_str , 0x00 , sizeof(src_port_str) );
-			sscanf( env->port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			sscanf( port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
 			env->src_port = atoi(src_port_str) ;
-			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , env->port_mapping )
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
 			
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , vip , env->dst_port ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
@@ -307,21 +312,21 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	{
 		if( env->cmd_para.__cpus )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
 		
 		if( env->cmd_para.__cpu_quota )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
 		
 		if( env->cmd_para.__mem_limit )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/memory/cocker_%s" , CGROUP_PATH , env->container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
@@ -387,11 +392,14 @@ int CleanContainerResource( struct CockerEnvironment *env )
 
 int DoAction_boot( struct CockerEnvironment *env )
 {
-	char		container_pid_file[ PATH_MAX ] ;
-	char		container_net_file[ PATH_MAX ] ;
-	char		container_vip_file[ PATH_MAX ] ;
-	char		container_port_mapping_file[ PATH_MAX ] ;
+	char		net[ NET_LEN_MAX + 1 ] ;
+	char		vip[ IP_LEN_MAX + 1 ] ;
+	char		container_pid_file[ PATH_MAX + 1 ] ;
+	char		container_net_file[ PATH_MAX + 1 ] ;
+	char		container_vip_file[ PATH_MAX + 1 ] ;
+	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
+	char		port_mapping[ PORT_MAP_LEN_MAX ] ;
 	char		src_port_str[ 20 + 1 ] ;
 	
 	char		cmd[ 4096 ] ;
@@ -406,9 +414,11 @@ int DoAction_boot( struct CockerEnvironment *env )
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
 	nret = access( env->container_path_base , F_OK ) ;
 	INTER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	
+	GetEthernetNames( env , env->cmd_para.__container_id );
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/pid" , env->container_path_base ) ;
@@ -424,27 +434,27 @@ int DoAction_boot( struct CockerEnvironment *env )
 	}
 	
 	/* read net file */
-	nret = ReadFileLine( env->net , sizeof(env->net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file %s ok\n" , container_net_file )
 	
-	TrimEnter( env->net );
+	TrimEnter( net );
 	
 	/* create network */
-	if( STRCMP( env->net , == , "BRIDGE" ) )
+	if( STRCMP( net , == , "BRIDGE" ) )
 	{
-		nret = ReadFileLine( env->vip , sizeof(env->vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
+		nret = ReadFileLine( vip , sizeof(vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
 		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 		EIDTI( "read file %s ok\n" , container_vip_file )
 		
-		TrimEnter( env->vip );
+		TrimEnter( vip );
 		
-		memset( env->port_mapping , 0x00 , sizeof(env->port_mapping) );
-		nret = ReadFileLine( env->port_mapping , sizeof(env->port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
-		ILTx( (memset( env->port_mapping,0x00,sizeof(env->port_mapping))) )
+		memset( port_mapping , 0x00 , sizeof(port_mapping) );
+		nret = ReadFileLine( port_mapping , sizeof(port_mapping)-1 , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
+		ILTx( (memset(port_mapping,0x00,sizeof(port_mapping))) )
 		EIDTI( "read file %s ok\n" , container_port_mapping_file )
 		
-		TrimEnter( env->port_mapping );
+		TrimEnter( port_mapping );
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip link add %s type veth peer name %s" , env->veth1_name , env->veth0_name ) ;
 		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
@@ -466,7 +476,7 @@ int DoAction_boot( struct CockerEnvironment *env )
 		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s %s" , env->netns_name , env->veth0_sname , env->vip ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns exec %s ifconfig %s %s" , env->netns_name , env->veth0_sname , vip ) ;
 		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
@@ -490,14 +500,14 @@ int DoAction_boot( struct CockerEnvironment *env )
 		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
-		if( env->port_mapping[0] )
+		if( port_mapping[0] )
 		{
 			memset( src_port_str , 0x00 , sizeof(src_port_str) );
-			sscanf( env->port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			sscanf( port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
 			env->src_port = atoi(src_port_str) ;
-			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , env->port_mapping )
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
 			
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , env->vip , env->dst_port ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , vip , env->dst_port ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
@@ -560,7 +570,7 @@ int DoAction_boot( struct CockerEnvironment *env )
 	EIDTI( "write file %s ok\n" , container_pid_file )
 	
 	/* create container */
-	if( STRCMP( env->net , == , "HOST" ) )
+	if( STRCMP( net , == , "HOST" ) )
 	{
 		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
 	}

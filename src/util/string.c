@@ -83,7 +83,7 @@ void *GenerateContainerId( char *images_id , char *container_id )
 	memset( md5 , 0x00 , sizeof(md5) );
 	MD5_Final( md5 , & md5_ctx );
 	
-	for( p_md5 = md5 , p_md5_exp = (unsigned char *)container_id , i = 0 ; i < CONTAINER_NAME_MAX/2 ; p_md5++ , p_md5_exp+=2 , i++ )
+	for( p_md5 = md5 , p_md5_exp = (unsigned char *)container_id , i = 0 ; i < CONTAINER_ID_LEN_MAX/2 ; p_md5++ , p_md5_exp+=2 , i++ )
 	{
 		p_md5_exp[0] = hex_charset[(p_md5[0]&0xF0)>>4] ;
 		p_md5_exp[1] = hex_charset[p_md5[0]&0x0F] ;

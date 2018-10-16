@@ -2,7 +2,7 @@
 
 int DoAction_install_test( struct CockerEnvironment *env )
 {
-	char		image_rlayer_path[ PATH_MAX ] ;
+	char		image_rlayer_path[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
 	
 	int		nret = 0 ;

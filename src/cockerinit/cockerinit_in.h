@@ -9,7 +9,7 @@ extern "C" {
 
 struct CockerInitEnvironment
 {
-	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
+	char			container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
 	
 	int			alive_pipe_0 ;
 	

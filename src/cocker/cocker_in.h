@@ -25,9 +25,9 @@ struct CommandParameter
 	
 	char			*__attach ;
 	
-	char			*__from_container ;
-	char			*__to_image ;
 	char			*__from_image ;
+	char			*__to_image ;
+	char			*__from_container ;
 	char			*__to_container ;
 	
 	char			*__debug ;
@@ -39,29 +39,22 @@ struct CockerEnvironment
 	struct CommandParameter	cmd_para ;
 	unsigned char		cgroup_enable ;
 	
-	char			cocker_home[ PATH_MAX ] ;
-	char			images_path_base[ PATH_MAX ] ;
-	char			containers_path_base[ PATH_MAX ] ;
+	char			cocker_home[ PATH_MAX + 1 ] ;
+	char			images_path_base[ PATH_MAX + 1 ] ;
+	char			containers_path_base[ PATH_MAX + 1 ] ;
 	char			netbr_ip[ IP_LEN_MAX + 1 ] ;
 	
-	char			image_id[ IMAGE_NAME_MAX + 1 ] ;
-	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
-	char			net[ NET_LEN_MAX + 1 ] ;
-	char			host_eth_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			vip[ IP_LEN_MAX + 1 ] ;
-	char			port_mapping[ 20+1+20 + 1 ] ;
+	char			host_eth_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	
-	char			image_path_base[ PATH_MAX ] ;
-	char			container_path_base[ PATH_MAX ] ;
-	
+	char			image_path_base[ PATH_MAX + 1 ] ;
+	char			container_path_base[ PATH_MAX + 1 ] ;
 	int			src_port ;
 	int			dst_port ;
-	
-	char			netns_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
+	char			netns_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			netbr_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth1_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth0_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth0_sname[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	
 	int			alive_pipe[ 2 ] ;
 } ;
@@ -70,6 +63,7 @@ struct CockerEnvironment
  * util
  */
 
+void GetEthernetNames( struct CockerEnvironment *env , char *container_id );
 
 /*
  * environment
@@ -100,6 +94,9 @@ int DoAction_port_mapping( struct CockerEnvironment *env );
 int DoAction_to_image( struct CockerEnvironment *env );
 int DoAction_to_container( struct CockerEnvironment *env );
 
+int DoAction_copy_image( struct CockerEnvironment *env );
+int DoAction_del_image( struct CockerEnvironment *env );
+
 /* depend on
 sudo yum install -y telnet
 sudo yum install -y nmap-ncat
@@ -125,7 +122,9 @@ cocker -a destroy -d -f -c test
 cocker -a vip -d --vip 166.88.0.3 -c test
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
 cocker -a to_image -d --from-container test --to-image test2
-cocker -a to_container -d -m test --from-image test2 --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test2
+cocker -a to_container -d -m test --from-image test2 --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
+cocker -a copy_image -d --from-image test --to-image test2
+cocker -a del_image -d -m test2
 
 ps -ef | grep -v grep | grep cockerinit | awk '{print $2}' | xargs kill -9
 

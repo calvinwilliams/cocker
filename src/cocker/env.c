@@ -4,7 +4,7 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_env )
 {
 	struct CockerEnvironment	*env = NULL ;
 	
-	char				netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
+	char				netbr_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	char				cmd[ 4096 ] ;
 	int				len ;
 	

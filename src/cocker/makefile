@@ -22,6 +22,8 @@ c_FILE		=	\
 			action_install_test.c \
 			action_to_image.c \
 			action_to_container.c \
+			action_copy_image.c \
+			action_del_image.c \
 			util.c \
 
 ###### 目标文件、安装目录配置区

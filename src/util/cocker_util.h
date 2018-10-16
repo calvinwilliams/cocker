@@ -65,28 +65,32 @@ extern "C" {
 #define OVERLAY_RET(_ret_,_inframe_ret_)	((_inframe_ret_)<0?-(_ret_)+(_inframe_ret_):(_ret_)+(_inframe_ret_))
 #endif
 
-#ifndef IMAGE_NAME_MAX
-#define IMAGE_NAME_MAX		10
+#ifndef IMAGE_ID_LEN_MAX
+#define IMAGE_ID_LEN_MAX		10
 #endif
 
-#ifndef CONTAINER_NAME_MAX
-#define CONTAINER_NAME_MAX	10
+#ifndef CONTAINER_ID_LEN_MAX
+#define CONTAINER_ID_LEN_MAX	10
 #endif
 
-#ifndef ETHERNET_NAME_MAX
-#define ETHERNET_NAME_MAX	16
+#ifndef ETHERNET_NAME_LEN_MAX
+#define ETHERNET_NAME_LEN_MAX	16
 #endif
 
 #ifndef NET_LEN_MAX
 #define NET_LEN_MAX		10
 #endif
 
-#ifndef NETNS_NAME_MAX
-#define NETNS_NAME_MAX		256
+#ifndef NETNS_NAME_LEN_MAX
+#define NETNS_NAME_LEN_MAX		256
 #endif
 
 #ifndef IP_LEN_MAX
 #define IP_LEN_MAX		20
+#endif
+
+#ifndef PORT_MAP_LEN_MAX
+#define PORT_MAP_LEN_MAX		64
 #endif
 
 #ifndef PID_LEN_MAX
@@ -96,6 +100,12 @@ extern "C" {
 #ifndef CGROUP_PATH
 #define CGROUP_PATH		"/sys/fs/cgroup"
 #endif
+
+/*
+ * expression macro
+ */
+
+#define IS_NULL_OR_EMPTY(_p_)	( (_p_) == NULL || (_p_)[0] == '\0' )
 
 /*
  * statement macro
