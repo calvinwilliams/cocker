@@ -9,7 +9,7 @@ extern "C" {
 
 struct CockerInitEnvironment
 {
-	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
+	char			container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
 	
 	int			alive_pipe_0 ;
 	
@@ -24,7 +24,7 @@ struct CockerInitEnvironment
 
 int server( struct CockerInitEnvironment *env );
 int process( struct CockerInitEnvironment *env );
-int pts_bridge( struct CockerInitEnvironment *env );
+int tcp_pts_bridge( struct CockerInitEnvironment *env );
 
 #ifdef __cplusplus
 }

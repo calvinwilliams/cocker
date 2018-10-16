@@ -25,6 +25,11 @@ struct CommandParameter
 	
 	char			*__attach ;
 	
+	char			*__from_image ;
+	char			*__to_image ;
+	char			*__from_container ;
+	char			*__to_container ;
+	
 	char			*__debug ;
 	char			*__forcely ;
 } ;
@@ -34,29 +39,22 @@ struct CockerEnvironment
 	struct CommandParameter	cmd_para ;
 	unsigned char		cgroup_enable ;
 	
-	char			cocker_home[ PATH_MAX ] ;
-	char			images_path_base[ PATH_MAX ] ;
-	char			containers_path_base[ PATH_MAX ] ;
+	char			cocker_home[ PATH_MAX + 1 ] ;
+	char			images_path_base[ PATH_MAX + 1 ] ;
+	char			containers_path_base[ PATH_MAX + 1 ] ;
 	char			netbr_ip[ IP_LEN_MAX + 1 ] ;
 	
-	char			image_id[ IMAGE_NAME_MAX + 1 ] ;
-	char			container_id[ CONTAINER_NAME_MAX + 1 ] ;
-	char			net[ NET_LEN_MAX + 1 ] ;
-	char			host_eth_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			vip[ IP_LEN_MAX + 1 ] ;
-	char			port_mapping[ 20+1+20 + 1 ] ;
+	char			host_eth_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	
-	char			image_path_base[ PATH_MAX ] ;
-	char			container_path_base[ PATH_MAX ] ;
-	
+	char			image_path_base[ PATH_MAX + 1 ] ;
+	char			container_path_base[ PATH_MAX + 1 ] ;
 	int			src_port ;
 	int			dst_port ;
-	
-	char			netns_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			netbr_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth1_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth0_name[ ETHERNET_NAME_MAX + 1 ] ;
-	char			veth0_sname[ ETHERNET_NAME_MAX + 1 ] ;
+	char			netns_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			netbr_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth1_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth0_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			veth0_sname[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	
 	int			alive_pipe[ 2 ] ;
 } ;
@@ -65,6 +63,7 @@ struct CockerEnvironment
  * util
  */
 
+void GetEthernetNames( struct CockerEnvironment *env , char *container_id );
 
 /*
  * environment
@@ -75,17 +74,28 @@ void DestroyCockerEnvironment( struct CockerEnvironment **pp_env );
 
 int CleanContainerResource( struct CockerEnvironment *env );
 
+int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__container_id );
+
 int DoShow_images( struct CockerEnvironment *env );
 int DoShow_containers( struct CockerEnvironment *env );
+
+int DoAction_install_test( struct CockerEnvironment *env );
+
 int DoAction_create( struct CockerEnvironment *env );
 int DoAction_destroy( struct CockerEnvironment *env );
-int DoAction_start( struct CockerEnvironment *env );
-int DoAction_stop( struct CockerEnvironment *env );
+int DoAction_boot( struct CockerEnvironment *env );
+int DoAction_attach( struct CockerEnvironment *env );
+int DoAction_shutdown( struct CockerEnvironment *env );
 int DoAction_kill( struct CockerEnvironment *env );
+
 int DoAction_vip( struct CockerEnvironment *env );
 int DoAction_port_mapping( struct CockerEnvironment *env );
-int DoAction_attach( struct CockerEnvironment *env );
-int DoAction_install_test( struct CockerEnvironment *env );
+
+int DoAction_to_image( struct CockerEnvironment *env );
+int DoAction_to_container( struct CockerEnvironment *env );
+
+int DoAction_copy_image( struct CockerEnvironment *env );
+int DoAction_del_image( struct CockerEnvironment *env );
 
 /* depend on
 sudo yum install -y telnet
@@ -98,19 +108,23 @@ echo "1" >/proc/sys/net/ipv4/ip_forward
 */
 
 /* for test
-cocker -a install_test --debug
+cocker -a install_test -d
 cocker -s images
 cocker -s containers
-cocker -a create --debug --image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --container test
-cocker -a create --debug --image test --host test --net HOST --vip 166.88.0.2
-cocker -a create --debug --image test --host test --net CUSTOM --vip 166.88.0.2
-cocker -a start --debug --cpus 1 --cpu-quota 30% --mem-limit 100M --attach --container test
-cocker -a attach --debug --container test
-cocker -a stop --debug --container test
-cocker -a destroy --debug --container test
-cocker -a destroy --debug --forcely --container test
-cocker -a vip --debug --vip 166.88.0.3 --container test
-cocker -a port_mapping --debug --port-mapping 19528:9528 --container test
+cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
+cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
+cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
+cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -t -c test
+cocker -a attach -d -c test
+cocker -a shutdown -d -c test
+cocker -a destroy -d -c test
+cocker -a destroy -d -f -c test
+cocker -a vip -d --vip 166.88.0.3 -c test
+cocker -a port_mapping -d --port-mapping 19528:9528 -c test
+cocker -a to_image -d --from-container test --to-image test2
+cocker -a to_container -d -m test --from-image test2 --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
+cocker -a copy_image -d --from-image test --to-image test2
+cocker -a del_image -d -m test2
 
 ps -ef | grep -v grep | grep cockerinit | awk '{print $2}' | xargs kill -9
 

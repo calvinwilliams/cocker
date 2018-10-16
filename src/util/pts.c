@@ -4,7 +4,7 @@ pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_wins
 {
 	int		ptm_fd ;
 	int		pts_fd ;
-	char		pts_pathfilename[ PATH_MAX ] ;
+	char		pts_pathfilename[ PATH_MAX + 1 ] ;
 	int		lock ;
 	
 	pid_t		pid ;
@@ -12,7 +12,6 @@ pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_wins
 	int		nret = 0 ;
 	
 	ptm_fd = open( "/dev/pts/ptmx" , O_RDWR ) ;
-INFOLOGC( "LIHUA - open[/dev/pts/ptmx] return[%d]\n" , ptm_fd )
 	if( ptm_fd == -1 )
 		return -1;
 	

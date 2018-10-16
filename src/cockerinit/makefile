@@ -11,7 +11,7 @@ c_FILE		=	\
 			main.c \
 			server.c \
 			process.c \
-			pts_bridge.c \
+			tcp_pts_bridge.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall

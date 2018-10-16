@@ -60,7 +60,7 @@ static int tcp_bridge( int connected_sock )
 
 int DoAction_attach( struct CockerEnvironment *env )
 {
-	char			container_merge_path[ PATH_MAX ] ;
+	char			container_merge_path[ PATH_MAX + 1 ] ;
 	
 	int			connected_sock ;
 	struct sockaddr_un	connected_addr ;
@@ -68,13 +68,15 @@ int DoAction_attach( struct CockerEnvironment *env )
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : container '%s' not found\n" , env->container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	Snprintf( container_merge_path , sizeof(container_merge_path)-1 , "%s/merged" , env->container_path_base );
 	nret = access( container_merge_path , F_OK ) ;
 	I1TER1( "*** ERROR : merged not exist in container '%s'\n" , env->cmd_para.__container_id )
+	
+	GetEthernetNames( env , env->cmd_para.__container_id );
 	
 	/* client connect to cockerinit */
 	connected_sock = socket( AF_UNIX , SOCK_STREAM , 0 ) ;
