@@ -42,7 +42,7 @@ static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 	return 0;
 }
 
-int DoAction_stop( struct CockerEnvironment *env )
+int DoAction_shutdown( struct CockerEnvironment *env )
 {
 	return _DoAction_kill( env , SIGTERM );
 }

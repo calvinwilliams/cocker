@@ -1,13 +1,18 @@
 #include "cocker_in.h"
 
-int DoAction_create( struct CockerEnvironment *env )
+int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__container_id )
 {
+	char		container_id[ CONTAINER_NAME_MAX + 1 ] ;
+	
 	char		cmd[ 4096 ] ;
 	
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
+	pid_t		pid ;
 	
 	char		container_rwlayer_path[ PATH_MAX ] ;
+	/*
 	char		container_rwlayer_etc_path[ PATH_MAX ] ;
+	*/
 	char		container_merged_path[ PATH_MAX ] ;
 	char		container_workdir_path[ PATH_MAX ] ;
 	char		container_images_file[ PATH_MAX ] ;
@@ -20,30 +25,41 @@ int DoAction_create( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	if( env->image_id[0] )
+	if( __image_id && __image_id[0] )
 	{
-		nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/rlayer" , env->images_path_base , env->image_id ) ;
-		INTER1( "*** ERROR : image[%s] not found\n" , env->image_id )
+		nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/rlayer" , env->images_path_base , __image_id ) ;
+		INTER1( "*** ERROR : image[%s] not found\n" , __image_id )
 	}
 	
+	memset( container_id , 0x00 , sizeof(container_id) );
 	if( env->cmd_para.__container_id == NULL )
 	{
-		memset( env->container_id , 0x00 , sizeof(env->container_id) );
-		GenerateContainerId( env->cmd_para.__image_id , env->container_id );
+		GenerateContainerId( __image_id , container_id );
+	}
+	else
+	{
+		strncpy( container_id , __container_id , sizeof(container_id)-1 );
 	}
 	
 	if( env->cmd_para.__host_name == NULL )
 	{
-		env->cmd_para.__host_name = env->container_id ;
+		env->cmd_para.__host_name = container_id ;
 	}
 	
 	/* read pid file */
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , env->container_id ) ;
-	IxTER1( (nret==0) , "*** ERROR : container is already running\n" )
-	TrimEnter( pid_str );
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , container_id ) ;
+	if( nret == 0 )
+	{
+		pid = atoi(pid_str) ;
+		if( pid > 0 )
+		{
+			nret = kill( pid , 0 ) ;
+			I0TER1( "*** ERROR : container is already running\n" )
+		}
+	}
 	
 	/* create container folders and files */
-	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->container_id ) ;
+	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , container_id ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir / failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTE( "mkdir %s ok\n" , env->container_path_base )
 	
@@ -51,9 +67,11 @@ int DoAction_create( struct CockerEnvironment *env )
 	INTER1( "*** ERROR : SnprintfAndMakeDir rwlayer failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTE( "mkdir %s ok\n" , container_rwlayer_path )
 	
+	/*
 	nret = SnprintfAndMakeDir( container_rwlayer_etc_path , sizeof(container_rwlayer_etc_path) , "%s/rwlayer/etc" , env->container_path_base ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir /etc failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTE( "mkdir %s ok\n" , container_rwlayer_etc_path )
+	*/
 	
 	nret = SnprintfAndMakeDir( container_merged_path , sizeof(container_merged_path) , "%s/merged" , env->container_path_base ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir merged failed[%d] , errno[%d]\n" , nret , errno )
@@ -63,9 +81,9 @@ int DoAction_create( struct CockerEnvironment *env )
 	INTER1( "*** ERROR : SnprintfAndMakeDir workdir failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTE( "mkdir %s ok\n" , container_workdir_path )
 	
-	if( env->image_id[0] )
+	if( __image_id && __image_id[0] )
 	{
-		nret = WriteFileLine( env->image_id , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
+		nret = WriteFileLine( __image_id , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
 		INTER1( "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
 		EIDTE( "write file %s ok\n" , container_images_file )
 	}
@@ -122,3 +140,7 @@ int DoAction_create( struct CockerEnvironment *env )
 	return 0;
 }
 
+int DoAction_create( struct CockerEnvironment *env )
+{
+	return CreateContainer( env , env->image_id , env->container_id );
+}

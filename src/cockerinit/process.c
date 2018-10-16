@@ -76,7 +76,7 @@ int process( struct CockerInitEnvironment *env )
 	{
 		INFOLOGC( "pty_fork parent\n" )
 		
-		pts_bridge( env );
+		tcp_pts_bridge( env );
 		
 		close( env->accepted_sock );
 		close( env->ptm_fd );

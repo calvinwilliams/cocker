@@ -14,12 +14,14 @@ c_FILE		=	\
 			show_containers.c \
 			action_create.c \
 			action_destroy.c \
-			action_start.c \
-			action_stop.c \
+			action_boot.c \
+			action_shutdown.c \
 			action_vip.c \
 			action_port_mapping.c \
 			action_attach.c \
 			action_install_test.c \
+			action_to_image.c \
+			action_to_container.c \
 			util.c \
 
 ###### 目标文件、安装目录配置区
