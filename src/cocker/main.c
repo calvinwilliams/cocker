@@ -119,6 +119,11 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__to_container = argv[i+1] ;
 			i++;
 		}
+		else if( STRCMP( argv[i] , == , "--image-file" ) && i + 1 < argc )
+		{
+			env->cmd_para.__image_file = argv[i+1] ;
+			i++;
+		}
 		else if( ( STRCMP( argv[i] , == , "-d" ) || STRCMP( argv[i] , == , "--debug" ) ) )
 		{
 			env->cmd_para.__debug = argv[i] ;
@@ -404,6 +409,30 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			INFOLOGC( "--- call DoAction_del_image ---" )
 			nret = DoAction_del_image( env ) ;
 			INFOLOGC( "--- DoAction_del_image return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "export" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
+			{
+				printf( "*** ERROR : expect '--image' with action '-a export'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_export ---" )
+			nret = DoAction_export( env ) ;
+			INFOLOGC( "--- DoAction_export return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "import" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_file) )
+			{
+				printf( "*** ERROR : expect '--image-file' with action '-a import'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_import ---" )
+			nret = DoAction_import( env ) ;
+			INFOLOGC( "--- DoAction_import return[%d] ---" , nret )
 		}
 		else
 		{

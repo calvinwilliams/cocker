@@ -30,6 +30,8 @@ struct CommandParameter
 	char			*__from_container ;
 	char			*__to_container ;
 	
+	char			*__image_file ;
+	
 	char			*__debug ;
 	char			*__forcely ;
 } ;
@@ -97,6 +99,9 @@ int DoAction_to_container( struct CockerEnvironment *env );
 int DoAction_copy_image( struct CockerEnvironment *env );
 int DoAction_del_image( struct CockerEnvironment *env );
 
+int DoAction_export( struct CockerEnvironment *env );
+int DoAction_import( struct CockerEnvironment *env );
+
 /* depend on
 sudo yum install -y telnet
 sudo yum install -y nmap-ncat
@@ -109,8 +114,10 @@ echo "1" >/proc/sys/net/ipv4/ip_forward
 
 /* for test
 cocker -a install_test -d
+
 cocker -s images
 cocker -s containers
+
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
 cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
@@ -119,13 +126,24 @@ cocker -a attach -d -c test
 cocker -a shutdown -d -c test
 cocker -a destroy -d -c test
 cocker -a destroy -d -f -c test
+
 cocker -a vip -d --vip 166.88.0.3 -c test
+
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
+
 cocker -a to_image -d --from-container test --to-image test2
 cocker -a to_container -d -m test --from-image test2 --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
+
 cocker -a copy_image -d --from-image test --to-image test2
 cocker -a del_image -d -m test2
 
+cocker -a export -d -m test
+cocker -a export -d -m test --image-file test.cockerimage
+cocker -a import -d --image-file test.cockerimage
+cocker -a import -d --image-file test.cockerimage -m test
+*/
+
+/* for test
 ps -ef | grep -v grep | grep cockerinit | awk '{print $2}' | xargs kill -9
 
 sudo cp ~/src/cocker/src/cockerinit/cockerinit /var/cocker/images/test/rlayer/bin/
