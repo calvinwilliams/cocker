@@ -24,6 +24,8 @@ c_FILE		=	\
 			action_to_container.c \
 			action_copy_image.c \
 			action_del_image.c \
+			action_export.c \
+			action_import.c \
 			util.c \
 
 ###### 目标文件、安装目录配置区

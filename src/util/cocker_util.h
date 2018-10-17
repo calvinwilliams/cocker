@@ -66,7 +66,7 @@ extern "C" {
 #endif
 
 #ifndef IMAGE_ID_LEN_MAX
-#define IMAGE_ID_LEN_MAX		10
+#define IMAGE_ID_LEN_MAX	10
 #endif
 
 #ifndef CONTAINER_ID_LEN_MAX
@@ -82,7 +82,7 @@ extern "C" {
 #endif
 
 #ifndef NETNS_NAME_LEN_MAX
-#define NETNS_NAME_LEN_MAX		256
+#define NETNS_NAME_LEN_MAX	256
 #endif
 
 #ifndef IP_LEN_MAX
@@ -90,7 +90,7 @@ extern "C" {
 #endif
 
 #ifndef PORT_MAP_LEN_MAX
-#define PORT_MAP_LEN_MAX		64
+#define PORT_MAP_LEN_MAX	64
 #endif
 
 #ifndef PID_LEN_MAX
@@ -99,6 +99,10 @@ extern "C" {
 
 #ifndef CGROUP_PATH
 #define CGROUP_PATH		"/sys/fs/cgroup"
+#endif
+
+#ifndef COCKERIMAGE_FILE_EXTNAME
+#define COCKERIMAGE_FILE_EXTNAME	"cockerimage"
 #endif
 
 /*
