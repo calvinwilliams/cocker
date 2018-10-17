@@ -97,7 +97,7 @@ int DoAction_attach( struct CockerEnvironment *env )
 	}
 	else
 	{
-		E( "connect[%s] ok\n" , connected_addr.sun_path )
+		I( "connect[%s] ok\n" , connected_addr.sun_path )
 	}
 	
 	tcp_bridge( connected_sock );

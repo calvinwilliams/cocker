@@ -14,6 +14,7 @@ static int CloneEntry( void *p )
 {
 	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
 	
+	char				container_net_file[ PATH_MAX + 1 ] ;
 	char				net[ NET_LEN_MAX + 1 ] ;
 	int				len ;
 	
@@ -49,6 +50,12 @@ static int CloneEntry( void *p )
 	SetLogcFile( "/var/cocker/cocker.log" );
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
+	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
+	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
+	EIDTI( "read file %s ok\n" , container_net_file )
+	
+	TrimEnter( net );
+	
 	if( STRCMP( net , == , "BRIDGE" ) || STRCMP( net , == , "CUSTOM" ) )
 	{
 		/* setns */
@@ -58,6 +65,7 @@ static int CloneEntry( void *p )
 		
 		netns_fd = open( netns_path , O_RDONLY ) ;
 		IxTEx( (netns_fd==-1) , exit(9) , "*** ERROR : open netns path failed , errno[%d]\n" , errno )
+		EIDTI( "open %s ok\n" , netns_path )
 		
 		nret = setns( netns_fd , CLONE_NEWNET ) ;
 		IxTEx( nret == -1 , exit(9) , "*** ERROR : setns failed , errno[%d]\n" , errno )
@@ -82,7 +90,7 @@ static int CloneEntry( void *p )
 	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
-	nret = ReadFileLine( image , sizeof(image)-1 , NULL , -1 , "%s/images" , env->container_path_base ) ;
+	nret = ReadFileLine( image , sizeof(image)-1 , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
 	INTEx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->cmd_para.__container_id )
 	EIDTI( "read file %s ok\n" , container_images_file )
 	
