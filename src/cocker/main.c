@@ -24,6 +24,7 @@ static void usage()
 static int ParseCommandParameters( struct CockerEnvironment *env , int argc , char *argv[] )
 {
 	int		i ;
+	char		cmd[ 4096 ] ;
 	
 	int		nret = 0 ;
 	
@@ -190,6 +191,10 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			return -1;
 		}
 	}
+	
+	memset( cmd , 0x00 , sizeof(cmd) );
+	SnprintfAndPopen( env->host_eth_ip , sizeof(env->host_eth_ip) , cmd , sizeof(cmd) , "ifconfig %s | grep -w inet | awk '{print $2}'" , env->host_eth_name );
+	TrimEnter( env->host_eth_ip );
 	
 	if( env->cmd_para.__cpus || env->cmd_para.__cpu_quota || env->cmd_para.__mem_limit )
 		env->cgroup_enable = 1 ;
