@@ -289,7 +289,11 @@ int CleanContainerResource( struct CockerEnvironment *env )
 			env->src_port = atoi(src_port_str) ;
 			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
 			
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , vip , env->dst_port ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
+			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			EIDTI( "system [%s] ok\n" , cmd )
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D OUTPUT -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
@@ -515,7 +519,11 @@ int DoAction_boot( struct CockerEnvironment *env )
 			env->src_port = atoi(src_port_str) ;
 			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
 			
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -i %s -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->host_eth_name , env->src_port , vip , env->dst_port ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
+			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
+			EIDTI( "system [%s] ok\n" , cmd )
+			
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A OUTPUT -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}

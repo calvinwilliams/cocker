@@ -47,6 +47,7 @@ struct CockerEnvironment
 	char			netbr_ip[ IP_LEN_MAX + 1 ] ;
 	
 	char			host_eth_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
+	char			host_eth_ip[ IP_LEN_MAX + 1 ] ;
 	
 	char			image_path_base[ PATH_MAX + 1 ] ;
 	char			container_path_base[ PATH_MAX + 1 ] ;
