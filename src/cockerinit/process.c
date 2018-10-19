@@ -34,7 +34,7 @@ int process( struct CockerInitEnvironment *env )
 	env->bash_pid = pty_fork( NULL , NULL , & (env->ptm_fd) ) ;
 	if( env->bash_pid < 0 )
 	{
-		ERRORLOGC( "*** ERROR : pty_fork failed[%d] , errno[%d]\n" , env->bash_pid , errno )
+		FATALLOGC( "*** ERROR : pty_fork failed[%d] , errno[%d]\n" , env->bash_pid , errno )
 		exit(9);
 	}
 	else if( env->bash_pid == 0 )
@@ -44,6 +44,7 @@ int process( struct CockerInitEnvironment *env )
 		nret = tcgetattr( STDIN_FILENO , & ptm_termios ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "*** ERROR : tcgetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
@@ -60,12 +61,14 @@ int process( struct CockerInitEnvironment *env )
 		nret = tcsetattr( STDIN_FILENO , TCSANOW , & ptm_termios ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "*** ERROR : tcsetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
 		nret = execl( "/bin/bash" , "bash" , "-l" , NULL ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "*** ERROR : execl failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
