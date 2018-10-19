@@ -13,11 +13,11 @@ fi
 IMAGE_RLAYER_PATH_BASE=$1
 
 cd ${IMAGE_RLAYER_PATH_BASE}
-mkdir -p bin sbin lib lib64 usr etc root dev proc var
+mkdir -p -m 755 bin sbin lib lib64 usr etc root dev proc var tmp
 
 # install /bin and /lib64
 cd /bin
-cp bash tty which locale env ls cat echo rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc ${IMAGE_RLAYER_PATH_BASE}/bin/
+cp bash tty which locale env ls cat echo cp mv rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc ${IMAGE_RLAYER_PATH_BASE}/bin/
 cp cockerinit ${IMAGE_RLAYER_PATH_BASE}/bin/
 cd ${IMAGE_RLAYER_PATH_BASE}/bin/
 cocker_ldd_and_cp_lib64.sh
@@ -37,6 +37,16 @@ echo "root:x:0:0:root:/root:/bin/bash" >${IMAGE_RLAYER_PATH_BASE}/etc/passwd
 echo "root:x:0:" >${IMAGE_RLAYER_PATH_BASE}/etc/group
 
 # install /dev/pts
+mknod -m 600 ${IMAGE_RLAYER_PATH_BASE}/dev/console c 5 1
+mknod -m 600 ${IMAGE_RLAYER_PATH_BASE}/dev/initctl p
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/full c 1 7
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/null c 1 3
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/zero c 1 5
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/random c 1 8
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/urandom c 1 9
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/ptmx c 5 2
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/tty c 5 0
+mknod -m 666 ${IMAGE_RLAYER_PATH_BASE}/dev/tty0 c 4 0
 mkdir -p ${IMAGE_RLAYER_PATH_BASE}/dev/pts
 
 # install /usr/share/terminfo
