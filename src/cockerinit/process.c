@@ -47,16 +47,15 @@ int process( struct CockerInitEnvironment *env )
 			exit(1);
 		}
 		
-		
+		/*
 		ptm_termios.c_lflag &= ~(ECHO|ECHOE|ECHOK|ECHONL) ;
 		ptm_termios.c_oflag &= ~(ONLCR) ;
+		*/
 		
-		/*
 		ptm_termios.c_lflag |= ECHO ;
 		ptm_termios.c_oflag |= ONLCR | XTABS ;
 		ptm_termios.c_iflag |= ICRNL ;
 		ptm_termios.c_iflag &= ~IXOFF ;
-		*/
 		
 		nret = tcsetattr( STDIN_FILENO , TCSANOW , & ptm_termios ) ;
 		if( nret == -1 )

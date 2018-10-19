@@ -1,5 +1,16 @@
 #include "cocker_in.h"
 
+#define TRY_CONNECT_COUNT	5
+
+struct termios          	g_termios_init ;
+struct termios          	g_termios_raw ;
+
+static void RestoreTerminalAttr()
+{
+	tcsetattr( 0 , TCSANOW , & g_termios_init );
+	return; 
+}
+
 static int tcp_bridge( int connected_sock )
 {
 	fd_set		read_fds ;
@@ -7,6 +18,12 @@ static int tcp_bridge( int connected_sock )
 	int		len ;
 	
 	int		nret = 0 ;
+	
+	tcgetattr( STDIN_FILENO , & g_termios_init );
+	atexit( & RestoreTerminalAttr );
+	memcpy( & g_termios_raw , & g_termios_init , sizeof(struct termios) );
+	cfmakeraw( & g_termios_raw );
+	tcsetattr( STDIN_FILENO , TCSANOW , & g_termios_raw ) ;
 	
 	while(1)
 	{
@@ -20,12 +37,12 @@ static int tcp_bridge( int connected_sock )
 			return -1;
 		}
 		
-		if( FD_ISSET( 0 , & read_fds ) )
+		if( FD_ISSET( STDIN_FILENO , & read_fds ) )
 		{
-			len = read( 0 , buf , sizeof(buf)-1 ) ;
+			len = read( STDIN_FILENO , buf , sizeof(buf)-1 ) ;
 			if( len == -1 )
 			{
-				E( "*** ERROR : read 0 failed , errno[%d]\n" , errno )
+				E( "*** ERROR : read STDIN_FILENO failed , errno[%d]\n" , errno )
 				return -1;
 			}
 			
@@ -46,10 +63,10 @@ static int tcp_bridge( int connected_sock )
 				return -1;
 			}
 			
-			nret = writen( 1 , buf , len , NULL ) ;
+			nret = writen( STDOUT_FILENO , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
-				E( "*** ERROR : writen 1 failed , errno[%d]\n" , errno )
+				E( "*** ERROR : writen STDOUT_FILENO failed , errno[%d]\n" , errno )
 				return -1;
 			}
 		}
@@ -64,6 +81,7 @@ int DoAction_attach( struct CockerEnvironment *env )
 	
 	int			connected_sock ;
 	struct sockaddr_un	connected_addr ;
+	int			i ;
 	
 	int			nret = 0 ;
 	
@@ -86,11 +104,18 @@ int DoAction_attach( struct CockerEnvironment *env )
 		return -1;
 	}
 	
-	memset( & connected_addr , 0x00 , sizeof(struct sockaddr_un) );
-	connected_addr.sun_family = AF_UNIX ;
-	snprintf( connected_addr.sun_path , sizeof(connected_addr.sun_path)-1 , "%s/dev/cocker.sock" , container_merge_path );
-	nret = connect( connected_sock , (struct sockaddr *) & connected_addr , sizeof(struct sockaddr_un) ) ;
-	if( nret == -1 )
+	for( i = 0 ; i < TRY_CONNECT_COUNT ; i++ )
+	{
+		memset( & connected_addr , 0x00 , sizeof(struct sockaddr_un) );
+		connected_addr.sun_family = AF_UNIX ;
+		snprintf( connected_addr.sun_path , sizeof(connected_addr.sun_path)-1 , "%s/dev/cocker.sock" , container_merge_path );
+		nret = connect( connected_sock , (struct sockaddr *) & connected_addr , sizeof(struct sockaddr_un) ) ;
+		if( nret == 0 )
+			break;
+		
+		sleep(1);
+	}
+	if( i >= TRY_CONNECT_COUNT )
 	{
 		E( "*** ERROR : connect[%s] failed , errno[%d]\n" , connected_addr.sun_path , errno )
 		return -1;
@@ -102,6 +127,7 @@ int DoAction_attach( struct CockerEnvironment *env )
 	
 	tcp_bridge( connected_sock );
 	
+	I( "close connected sock\n" )
 	close( connected_sock );
 	
 	return 0;
