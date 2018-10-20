@@ -39,7 +39,6 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( images , sizeof(images) , container_images_file , sizeof(container_images_file) , "%s/%s/images" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine images failed[%d]\n" , nret );
 			memset( container_images_file , 0x00 , sizeof(container_images_file) );
 			memset( images , 0x00 , sizeof(images) );
 		}
@@ -50,7 +49,6 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( hostname , sizeof(hostname) , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine hostname failed[%d]\n" , nret );
 			memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 			memset( hostname , 0x00 , sizeof(hostname) );
 		}
@@ -61,7 +59,6 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/%s/net" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine net failed[%d]\n" , nret );
 			memset( container_net_file , 0x00 , sizeof(container_net_file) );
 			memset( net , 0x00 , sizeof(net) );
 		}
@@ -72,7 +69,6 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( netns , sizeof(netns) , container_netns_file , sizeof(container_netns_file) , "%s/%s/netns" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine netns failed[%d]\n" , nret );
 			memset( container_netns_file , 0x00 , sizeof(container_netns_file) );
 			memset( netns , 0x00 , sizeof(netns) );
 		}

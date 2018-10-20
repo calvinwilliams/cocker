@@ -32,7 +32,6 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( author , sizeof(author) , image_author_file , sizeof(image_author_file) , "%s/%s/author" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine author failed[%d]\n" , nret );
 			memset( image_author_file , 0x00 , sizeof(image_author_file) );
 			memset( author , 0x00 , sizeof(author) );
 		}
@@ -43,7 +42,6 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( create_datetime , sizeof(create_datetime) , image_create_datetime_file , sizeof(image_create_datetime_file) , "%s/%s/create_datetime" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine create_datetime failed[%d]\n" , nret );
 			memset( image_create_datetime_file , 0x00 , sizeof(image_create_datetime_file) );
 			memset( create_datetime , 0x00 , sizeof(create_datetime) );
 		}
@@ -54,7 +52,6 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		nret = ReadFileLine( version , sizeof(version) , image_version_file , sizeof(image_version_file) , "%s/%s/version" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			printf( "*** ERROR : ReadFileLine author failed[%d]\n" , nret );
 			memset( image_version_file , 0x00 , sizeof(image_version_file) );
 			memset( version , 0x00 , sizeof(version) );
 		}
