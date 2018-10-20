@@ -11,7 +11,7 @@ static void RestoreTerminalAttr()
 	return; 
 }
 
-static int tcp_bridge( int connected_sock )
+static int tcp_and_pts_bridge( int connected_sock )
 {
 	fd_set		read_fds ;
 	char		buf[ 4096 ] ;
@@ -125,7 +125,7 @@ int DoAction_attach( struct CockerEnvironment *env )
 		I( "connect[%s] ok\n" , connected_addr.sun_path )
 	}
 	
-	tcp_bridge( connected_sock );
+	tcp_and_pts_bridge( connected_sock );
 	
 	I( "close connected sock\n" )
 	close( connected_sock );

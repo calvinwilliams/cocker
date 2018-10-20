@@ -12,9 +12,9 @@ static void usage()
 	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
-	printf( "               -a to_image --from-container (container_id) --to-image (image_id)\n" );
+	printf( "               -a to_image --from-container (container_id) --to-image (image_id) [ --author (author) ] [ --verion (verion) ]\n" );
 	printf( "               -a to_container --from-image (image_id) --to-container (container_id) [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
-	printf( "               -a copy_image --from-image (image_id) --to-image (image_id)\n" );
+	printf( "               -a copy_image --from-image (image_id) --to-image (image_id) [ --author (author) ] [ --verion (verion) ]\n" );
 	printf( "               -a del_image (-m|--image) (image_id)\n" );
 	printf( "               -a install_test\n" );
 	printf( "                    (-d|--debug)\n" );
@@ -45,6 +45,16 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 		else if( STRCMP( argv[i] , == , "-a" ) && i + 1 < argc )
 		{
 			env->cmd_para._action = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--author" ) && i + 1 < argc )
+		{
+			env->cmd_para.__author = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--version" ) && i + 1 < argc )
+		{
+			env->cmd_para.__version = argv[i+1] ;
 			i++;
 		}
 		else if( ( STRCMP( argv[i] , == , "-m" ) || STRCMP( argv[i] , == , "--image" ) ) && i + 1 < argc )
@@ -232,7 +242,47 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 	}
 	else if( env->cmd_para._action )
 	{
-		if( STRCMP( env->cmd_para._action , == , "create" ) )
+		if( STRCMP( env->cmd_para._action , == , "install_test" ) )
+		{
+			return -DoAction_install_test( env );
+		}
+		else if( STRCMP( env->cmd_para._action , == , "author" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
+			{
+				printf( "*** ERROR : expect '--image' with action '-a author'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__author) )
+			{
+				printf( "*** ERROR : expect '--author' with action '-a author'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_author ---" )
+			nret = DoAction_author( env ) ;
+			INFOLOGC( "--- DoAction_author return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "version" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
+			{
+				printf( "*** ERROR : expect '--image' with action '-a author'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__version) )
+			{
+				printf( "*** ERROR : expect '--version' with action '-a author'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_version ---" )
+			nret = DoAction_version( env ) ;
+			INFOLOGC( "--- DoAction_version return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "create" ) )
 		{
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
 			{
@@ -345,10 +395,6 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			INFOLOGC( "--- call DoAction_port_mapping ---" )
 			nret = DoAction_port_mapping( env ) ;
 			INFOLOGC( "--- DoAction_port_mapping return[%d] ---" , nret )
-		}
-		else if( STRCMP( env->cmd_para._action , == , "install_test" ) )
-		{
-			return -DoAction_install_test( env );
 		}
 		else if( STRCMP( env->cmd_para._action , == , "to_image" ) )
 		{

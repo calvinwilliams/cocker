@@ -42,12 +42,14 @@ c_FILE		=	\
 			action_port_mapping.c \
 			action_attach.c \
 			action_install_test.c \
-			action_to_image.c \
 			action_to_container.c \
+			action_to_image.c \
 			action_copy_image.c \
 			action_del_image.c \
 			action_export.c \
 			action_import.c \
+			action_author.c \
+			action_version.c \
 			util.c \
 
 ###### 目标文件、安装目录配置区

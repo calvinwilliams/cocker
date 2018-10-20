@@ -1,6 +1,6 @@
 #include "cockerinit_in.h"
 
-int tcp_pts_bridge( struct CockerInitEnvironment *env )
+int pts_and_tcp_bridge( struct CockerInitEnvironment *env )
 {
 	fd_set		read_fds ;
 	char		buf[ 4096 ] ;

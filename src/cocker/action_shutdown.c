@@ -27,7 +27,7 @@ static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 		nret = kill( pid , 0 ) ;
 		if( nret == 0 )
 		{
-			/* kill clone process */
+			/* kill clone create_pty */
 			kill( pid , signal_no );
 			printf( "OK\n" );
 		}
