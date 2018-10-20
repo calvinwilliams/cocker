@@ -85,9 +85,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	}
 	
 	if( env->cmd_para.__host_name == NULL )
-	{
 		env->cmd_para.__host_name = __container_id ;
-	}
 	
 	nret = WriteFileLine( env->cmd_para.__host_name , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
 	INTER1( "*** ERROR : WriteFileLine hostname failed[%d] , errno[%d]\n" , nret , errno )

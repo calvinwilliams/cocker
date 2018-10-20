@@ -102,7 +102,7 @@ _WAITPID :
 			}
 			else if( pid == 0 )
 			{
-				exit(-process( env ));
+				exit(-create_pty( env ));
 			}
 			
 			close( env->accepted_sock );

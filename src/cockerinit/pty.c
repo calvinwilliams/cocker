@@ -1,6 +1,6 @@
 #include "cockerinit_in.h"
 
-int process( struct CockerInitEnvironment *env )
+int create_pty( struct CockerInitEnvironment *env )
 {
 	/*
 	struct termios	origin_termios ;
@@ -78,7 +78,7 @@ int process( struct CockerInitEnvironment *env )
 	{
 		INFOLOGC( "pty_fork parent\n" )
 		
-		tcp_pts_bridge( env );
+		pts_and_tcp_bridge( env );
 		
 		close( env->accepted_sock );
 		close( env->ptm_fd );

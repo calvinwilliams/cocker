@@ -69,6 +69,22 @@ extern "C" {
 #define IMAGE_ID_LEN_MAX	10
 #endif
 
+#ifndef AUTHOR_LEN_MAX
+#define AUTHOR_LEN_MAX		64
+#endif
+
+#ifndef CREATE_DATATIME_LEN_MAX
+#define CREATE_DATATIME_LEN_MAX	20
+#endif
+
+#ifndef VERSION_LEN_MAX
+#define VERSION_LEN_MAX		16
+#endif
+
+#ifndef TAG_LEN_MAX
+#define TAG_LEN_MAX		64
+#endif
+
 #ifndef CONTAINER_ID_LEN_MAX
 #define CONTAINER_ID_LEN_MAX	10
 #endif

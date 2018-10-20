@@ -23,8 +23,8 @@ struct CockerInitEnvironment
 } ;
 
 int server( struct CockerInitEnvironment *env );
-int process( struct CockerInitEnvironment *env );
-int tcp_pts_bridge( struct CockerInitEnvironment *env );
+int create_pty( struct CockerInitEnvironment *env );
+int pts_and_tcp_bridge( struct CockerInitEnvironment *env );
 
 #ifdef __cplusplus
 }

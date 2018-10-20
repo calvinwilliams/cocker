@@ -1,3 +1,7 @@
+0.11.0		2018-10-20	calvin
+		* 新增镜像属性'author','create_datetime','version'
+		* 新增指令'author','version'
+
 0.10.2		2018-10-19	calvin
 		* 修正了-a attach连接伪终端的控制字符问题
 

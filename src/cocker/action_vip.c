@@ -16,6 +16,8 @@ int DoAction_vip( struct CockerEnvironment *env )
 	INTER1( "*** ERROR : WriteFileLine vip failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTE( "write file [%s] ok\n" , container_vip_file )
 	
+	printf( "OK\n" );
+	
 	return 0;	
 }
 
