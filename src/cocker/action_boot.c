@@ -102,11 +102,43 @@ static int CloneEntry( void *p )
 	
 	memset( mount_data , 0x00 , sizeof(mount_data) );
 	if( image[0] == '\0' )
+	{
 		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
+		IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) , exit(9) , "*** ERROR : snprintf overflow\n" )
+	}
 	else
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "lowerdir=%s/%s/rlayer,upperdir=%s/rwlayer,workdir=%s/workdir" , env->images_path_base , image , env->container_path_base , env->container_path_base ) ;
-	IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) , exit(9) , "*** ERROR : snprintf overflow\n" )
-	
+	{
+		int	l ;
+		char	*p = NULL ;
+		
+		len = 0 ;
+		p = strtok( image , ":" ) ;
+		while( p )
+		{
+			if( len == 0 )
+			{
+				l = snprintf( mount_data+len , sizeof(mount_data)-1-len , "lowerdir=" ) ;
+				IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+				len += l ;
+			}
+			else
+			{
+				l = snprintf( mount_data+len , sizeof(mount_data)-1-len , ":" ) ;
+				IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+				len += l ;
+			}
+			
+			l = snprintf( mount_data+len , sizeof(mount_data)-1-len , "%s/%s/rlayer" , env->images_path_base , p ) ;
+			IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+			len += l ;
+			
+			p = strtok( NULL , ":" ) ;
+		}
+		
+		l = snprintf( mount_data+len , sizeof(mount_data)-1-len , ",upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
+		IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+		len += l ;
+	}
 	nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
 	I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )
 	EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data )

@@ -130,6 +130,7 @@ cocker -a version -d -m test --version "1.0.1"
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
 cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
+cocker -a create -d -m "test:test2" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -t -c test
 cocker -a attach -d -c test
 cocker -a shutdown -d -c test

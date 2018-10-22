@@ -25,8 +25,19 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	/* preprocess input parameters */
 	if( __image_id && __image_id[0] )
 	{
-		nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/rlayer" , env->images_path_base , __image_id ) ;
-		INTER1( "*** ERROR : image[%s] not found\n" , __image_id )
+		char	image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+		char	*p = NULL ;
+		
+		memset( image_id , 0x00 , sizeof(image_id) );
+		strncpy( image_id , __image_id , sizeof(image_id)-1 );
+		p = strtok( image_id , ":" ) ;
+		while( p )
+		{
+			nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/rlayer" , env->images_path_base , p ) ;
+			INTER1( "*** ERROR : image[%s] not found\n" , p )
+			
+			p = strtok( NULL , ":" ) ;
+		}
 	}
 	
 	if( __container_id == NULL )

@@ -65,8 +65,8 @@ extern "C" {
 #define OVERLAY_RET(_ret_,_inframe_ret_)	((_inframe_ret_)<0?-(_ret_)+(_inframe_ret_):(_ret_)+(_inframe_ret_))
 #endif
 
-#ifndef IMAGE_ID_LEN_MAX
-#define IMAGE_ID_LEN_MAX	10
+#ifndef IMAGES_ID_LEN_MAX
+#define IMAGES_ID_LEN_MAX	1024
 #endif
 
 #ifndef AUTHOR_LEN_MAX
