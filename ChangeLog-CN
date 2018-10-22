@@ -1,3 +1,6 @@
+0.12.0		2018-10-22	calvin
+		* 创建容器时支持叠加多个镜像了
+
 0.11.0		2018-10-20	calvin
 		* 新增镜像属性'author','create_datetime','version'
 		* 新增指令'author','version'
