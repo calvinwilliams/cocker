@@ -5,7 +5,7 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create (-m|--image) (image_id) [ (-c|--container) (container_id) ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "               -a create (-m|--image) (image_id[:image_id2][...]) [ (-c|--container) (container_id) ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );

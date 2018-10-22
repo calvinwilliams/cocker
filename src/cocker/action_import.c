@@ -3,7 +3,7 @@
 int DoAction_import( struct CockerEnvironment *env )
 {
 	int		image_file_len ;
-	char		image_id[ IMAGE_ID_LEN_MAX + 1 ] ;
+	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
 	char		image_rlayer_path_base[ PATH_MAX + 1 ] ;
 	char		current_path[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
