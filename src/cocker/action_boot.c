@@ -25,8 +25,12 @@ static int CloneEntry( void *p )
 	char				hostname[ HOST_NAME_MAX + 1 ] ;
 	char				container_images_file[ PATH_MAX + 1 ] ;
 	char				image[ PATH_MAX + 1 ] ;
+	char				container_volume_file[ PATH_MAX + 1 ] ;
+	FILE				*container_volume_fp = NULL ;
 	char				mount_target[ PATH_MAX + 1 ] ;
 	char				mount_data[ 4096 ] ;
+	struct CockerVolume		volume ;
+	char				mount_volume[ PATH_MAX + 1 ] ;
 	
 	char				cmd[ 4096 ] ;
 	
@@ -143,6 +147,47 @@ static int CloneEntry( void *p )
 	I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )
 	EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data )
 	
+	/* mount volumes */
+	Snprintf( container_volume_file , sizeof(container_volume_file) , "%s/volume" , env->container_path_base ) ;
+	container_volume_fp = fopen( container_volume_file , "r" ) ;
+	if( container_volume_fp )
+	{
+		char		file_buffer[ 4096 ] ;
+		char		*p = NULL ;
+		
+		while(1)
+		{
+			memset( file_buffer , 0x00 , sizeof(file_buffer) );
+			if( fgets( file_buffer , sizeof(file_buffer) , container_volume_fp ) == NULL )
+				break;
+			TrimEnter( file_buffer );
+			
+			volume.host_path = file_buffer ;
+			p = strchr( volume.host_path , ':' ) ;
+			if( p )
+			{
+				volume.host_path_len = p - volume.host_path ;
+				volume.container_path = p + 1 ;
+				(*p) = '\0' ;
+			}
+			else
+			{
+				volume.host_path_len = strlen(volume.host_path) ;
+				volume.container_path = volume.host_path ;
+			}
+			
+			memset( mount_volume , 0x00 , sizeof(mount_volume) );
+			len = snprintf( mount_volume , sizeof(mount_volume)-1 , "%s/merged%s" , env->container_path_base , volume.container_path ) ;
+			IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_volume)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
+			
+			nret = mount( volume.host_path , mount_volume , NULL , MS_MGC_VAL|MS_BIND , NULL ) ;
+			I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , volume.host_path , mount_volume , errno )
+			EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , volume.host_path , mount_volume , "(null)" , MS_MGC_VAL|MS_BIND , "(null)" )
+		}
+		
+		fclose( container_volume_fp );
+	}
+	
 	/* enable system limits */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	snprintf( pid_str , sizeof(pid_str)-1 , "%d" , getpid() );
@@ -218,7 +263,10 @@ static int CloneEntry( void *p )
 		}
 	}
 	
-	/* chroot */
+	/* chroot
+	----------------------------------------------------------------------------------------------------
+	*/
+	I( "chroot [%s] ...\n" , mount_target )
 	nret = chroot( mount_target ) ;
 	if( env->cmd_para.__debug )
 	{
@@ -256,25 +304,29 @@ static int CloneEntry( void *p )
 
 int CleanContainerResource( struct CockerEnvironment *env )
 {
-	char		net[ NET_LEN_MAX + 1 ] ;
-	char		vip[ IP_LEN_MAX + 1 ] ;
+	char			net[ NET_LEN_MAX + 1 ] ;
+	char			vip[ IP_LEN_MAX + 1 ] ;
 	
-	char		cmd[ 4096 ] ;
-	int		len ;
+	char			cmd[ 4096 ] ;
+	int			len ;
 	
-	char		container_pid_file[ PATH_MAX + 1 ] ;
-	char		container_net_file[ PATH_MAX + 1 ] ;
-	char		container_vip_file[ PATH_MAX + 1 ] ;
-	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	char			container_pid_file[ PATH_MAX + 1 ] ;
+	char			container_net_file[ PATH_MAX + 1 ] ;
+	char			container_vip_file[ PATH_MAX + 1 ] ;
+	char			container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
-	char		pid_str[ PID_LEN_MAX + 1 ] ;
+	char			pid_str[ PID_LEN_MAX + 1 ] ;
 	
-	char		port_mapping[ PORT_MAP_LEN_MAX + 1 ] ;
-	char		src_port_str[ 20 + 1 ] ;
+	char			port_mapping[ PORT_MAP_LEN_MAX + 1 ] ;
+	char			src_port_str[ 20 + 1 ] ;
 	
-	char		mount_target[ PATH_MAX + 1 ] ;
+	char			container_volume_file[ PATH_MAX + 1 ] ;
+	FILE			*container_volume_fp = NULL ;
+	struct CockerVolume	volume ;
+	char			mount_volume[ PATH_MAX + 1 ] ;
+	char			mount_target[ PATH_MAX + 1 ] ;
 	
-	int		nret = 0 ;
+	int			nret = 0 ;
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
@@ -376,6 +428,47 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		}
 	}
 	
+	/* umount volumes */
+	Snprintf( container_volume_file , sizeof(container_volume_file) , "%s/volume" , env->container_path_base ) ;
+	container_volume_fp = fopen( container_volume_file , "r" ) ;
+	if( container_volume_fp )
+	{
+		char		file_buffer[ 4096 ] ;
+		char		*p = NULL ;
+		
+		while(1)
+		{
+			memset( file_buffer , 0x00 , sizeof(file_buffer) );
+			if( fgets( file_buffer , sizeof(file_buffer) , container_volume_fp ) == NULL )
+				break;
+			TrimEnter( file_buffer );
+			
+			volume.host_path = file_buffer ;
+			p = strchr( volume.host_path , ':' ) ;
+			if( p )
+			{
+				volume.host_path_len = p - volume.host_path ;
+				volume.container_path = p + 1 ;
+				(*p) = '\0' ;
+			}
+			else
+			{
+				volume.host_path_len = strlen(volume.host_path) ;
+				volume.container_path = volume.host_path ;
+			}
+			
+			memset( mount_volume , 0x00 , sizeof(mount_volume) );
+			len = snprintf( mount_volume , sizeof(mount_volume)-1 , "%s/merged%s" , env->container_path_base , volume.container_path ) ;
+			IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_volume)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
+			
+			nret = umount( mount_volume ) ;
+			I1TE( "*** ERROR : umount[%s] failed , errno[%d]\n" , mount_volume , errno )
+			EIDTI( "umount [%s] ok\n" , mount_volume )
+		}
+		
+		fclose( container_volume_fp );
+	}
+	
 	/* umount */
 	memset( mount_target , 0x00 , sizeof(mount_target) );
 	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged/proc" , env->container_path_base ) ;
@@ -385,8 +478,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		while(1)
 		{
 			nret = umount( mount_target ) ;
-			I1TE( "*** ERROR : umount /proc failed , errno[%d]\n" , errno )
-			EIDTI( "umount /proc ok\n" )
+			I1TE( "*** ERROR : umount %s failed , errno[%d]\n" , mount_target , errno )
+			EIDTI( "umount %s ok\n" , mount_target )
 			if( nret == 0 )
 				break;
 			if( nret == -1 && errno != EBUSY )
@@ -403,8 +496,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		while(1)
 		{
 			nret = umount( mount_target ) ;
-			I1TE( "*** ERROR : umount /dev/pts failed , errno[%d]\n" , errno )
-			EIDTI( "umount /dev/pts ok\n" )
+			I1TE( "*** ERROR : umount %s failed , errno[%d]\n" , mount_target , errno )
+			EIDTI( "umount %s ok\n" , mount_target )
 			if( nret == 0 )
 				break;
 			if( nret == -1 && errno != EBUSY )
@@ -421,8 +514,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		while(1)
 		{
 			nret = umount( mount_target ) ;
-			I1TE( "*** ERROR : umount merged failed , errno[%d]\n" , errno )
-			EIDTI( "umount merged ok\n" )
+			I1TE( "*** ERROR : umount %s failed , errno[%d]\n" , mount_target , errno )
+			EIDTI( "umount %s ok\n" , mount_target )
 			if( nret == 0 )
 				break;
 			if( nret == -1 && errno != EBUSY )

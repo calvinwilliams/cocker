@@ -25,6 +25,8 @@
 #define __USE_GNU
 #include <sched.h>
 
+#include "list.h"
+
 #include "LOGC.h"
 
 int ptmname_r(int fd, char * buf, size_t buflen);

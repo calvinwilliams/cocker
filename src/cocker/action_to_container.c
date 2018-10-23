@@ -2,12 +2,12 @@
 
 int DoAction_to_container( struct CockerEnvironment *env )
 {
-	char		cmd[ 4096 ] ;
-	char		image_author_file[ PATH_MAX + 1 ] ;
-	char		image_create_datetime_file[ PATH_MAX + 1 ] ;
-	char		image_version_file[ PATH_MAX + 1 ] ;
-
-	int		nret = 0 ;
+	char			cmd[ 4096 ] ;
+	char			image_author_file[ PATH_MAX + 1 ] ;
+	char			image_create_datetime_file[ PATH_MAX + 1 ] ;
+	char			image_version_file[ PATH_MAX + 1 ] ;
+	
+	int			nret = 0 ;
 	
 	/* preprocess input parameters */
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__from_image );

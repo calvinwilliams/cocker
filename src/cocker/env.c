@@ -104,6 +104,8 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_env )
 	SnprintfAndPopen( env->netbr_ip , sizeof(env->netbr_ip) , cmd , sizeof(cmd) , "ifconfig cocker0 | grep -w inet | awk '{print $2}'" );
 	TrimEnter( env->netbr_ip );
 	
+	INIT_LIST_HEAD( & (env->cmd_para.volume_list) );
+	
 	(*pp_env) = env ;
 	
 	return 0;
@@ -111,6 +113,15 @@ int CreateCockerEnvironment( struct CockerEnvironment **pp_env )
 
 void DestroyCockerEnvironment( struct CockerEnvironment **pp_env )
 {
+	struct CockerVolume	*volume = NULL ;
+	struct CockerVolume	*next_volume = NULL ;
+	
+	list_for_each_entry_safe( volume , next_volume , & ((*pp_env)->cmd_para.volume_list) , struct CockerVolume , volume_node )
+	{
+		list_del( & (volume->volume_node) );
+		free( volume );
+	}
+	
 	free( (*pp_env) );
 	(*pp_env) = NULL ;
 	

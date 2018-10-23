@@ -7,6 +7,15 @@
 extern "C" {
 #endif
 
+struct CockerVolume
+{
+	char			*host_path ;
+	int			host_path_len ;
+	char			*container_path ;
+	
+	struct list_head	volume_node ;
+} ;
+
 struct CommandParameter
 {
 	char			*_action ;
@@ -36,6 +45,8 @@ struct CommandParameter
 	
 	char			*__debug ;
 	char			*__forcely ;
+	
+	struct list_head	volume_list ;
 } ;
 
 struct CockerEnvironment
@@ -131,7 +142,9 @@ cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-map
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
 cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
 cocker -a create -d -m "test:test2" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
-cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -t -c test
+cocker -a create -d -m test --volume "/tmp:/tmp" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
+cocker -a boot -d -c test -t
+cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a attach -d -c test
 cocker -a shutdown -d -c test
 cocker -a destroy -d -c test

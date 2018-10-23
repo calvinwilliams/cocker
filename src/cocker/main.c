@@ -5,19 +5,19 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create (-m|--image) (image_id[:image_id2][...]) [ (-c|--container) (container_id) ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "               -a create (-m|--image) (image_id[:image_id2][...]) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ] [ (-c|--container) (container_id) ]\n" );
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
-	printf( "               -a to_image --from-container (container_id) --to-image (image_id) [ --author (author) ] [ --verion (verion) ]\n" );
-	printf( "               -a to_container --from-image (image_id) --to-container (container_id) [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
-	printf( "               -a copy_image --from-image (image_id) --to-image (image_id) [ --author (author) ] [ --verion (verion) ]\n" );
+	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
+	printf( "               -a to_container --from-image (image_id) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ] --to-container (container_id)\n" );
+	printf( "               -a copy_image --from-image (image_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
 	printf( "               -a del_image (-m|--image) (image_id)\n" );
 	printf( "               -a install_test\n" );
-	printf( "                    (-d|--debug)\n" );
+	printf( "                    [ (-d|--debug) ]\n" );
 	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
 	return;
 }
@@ -90,6 +90,35 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 		else if( STRCMP( argv[i] , == , "--port-mapping" ) && i + 1 < argc )
 		{
 			env->cmd_para.__port_mapping = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--volume" ) && i + 1 < argc )
+		{
+			struct CockerVolume	*volume = NULL ;
+			char			*p = NULL ;
+			
+			volume = (struct CockerVolume *)malloc( sizeof(struct CockerVolume) ) ;
+			if( volume == NULL )
+			{
+				printf( "*** ERROR : malloc failed , errno[%d]\n" , errno );
+				exit(1);
+			}
+			memset( volume , 0x00 , sizeof(struct CockerVolume) );
+			
+			volume->host_path = argv[i+1] ;
+			p = strchr( volume->host_path , ':' ) ;
+			if( p )
+			{
+				volume->host_path_len = p - volume->host_path ;
+				volume->container_path = p + 1 ;
+			}
+			else
+			{
+				volume->host_path_len = strlen(volume->host_path) ;
+				volume->container_path = volume->host_path ;
+			}
+			
+			list_add_tail( & (volume->volume_node) , & (env->cmd_para.volume_list) );
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--cpus" ) && i + 1 < argc )

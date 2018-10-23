@@ -2,25 +2,28 @@
 
 int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__container_id )
 {
-	char		container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
+	char			container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
 	
-	char		cmd[ 4096 ] ;
+	char			cmd[ 4096 ] ;
 	
-	char		pid_str[ PID_LEN_MAX + 1 ] ;
-	pid_t		pid ;
+	char			pid_str[ PID_LEN_MAX + 1 ] ;
+	pid_t			pid ;
+	struct CockerVolume	*volume = NULL ;
+	FILE			*container_volume_fp = NULL ;
 	
-	char		container_rwlayer_path[ PATH_MAX + 1 ] ;
-	char		container_rwlayer_etc_path[ PATH_MAX + 1 ] ;
-	char		container_merged_path[ PATH_MAX + 1 ] ;
-	char		container_workdir_path[ PATH_MAX + 1 ] ;
-	char		container_images_file[ PATH_MAX + 1 ] ;
-	char		container_hostname_file[ PATH_MAX + 1 ] ;
-	char		container_rwlayer_net_file[ PATH_MAX + 1 ] ;
-	char		container_rwlayer_netns_file[ PATH_MAX + 1 ] ;
-	char		container_vip_file[ PATH_MAX + 1 ] ;
-	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
+	char			container_rwlayer_path[ PATH_MAX + 1 ] ;
+	char			container_rwlayer_etc_path[ PATH_MAX + 1 ] ;
+	char			container_merged_path[ PATH_MAX + 1 ] ;
+	char			container_workdir_path[ PATH_MAX + 1 ] ;
+	char			container_images_file[ PATH_MAX + 1 ] ;
+	char			container_hostname_file[ PATH_MAX + 1 ] ;
+	char			container_volume_file[ PATH_MAX + 1 ] ;
+	char			container_rwlayer_net_file[ PATH_MAX + 1 ] ;
+	char			container_rwlayer_netns_file[ PATH_MAX + 1 ] ;
+	char			container_vip_file[ PATH_MAX + 1 ] ;
+	char			container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
-	int		nret = 0 ;
+	int			nret = 0 ;
 	
 	/* preprocess input parameters */
 	if( __image_id && __image_id[0] )
@@ -93,6 +96,21 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 		nret = WriteFileLine( "" , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
 		INTER1( "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
 		EIDTI( "write file %s ok\n" , container_images_file )
+	}
+	
+	if( ! list_empty( & (env->cmd_para.volume_list) ) )
+	{
+		Snprintf( container_volume_file , sizeof(container_volume_file) , "%s/volume" , env->container_path_base ) ;
+		container_volume_fp = fopen( container_volume_file , "w" ) ;
+		IxTER1( (container_volume_fp==NULL) , "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
+		
+		list_for_each_entry( volume , & (env->cmd_para.volume_list) , struct CockerVolume , volume_node )
+		{
+			fprintf( container_volume_fp , "%.*s:%s\n" , volume->host_path_len , volume->host_path , volume->container_path );
+			IDTI( "write file %s [%.*s:%s]\n" , container_volume_file , volume->host_path_len , volume->host_path , volume->container_path )
+		}
+		
+		fclose( container_volume_fp );
 	}
 	
 	if( env->cmd_para.__host_name == NULL )
