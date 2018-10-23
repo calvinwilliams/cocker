@@ -46,7 +46,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	/* read net file */
 	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
-	EIDTE( "read file net ok\n" )
+	EIDTI( "read file net ok\n" )
 	
 	TrimEnter( net );
 	
@@ -55,19 +55,19 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , env->netns_name ) ;
 		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
+		EIDTI( "system [%s] ok\n" , cmd )
 	}
 	else if( STRCMP( net , == , "CUSTOM" ) )
 	{
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ip netns del %s" , env->netns_name ) ;
 		INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
+		EIDTI( "system [%s] ok\n" , cmd )
 	}
 	
 	/* destroy container folders and files */
 	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , env->container_path_base ) ;
 	INTEFR1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
-	EIDTE( "system [%s] ok\n" , cmd )
+	EIDTI( "system [%s] ok\n" , cmd )
 	
 	printf( "OK\n" );
 	

@@ -8,6 +8,7 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
+			list.c \
 			LOGC.c \
 			version.c \
 			file.c \
@@ -20,6 +21,7 @@ include ../../makeinstall
 LIB		=	libcocker_util.so
 LIBINST		=	$(_LIBINST)
 HDER		= \
+			list.h \
 			LOGC.h \
 			cocker_util.h \
 
