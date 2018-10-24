@@ -6,8 +6,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 	struct dirent	*dirent = NULL ;
 	int		count ;
 	
-	char		container_images_file[ PATH_MAX + 1 ] ;
-	char		images[ 4096 ] ;
+	char		container_image_file[ PATH_MAX + 1 ] ;
+	char		image[ 4096 ] ;
 	char		container_hostname_file[ PATH_MAX + 1 ] ;
 	char		hostname[ HOST_NAME_MAX ] ;
 	char		container_net_file[ PATH_MAX + 1 ] ;
@@ -34,15 +34,19 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		if( dirent->d_type != DT_DIR )
 			continue;
 		
-		memset( container_images_file , 0x00 , sizeof(container_images_file) );
-		memset( images , 0x00 , sizeof(images) );
-		nret = ReadFileLine( images , sizeof(images) , container_images_file , sizeof(container_images_file) , "%s/%s/images" , cocker_env->containers_path_base , dirent->d_name ) ;
+		memset( container_image_file , 0x00 , sizeof(container_image_file) );
+		memset( image , 0x00 , sizeof(image) );
+		nret = ReadFileLine( image , sizeof(image) , container_image_file , sizeof(container_image_file) , "%s/%s/image" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
-			memset( container_images_file , 0x00 , sizeof(container_images_file) );
-			memset( images , 0x00 , sizeof(images) );
+			memset( container_image_file , 0x00 , sizeof(container_image_file) );
+			memset( image , 0x00 , sizeof(image) );
 		}
-		TrimEnter( images );
+		else
+		{
+			I0TI( "read file %s ok\n" , container_image_file )
+		}
+		TrimEnter( image );
 		
 		memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 		memset( hostname , 0x00 , sizeof(hostname) );
@@ -107,11 +111,11 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		
 		if( count == 0 )
 		{
-			printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , "container_id" , "images" , "hostname" , "net" , "netns" , "status" );
+			printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , "container_id" , "image" , "hostname" , "net" , "netns" , "status" );
 			printf( "---------------------------------------------------------------------------------------\n" );
 		}
 		
-		printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , dirent->d_name , images , hostname , net , netns , status );
+		printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , dirent->d_name , image , hostname , net , netns , status );
 		
 		count++;
 	}

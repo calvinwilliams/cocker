@@ -15,7 +15,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	char			container_rwlayer_etc_path[ PATH_MAX + 1 ] ;
 	char			container_merged_path[ PATH_MAX + 1 ] ;
 	char			container_workdir_path[ PATH_MAX + 1 ] ;
-	char			container_images_file[ PATH_MAX + 1 ] ;
+	char			container_image_file[ PATH_MAX + 1 ] ;
 	char			container_hostname_file[ PATH_MAX + 1 ] ;
 	char			container_volume_file[ PATH_MAX + 1 ] ;
 	char			container_rwlayer_net_file[ PATH_MAX + 1 ] ;
@@ -87,22 +87,24 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	
 	if( __image_id && __image_id[0] )
 	{
-		nret = WriteFileLine( __image_id , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
-		INTER1( "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
-		EIDTI( "write file %s ok\n" , container_images_file )
+		nret = WriteFileLine( __image_id , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
+		INTER1( "*** ERROR : WriteFileLine image failed[%d] , errno[%d]\n" , nret , errno )
+		EIDTI( "write file %s ok\n" , container_image_file )
 	}
+	/*
 	else
 	{
-		nret = WriteFileLine( "" , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
-		INTER1( "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
-		EIDTI( "write file %s ok\n" , container_images_file )
+		nret = WriteFileLine( "" , container_image_file , sizeof(container_image_file) , "%s/images" , env->container_path_base ) ;
+		INTER1( "*** ERROR : WriteFileLine image failed[%d] , errno[%d]\n" , nret , errno )
+		EIDTI( "write file %s ok\n" , container_image_file )
 	}
+	*/
 	
 	if( ! list_empty( & (env->cmd_para.volume_list) ) )
 	{
 		Snprintf( container_volume_file , sizeof(container_volume_file) , "%s/volume" , env->container_path_base ) ;
 		container_volume_fp = fopen( container_volume_file , "w" ) ;
-		IxTER1( (container_volume_fp==NULL) , "*** ERROR : WriteFileLine images failed[%d] , errno[%d]\n" , nret , errno )
+		IxTER1( (container_volume_fp==NULL) , "*** ERROR : WriteFileLine volume failed[%d] , errno[%d]\n" , nret , errno )
 		
 		list_for_each_entry( volume , & (env->cmd_para.volume_list) , struct CockerVolume , volume_node )
 		{

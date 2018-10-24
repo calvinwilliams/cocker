@@ -13,11 +13,12 @@ fi
 IMAGE_RLAYER_PATH_BASE=$1
 
 cd ${IMAGE_RLAYER_PATH_BASE}
-mkdir -p -m 755 bin sbin lib lib64 usr etc root dev proc var tmp
+mkdir -p -m 755 bin sbin lib lib64 usr etc root dev proc mnt var tmp
+mkdir -p -m 755 mnt/cdrom
 
 # install /bin and /lib64
 cd /bin
-cp bash tty which locale env ls cat echo cp mv rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc ${IMAGE_RLAYER_PATH_BASE}/bin/
+cp bash tty which locale env ls cat echo cp mv rm pwd cd mkdir rmdir clear ps grep more id uname hostname vi vim awk sed tr file ldd top netstat ping telnet ssh nc mount umount ${IMAGE_RLAYER_PATH_BASE}/bin/
 cp cockerinit ${IMAGE_RLAYER_PATH_BASE}/bin/
 cd ${IMAGE_RLAYER_PATH_BASE}/bin/
 cocker_ldd_and_cp_lib64.sh
