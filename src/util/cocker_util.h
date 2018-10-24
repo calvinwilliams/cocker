@@ -205,6 +205,13 @@ extern "C" {
 		_return_statement_; \
 	} \
 
+#define I0TI(...) \
+	if( nret == 0 ) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		INFOLOGC( __VA_ARGS__ ) \
+	} \
+
 #define I0TER1(...) \
 	if( nret == 0 ) \
 	{ \

@@ -10,6 +10,60 @@ static void sig_proc( int sig_no )
 	return;
 }
 
+static int InvertLowerDirs( struct CockerEnvironment *env , char *images , char *mount_data , int *p_len , int *p_remain_len )
+{
+	int		l ;
+	char		*p = NULL ;
+	
+	int		nret = 0 ;
+	
+	if( images )
+	{
+		p = strtok( images , ":" ) ;
+	}
+	else
+	{
+		p = strtok( NULL , ":" ) ;
+	}
+	
+	if( p )
+	{
+		nret = InvertLowerDirs( env , NULL , mount_data , p_len , p_remain_len ) ;
+		if( nret )
+			return nret;
+		
+		if( (*p_len) == 0 )
+		{
+			l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "lowerdir=" ) ;
+			IxTEx( SNPRINTF_OVERFLOW(l,(*p_remain_len)) , exit(9) , "*** ERROR : snprintf overflow\n" )
+			(*p_len) += l ;
+			(*p_remain_len) -= l ;
+		}
+		else
+		{
+			l = snprintf( mount_data+(*p_len) , (*p_remain_len) , ":" ) ;
+			IxTEx( SNPRINTF_OVERFLOW(l,(*p_remain_len)) , exit(9) , "*** ERROR : snprintf overflow\n" )
+			(*p_len) += l ;
+			(*p_remain_len) -= l ;
+		}
+		
+		l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "%s/%s/rlayer" , env->images_path_base , p ) ;
+		IxTEx( SNPRINTF_OVERFLOW(l,(*p_remain_len)) , exit(9) , "*** ERROR : snprintf overflow\n" )
+		(*p_len) += l ;
+		(*p_remain_len) -= l ;
+		
+		if( images )
+		{
+			l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "," ) ;
+			IxTEx( SNPRINTF_OVERFLOW(l,(*p_remain_len)) , exit(9) , "*** ERROR : snprintf overflow\n" )
+			(*p_len) += l ;
+			(*p_remain_len) -= l ;
+		}
+	}
+	
+	return 0;
+}
+
 static int CloneEntry( void *p )
 {
 	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
@@ -17,13 +71,15 @@ static int CloneEntry( void *p )
 	char				container_net_file[ PATH_MAX + 1 ] ;
 	char				net[ NET_LEN_MAX + 1 ] ;
 	int				len ;
+	int				l ;
+	int				remain_len ;
 	
 	char				netns_path[ PATH_MAX + 1 ] ;
 	int				netns_fd ;
 	
 	char				container_hostname_file[ PATH_MAX + 1 ] ;
 	char				hostname[ HOST_NAME_MAX + 1 ] ;
-	char				container_images_file[ PATH_MAX + 1 ] ;
+	char				container_image_file[ PATH_MAX + 1 ] ;
 	char				image[ PATH_MAX + 1 ] ;
 	char				container_volume_file[ PATH_MAX + 1 ] ;
 	FILE				*container_volume_fp = NULL ;
@@ -94,10 +150,16 @@ static int CloneEntry( void *p )
 	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
-	nret = ReadFileLine( image , sizeof(image)-1 , container_images_file , sizeof(container_images_file) , "%s/images" , env->container_path_base ) ;
-	INTEx( (exit(9)) , "*** ERROR : ReadFileLine images in container '%s' failed\n" , env->cmd_para.__container_id )
-	EIDTI( "read file %s ok\n" , container_images_file )
-	
+	nret = ReadFileLine( image , sizeof(image)-1 , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
+	if( nret )
+	{
+		memset( container_image_file , 0x00 , sizeof(container_image_file) );
+		memset( image , 0x00 , sizeof(image) );
+	}
+	else
+	{
+		I0TI( "read file %s ok\n" , container_image_file )
+	}
 	TrimEnter( image );
 	
 	memset( mount_target , 0x00 , sizeof(mount_target) );
@@ -112,36 +174,15 @@ static int CloneEntry( void *p )
 	}
 	else
 	{
-		int	l ;
-		char	*p = NULL ;
-		
 		len = 0 ;
-		p = strtok( image , ":" ) ;
-		while( p )
-		{
-			if( len == 0 )
-			{
-				l = snprintf( mount_data+len , sizeof(mount_data)-1-len , "lowerdir=" ) ;
-				IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
-				len += l ;
-			}
-			else
-			{
-				l = snprintf( mount_data+len , sizeof(mount_data)-1-len , ":" ) ;
-				IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
-				len += l ;
-			}
-			
-			l = snprintf( mount_data+len , sizeof(mount_data)-1-len , "%s/%s/rlayer" , env->images_path_base , p ) ;
-			IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
-			len += l ;
-			
-			p = strtok( NULL , ":" ) ;
-		}
+		remain_len = sizeof(mount_data)-1 ;
+		nret = InvertLowerDirs( env , image , mount_data , & len , & remain_len ) ;
+		INTEx( exit(9) , "*** ERROR : InvertLowerDirs overflow\n" )
 		
-		l = snprintf( mount_data+len , sizeof(mount_data)-1-len , ",upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
-		IxTEx( SNPRINTF_OVERFLOW(l,sizeof(mount_data)-1-len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+		l = snprintf( mount_data+len , remain_len , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
+		IxTEx( SNPRINTF_OVERFLOW(l,remain_len) , exit(9) , "*** ERROR : snprintf overflow\n" )
 		len += l ;
+		remain_len -= l ;
 	}
 	nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
 	I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )

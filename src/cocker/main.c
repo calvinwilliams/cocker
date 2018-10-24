@@ -5,7 +5,7 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create (-m|--image) (image_id[:image_id2][...]) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ] [ (-c|--container) (container_id) ]\n" );
+	printf( "               -a create [ create options ] [ (-c|--container) (container_id) ]\n" );
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
@@ -13,12 +13,13 @@ static void usage()
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
-	printf( "               -a to_container --from-image (image_id) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ] --to-container (container_id)\n" );
+	printf( "               -a to_container --from-image (image_id) [ create options ] --to-container (container_id)\n" );
 	printf( "               -a copy_image --from-image (image_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
 	printf( "               -a del_image (-m|--image) (image_id)\n" );
 	printf( "               -a install_test\n" );
-	printf( "                    [ (-d|--debug) ]\n" );
+	printf( "create options : (-m|--image) (lowest_image[:lower_image][...]) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
 	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
+	printf( "enable debug : [ (-d|--debug) ]\n" );
 	return;
 }
 
@@ -319,7 +320,7 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			if( STRCMP( env->cmd_para.__image_id , == , "BRIDGE" ) && env->cmd_para.__image_id[0] == '\0' )
+			if( STRCMP( env->cmd_para.__net , == , "BRIDGE" ) && env->cmd_para.__vip[0] == '\0' )
 			{
 				printf( "*** ERROR : expect '--vip' with action '-a create'\n" );
 				return -7;
@@ -454,6 +455,12 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__to_container) )
 			{
 				printf( "*** ERROR : expect '--to-container' with action '-a to_container'\n" );
+				return -7;
+			}
+			
+			if( STRCMP( env->cmd_para.__net , == , "BRIDGE" ) && env->cmd_para.__vip[0] == '\0' )
+			{
+				printf( "*** ERROR : expect '--vip' with action '-a create'\n" );
 				return -7;
 			}
 			
