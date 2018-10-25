@@ -1,7 +1,10 @@
 #include "cocker_in.h"
 
+#define WAIT_FOR_SHUTDOWN_COUNT		5
+
 int DoAction_destroy( struct CockerEnvironment *env )
 {
+	int		i ;
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	pid_t		pid ;
 	char		net[ NET_LEN_MAX + 1 ] ;
@@ -18,6 +21,29 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
 	
 	GetEthernetNames( env , env->cmd_para.__container_id );
+	
+	/* if --shutdown optional */
+	if( env->cmd_para.__shutdown )
+	{
+		nret = _DoAction_kill( env , SIGTERM ) ;
+		if( nret )
+		{
+			if( env->cmd_para.__forcely == NULL )
+				return -1;
+		}
+		
+		Snprintf( container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container_id ) ;
+		for( i = 0 ; i < WAIT_FOR_SHUTDOWN_COUNT ; i++ )
+		{
+			nret = access( container_pid_file , F_OK ) ;
+			if( nret == -1 )
+				break;
+			
+			sleep(1);
+		}
+		if( i >= WAIT_FOR_SHUTDOWN_COUNT )
+		ER1( "*** ERROR : wait for shutdown failed\n" )
+	}
 	
 	/* read pid file */
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container_id ) ;

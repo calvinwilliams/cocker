@@ -5,11 +5,11 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create [ create options ] [ (-c|--container) (container_id) ]\n" );
-	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) ]\n" );
+	printf( "               -a create [ create options ] [ (-c|--container) (container_id) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
+	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\")] ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
-	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
+	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ] [ (-h|--shutdown) ]\n" );
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
@@ -139,9 +139,22 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__mem_limit = argv[i+1] ;
 			i++;
 		}
+		else if( ( STRCMP( argv[i] , == , "-b" ) || STRCMP( argv[i] , == , "--boot" ) ) )
+		{
+			env->cmd_para.__boot = argv[i] ;
+		}
 		else if( ( STRCMP( argv[i] , == , "-t" ) || STRCMP( argv[i] , == , "--attach" ) ) )
 		{
 			env->cmd_para.__attach = argv[i] ;
+		}
+		else if( ( STRCMP( argv[i] , == , "-e" ) || STRCMP( argv[i] , == , "--exec" ) ) && i + 1 < argc )
+		{
+			env->cmd_para.__exec = argv[i+1] ;
+			i++;
+		}
+		else if( ( STRCMP( argv[i] , == , "-h" ) || STRCMP( argv[i] , == , "--shutdown" ) ) )
+		{
+			env->cmd_para.__shutdown = argv[i] ;
 		}
 		else if( STRCMP( argv[i] , == , "--from-container" ) && i + 1 < argc )
 		{

@@ -169,7 +169,14 @@ int DoAction_create( struct CockerEnvironment *env )
 	nret = CreateContainer( env , env->cmd_para.__image_id , env->cmd_para.__container_id ) ;
 	if( nret == 0 )
 	{
-		printf( "OK\n" );
+		if( env->cmd_para.__boot )
+		{
+			nret = DoAction_boot( env ) ;
+		}
+		else
+		{
+			printf( "OK\n" );
+		}
 	}
 	
 	return nret;
