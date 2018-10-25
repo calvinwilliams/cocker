@@ -120,6 +120,8 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			}
 			
 			list_add_tail( & (volume->volume_node) , & (env->cmd_para.volume_list) );
+			
+			env->cmd_para.__volume = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--cpus" ) && i + 1 < argc )
@@ -394,13 +396,13 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__container_id) )
 			{
-				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a vip'\n" );
 				return -7;
 			}
 			
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__vip) )
 			{
-				printf( "*** ERROR : expect '--vip' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--vip' with action '-a vip'\n" );
 				return -7;
 			}
 			
@@ -412,19 +414,37 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__container_id) )
 			{
-				printf( "*** ERROR : expect '--container' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a port_mapping'\n" );
 				return -7;
 			}
 			
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__port_mapping) )
 			{
-				printf( "*** ERROR : expect '--port-mapping' with action '-a destroy'\n" );
+				printf( "*** ERROR : expect '--port-mapping' with action '-a port_mapping'\n" );
 				return -7;
 			}
 			
 			INFOLOGC( "--- call DoAction_port_mapping ---" )
 			nret = DoAction_port_mapping( env ) ;
 			INFOLOGC( "--- DoAction_port_mapping return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "volume" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__container_id) )
+			{
+				printf( "*** ERROR : expect '--volume' with action '-a volume'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__volume) )
+			{
+				printf( "*** ERROR : expect '--volume' with action '-a volume'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_volume ---" )
+			nret = DoAction_volume( env ) ;
+			INFOLOGC( "--- DoAction_volume return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "to_image" ) )
 		{

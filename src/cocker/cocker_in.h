@@ -47,6 +47,7 @@ struct CommandParameter
 	char			*__forcely ;
 	
 	struct list_head	volume_list ;
+	char			*__volume ;
 } ;
 
 struct CockerEnvironment
@@ -110,6 +111,8 @@ int DoAction_kill( struct CockerEnvironment *env );
 int DoAction_vip( struct CockerEnvironment *env );
 int DoAction_port_mapping( struct CockerEnvironment *env );
 
+int DoAction_volume( struct CockerEnvironment *env );
+
 int DoAction_to_image( struct CockerEnvironment *env );
 int DoAction_to_container( struct CockerEnvironment *env );
 
@@ -151,8 +154,8 @@ cocker -a destroy -d -c test
 cocker -a destroy -d -f -c test
 
 cocker -a vip -d --vip 166.88.0.3 -c test
-
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
+cocker -a volume -d --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom" -c test
 
 cocker -a to_container -d -m test --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
 cocker -a to_image -d --from-container test --to-image test

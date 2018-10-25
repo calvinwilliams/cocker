@@ -18,6 +18,7 @@ c_FILE		=	\
 			action_shutdown.c \
 			action_vip.c \
 			action_port_mapping.c \
+			action_volume.c \
 			action_attach.c \
 			action_install_test.c \
 			action_to_container.c \

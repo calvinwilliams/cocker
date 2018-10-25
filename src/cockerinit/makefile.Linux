@@ -32,8 +32,8 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 c_FILE		=	\
 			main.c \
 			server.c \
-			process.c \
-			tcp_pts_bridge.c \
+			pty.c \
+			pts_and_tcp_bridge.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall
