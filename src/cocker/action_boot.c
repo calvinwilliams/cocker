@@ -145,7 +145,10 @@ static int CloneEntry( void *p )
 	EIDTI( "read file %s ok\n" , container_hostname_file )
 	
 	TrimEnter( hostname );
-	sethostname( hostname , strlen(hostname) );
+	if( hostname[0] )
+	{
+		sethostname( hostname , strlen(hostname) );
+	}
 	
 	IDTI( "sethostname [%s] ok\n" , hostname )
 	

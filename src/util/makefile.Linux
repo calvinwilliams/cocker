@@ -30,6 +30,7 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 	$(CC) $(CFLAGS) -c $<
 
 c_FILE		=	\
+			list.c \
 			LOGC.c \
 			version.c \
 			file.c \
@@ -42,6 +43,7 @@ include ../../makeinstall
 LIB		=	libcocker_util.so
 LIBINST		=	$(_LIBINST)
 HDER		= \
+			list.h \
 			LOGC.h \
 			cocker_util.h \
 
