@@ -32,8 +32,12 @@ int main( int argc , char *argv[] )
 		}
 		else if( STRCMP( argv[i] , == , "--container" ) && i + 1 < argc )
 		{
-			strncpy( env->container_id , argv[i+1] , sizeof(env->container_id)-1 );
+			env->cmd_para.__container_id = argv[i+1] ;
 			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--single" ) )
+		{
+			env->cmd_para.__single = argv[i] ;
 		}
 		else
 		{
@@ -41,7 +45,7 @@ int main( int argc , char *argv[] )
 			return -7;
 		}
 	}
-	if( env->container_id[0] == '\0' )
+	if( env->cmd_para.__container_id == NULL )
 	{
 		E( "*** ERROR : '--container' need for running\n" )
 		return -7;

@@ -7,9 +7,15 @@
 extern "C" {
 #endif
 
+struct CommandParameter
+{
+	char			*__container_id ;
+	char			*__single ;
+} ;
+
 struct CockerInitEnvironment
 {
-	char			container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
+	struct CommandParameter	cmd_para ;
 	
 	int			alive_pipe_0 ;
 	

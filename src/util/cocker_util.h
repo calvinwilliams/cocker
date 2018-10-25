@@ -145,6 +145,13 @@ extern "C" {
 		ERRORLOGC( __VA_ARGS__ ) \
 	} \
 
+#define ER1(...) \
+	{ \
+		printf( __VA_ARGS__ ); fflush(stdout); \
+		ERRORLOGC( __VA_ARGS__ ) \
+		return -1; \
+	} \
+
 #define INTx(_return_statement_,...) \
 	if( nret ) \
 	{ \

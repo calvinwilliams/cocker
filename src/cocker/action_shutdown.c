@@ -1,6 +1,6 @@
 #include "cocker_in.h"
 
-static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
+int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 {
 	char		container_pid_file[ PATH_MAX + 1 ] ;
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
@@ -29,7 +29,6 @@ static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 		{
 			/* kill clone create_pty */
 			kill( pid , signal_no );
-			printf( "OK\n" );
 		}
 		else
 		{
@@ -46,11 +45,23 @@ static int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 
 int DoAction_shutdown( struct CockerEnvironment *env )
 {
-	return _DoAction_kill( env , SIGTERM );
+	int		nret = 0 ;
+	
+	nret = _DoAction_kill( env , SIGTERM ) ;
+	if( nret == 0 )
+	I( "OK\n" )
+	
+	return nret;
 }
 
 int DoAction_kill( struct CockerEnvironment *env )
 {
-	return _DoAction_kill( env , SIGKILL );
+	int		nret = 0 ;
+	
+	nret = _DoAction_kill( env , SIGKILL ) ;
+	if( nret == 0 )
+	I( "OK\n" )
+	
+	return nret;
 }
 

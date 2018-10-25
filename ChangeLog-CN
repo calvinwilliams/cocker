@@ -1,3 +1,7 @@
+0.16.0		2018-10-25	calvin
+		* cocker指令'-a create'增加选项'-b'和'-t'
+		* cocker指令'-a destroy'增加选项'-h'
+
 0.15.0		2018-10-25	calvin
 		* 新增cocker指令'--volume'
 

@@ -103,6 +103,9 @@ static int CloneEntry( void *p )
 	
 	char				fd_str[ 20 + 1 ] ;
 	
+	int				argc ;
+	char				*argv[64] = { NULL } ;
+	
 	int				nret = 0 ;
 	
 	signal( SIGTERM , SIG_DFL );
@@ -340,7 +343,30 @@ static int CloneEntry( void *p )
 	close( env->alive_pipe[1] );
 	
 	/* execl */
-	nret = execl( "/bin/cockerinit" , "cockerinit" , "--container" , env->cmd_para.__container_id , NULL ) ;
+	if( env->cmd_para.__exec == NULL )
+	{
+		argc = 0 ;
+		argv[argc++] = "cockerinit" ;
+		argv[argc++] = "--container" ;
+		argv[argc++] = env->cmd_para.__container_id ;
+		argv[argc++] = NULL ;
+	}
+	else
+	{
+		argc = 0 ;
+		p = strtok( env->cmd_para.__exec , " \t" ) ;
+		while( p )
+		{
+			if( argc >= sizeof(argv)/sizeof(argv[0])-1 )
+			ER1( "*** ERROR : exec too long\n" )
+			
+			argv[argc++] = p ;
+			
+			p = strtok( NULL , " \t" ) ;
+		}
+		argv[argc++] = NULL ;
+	}
+	nret = execv( "/bin/cockerinit" , argv ) ;
 	I1TERx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
 	exit(9);
