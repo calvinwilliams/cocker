@@ -1,3 +1,11 @@
+/*
+ * cocker - Container Machine Engine
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "cocker_util.h"
 
 pid_t pty_fork( struct termios *p_origin_termios , struct winsize *p_origin_winsize , int *p_ptm_fd )

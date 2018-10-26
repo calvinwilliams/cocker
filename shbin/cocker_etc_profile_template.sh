@@ -1,7 +1,10 @@
-############################################################
-# cocker shell
-# copyright by calvin<calvinwilliams@163.com> 2018
-############################################################
+/*
+ * cocker - Container Machine Engine
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
 
 set -o vi
 
