@@ -1,3 +1,11 @@
+/*
+ * cocker - Container Machine Engine
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #ifndef _H_COCKER_IN_
 #define _H_COCKER_IN_
 

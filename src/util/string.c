@@ -1,3 +1,11 @@
+/*
+ * cocker - Container Machine Engine
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "cocker_util.h"
 
 char *SnprintfV( char *path_buf , int path_bufsize , char *path_format , va_list valist )

@@ -1,3 +1,11 @@
+/*
+ * cocker - Container Machine Engine
+ * author	: calvin
+ * email	: calvinwilliams@163.com
+ *
+ * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+ */
+
 #include "cockerinit_in.h"
 
 int create_pty( struct CockerInitEnvironment *env )
