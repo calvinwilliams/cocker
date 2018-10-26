@@ -64,9 +64,9 @@ static int InvertLowerDirs( struct CockerEnvironment *env , char *images , char 
 	return 0;
 }
 
-static int CloneEntry( void *p )
+static int CloneEntry( void *pv )
 {
-	struct CockerEnvironment	*env = (struct CockerEnvironment *)p ;
+	struct CockerEnvironment	*env = (struct CockerEnvironment *)pv ;
 	
 	char				container_net_file[ PATH_MAX + 1 ] ;
 	char				net[ NET_LEN_MAX + 1 ] ;
@@ -105,6 +105,9 @@ static int CloneEntry( void *p )
 	
 	int				argc ;
 	char				*argv[64] = { NULL } ;
+	char				*p = NULL ;
+	char				*p2 = NULL ;
+	int				i ;
 	
 	int				nret = 0 ;
 	
@@ -346,10 +349,14 @@ static int CloneEntry( void *p )
 	if( env->cmd_para.__exec == NULL )
 	{
 		argc = 0 ;
+		argv[argc++] = "/bin/cockerinit" ;
 		argv[argc++] = "cockerinit" ;
 		argv[argc++] = "--container" ;
 		argv[argc++] = env->cmd_para.__container_id ;
 		argv[argc++] = NULL ;
+		for( i = 0 ; i < argc ; i++ )
+			I( "argv[%d]=[%s]\n" , i , argv[i] )
+		nret = execv( argv[0] , argv+1 ) ;
 	}
 	else
 	{
@@ -360,13 +367,28 @@ static int CloneEntry( void *p )
 			if( argc >= sizeof(argv)/sizeof(argv[0])-1 )
 			ER1( "*** ERROR : exec too long\n" )
 			
-			argv[argc++] = p ;
+			if( argc == 0 )
+			{
+				argv[argc++] = p ;
+				p2 = strrchr( p , '/' ) ;
+				if( p2 )
+					argv[argc++] = p2 + 1 ;
+				else
+					argv[argc++] = p ;
+			}
+			else
+			{
+				argv[argc++] = p ;
+			}
 			
 			p = strtok( NULL , " \t" ) ;
 		}
 		argv[argc++] = NULL ;
+		
+		for( i = 0 ; i < argc ; i++ )
+			I( "argv[%d]=[%s]\n" , i , argv[i] )
+		nret = execv( argv[0] , argv+1 ) ;
 	}
-	nret = execv( "/bin/cockerinit" , argv ) ;
 	I1TERx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
 	exit(9);
@@ -724,49 +746,52 @@ int DoAction_boot( struct CockerEnvironment *env )
 		}
 	}
 	
-	signal( SIGCLD , SIG_IGN );
-	signal( SIGCHLD , SIG_IGN );
-	signal( SIGTERM , sig_proc );
-	
-	pid = fork() ;
-	if( pid == -1 )
+	if( env->cmd_para.__exec == NULL )
 	{
-		E( "*** ERROR : fork failed , errno[%d]\n" , errno )
-		goto _END ;
-	}
-	else if( pid > 0 )
-	{
-		if( env->cmd_para.__attach )
+		signal( SIGCLD , SIG_IGN );
+		signal( SIGCHLD , SIG_IGN );
+		signal( SIGTERM , sig_proc );
+		
+		pid = fork() ;
+		if( pid == -1 )
 		{
-			sleep(1);
-			exit( -DoAction_attach(env) ) ;
+			E( "*** ERROR : fork failed , errno[%d]\n" , errno )
+			goto _END ;
 		}
-		else
+		else if( pid > 0 )
 		{
-			printf( "OK\n" );
+			if( env->cmd_para.__attach )
+			{
+				sleep(1);
+				exit( -DoAction_attach(env) ) ;
+			}
+			else
+			{
+				printf( "OK\n" );
+			}
+			
+			return 0;
 		}
 		
-		return 0;
+		signal( SIGCLD , SIG_DFL );
+		signal( SIGCHLD , SIG_DFL );
+		
+		SetLogcFile( "/var/cocker/cocker.log" );
+		SetLogcLevel( LOGCLEVEL_INFO );
+		
+		setsid();
+		
+		null_fd = open( "/dev/null" , O_RDWR ) ;
+		if( null_fd == -1 )
+		{
+			E( "*** ERROR : open /dev/null failed , errno[%d]\n" , errno )
+			goto _END ;
+		}
+		
+		dup2( null_fd , 0 );
+		dup2( null_fd , 1 );
+		dup2( null_fd , 2 );
 	}
-	
-	signal( SIGCLD , SIG_DFL );
-	signal( SIGCHLD , SIG_DFL );
-	
-	SetLogcFile( "/var/cocker/cocker.log" );
-	SetLogcLevel( LOGCLEVEL_INFO );
-	
-	setsid();
-	
-	null_fd = open( "/dev/null" , O_RDWR ) ;
-	if( null_fd == -1 )
-	{
-		E( "*** ERROR : open /dev/null failed , errno[%d]\n" , errno )
-		goto _END ;
-	}
-	
-	dup2( null_fd , 0 );
-	dup2( null_fd , 1 );
-	dup2( null_fd , 2 );
 	
 	/* create alive pipe */
 	nret = pipe( env->alive_pipe ) ;
@@ -781,6 +806,9 @@ int DoAction_boot( struct CockerEnvironment *env )
 	EIDTI( "write file %s ok\n" , container_pid_file )
 	
 	/* create container */
+	signal( SIGCLD , SIG_DFL );
+	signal( SIGCHLD , SIG_DFL );
+	
 	if( STRCMP( net , == , "HOST" ) )
 	{
 		pid = clone( CloneEntry , stack_bottom+sizeof(stack_bottom) , CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWIPC|CLONE_NEWUTS , (void*)env ) ;
@@ -804,6 +832,12 @@ int DoAction_boot( struct CockerEnvironment *env )
 			if( g_TERM_flag == 1 )
 			{
 				I( "waitpid interrupted by SIGTERM\n" )
+				break;
+			}
+			
+			if( errno == ECHILD )
+			{
+				I( "waitpid interrupted by errno ECHILD\n" )
 				break;
 			}
 			
