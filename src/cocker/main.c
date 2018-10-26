@@ -5,7 +5,7 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create [ create options ] [ (-c|--container) (container_id) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
+	printf( "               -a create (-m|--image) (lowest_image[:lower_image][...]) [ create options ] [ (-c|--container) (container_id) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\")] ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
@@ -13,13 +13,13 @@ static void usage()
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
-	printf( "               -a to_container --from-image (image_id) [ create options ] --to-container (container_id)\n" );
+	printf( "               -a to_container --from-image (image_id) (-m|--image) (lowest_image[:lower_image][...]) [ create options ] --to-container (container_id)\n" );
 	printf( "               -a copy_image --from-image (image_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
 	printf( "               -a del_image (-m|--image) (image_id)\n" );
 	printf( "               -a install_test\n" );
-	printf( "create options : (-m|--image) (lowest_image[:lower_image][...]) [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "create options : [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
 	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
-	printf( "enable debug : [ (-d|--debug) ]\n" );
+	printf( "  enable debug : [ (-d|--debug) ]\n" );
 	return;
 }
 
