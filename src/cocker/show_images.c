@@ -19,6 +19,12 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 	char		create_datetime[ CREATE_DATATIME_LEN_MAX + 1 ] ;
 	char		image_version_file[ PATH_MAX + 1 ] ;
 	char		version[ VERSION_LEN_MAX + 1 ] ;
+	char		image_rlayer_path[ PATH_MAX + 1 ] ;
+	char		image_size_file[ PATH_MAX + 1 ] ;
+	struct stat	image_size_file_stat ;
+	int		image_size ;
+	char		image_size_str[ 32 + 1 ] ;
+	char		file_buffer[ 4096 ] ;
 	
 	int		nret = 0 ;
 	
@@ -35,6 +41,7 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		if( dirent->d_type != DT_DIR )
 			continue;
 		
+		/* author */
 		memset( image_author_file , 0x00 , sizeof(image_author_file) );
 		memset( author , 0x00 , sizeof(author) );
 		nret = ReadFileLine( author , sizeof(author) , image_author_file , sizeof(image_author_file) , "%s/%s/author" , cocker_env->images_path_base , dirent->d_name ) ;
@@ -45,6 +52,7 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( author );
 		
+		/* create_datetime */
 		memset( image_create_datetime_file , 0x00 , sizeof(image_create_datetime_file) );
 		memset( create_datetime , 0x00 , sizeof(create_datetime) );
 		nret = ReadFileLine( create_datetime , sizeof(create_datetime) , image_create_datetime_file , sizeof(image_create_datetime_file) , "%s/%s/create_datetime" , cocker_env->images_path_base , dirent->d_name ) ;
@@ -55,6 +63,7 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( create_datetime );
 		
+		/* version */
 		memset( image_version_file , 0x00 , sizeof(image_version_file) );
 		memset( version , 0x00 , sizeof(version) );
 		nret = ReadFileLine( version , sizeof(version) , image_version_file , sizeof(image_version_file) , "%s/%s/version" , cocker_env->images_path_base , dirent->d_name ) ;
@@ -65,13 +74,69 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( version );
 		
-		if( count == 0 )
+		/* size */
+		Snprintf( image_rlayer_path , sizeof(image_rlayer_path) , "%s/%s/rlayer" , cocker_env->images_path_base , dirent->d_name );
+		
+		nret = ReadFileLine( file_buffer , sizeof(file_buffer) , image_size_file , sizeof(image_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name ) ;
+		if( nret )
 		{
-			printf( "%-10s %-32s %-19s %-16s\n" , "image_id" , "author" , "create_datetime" , "version" );
-			printf( "-----------------------------------------------------------------------\n" );
+			nret = GetDirectorySize( image_rlayer_path , & image_size ) ;
+			if( nret )
+			{
+				image_size = -1 ;
+			}
+			else
+			{
+				Snprintf( file_buffer , sizeof(file_buffer) , "%d" , image_size );
+				WriteFileLine( file_buffer , image_size_file , sizeof(image_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name );
+			}
+		}
+		else
+		{
+			stat( image_size_file , & image_size_file_stat );
+			nret = IsDirectoryNewThan( image_rlayer_path , image_size_file_stat.st_mtime ) ;
+			if( nret < 0 )
+			{
+				image_size = -1 ;
+			}
+			else if( nret > 0 )
+			{
+				nret = GetDirectorySize( image_rlayer_path , & image_size ) ;
+				if( nret )
+				{
+					image_size = -1 ;
+				}
+				else
+				{
+					Snprintf( file_buffer , sizeof(file_buffer) , "%d" , image_size );
+					WriteFileLine( file_buffer , image_size_file , sizeof(image_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name );
+				}
+			}
+			else
+			{
+				image_size = atoi(file_buffer) ;
+			}
 		}
 		
-		printf( "%-10s %-32s %-19s %-16s\n" , dirent->d_name , author , create_datetime , version );
+		if( image_size == -1 )
+			Snprintf( image_size_str , sizeof(image_size_str) , "(unknow)" );
+		else if( image_size > 1024*1024*1024 )
+			Snprintf( image_size_str , sizeof(image_size_str) , "%d GB" , image_size / (1024*1024*1024) );
+		else if( image_size > 1024*1024 )
+			Snprintf( image_size_str , sizeof(image_size_str) , "%d MB" , image_size / (1024*1024) );
+		else if( image_size > 1024 )
+			Snprintf( image_size_str , sizeof(image_size_str) , "%d KB" , image_size / 1024 );
+		else
+			Snprintf( image_size_str , sizeof(image_size_str) , "%d B" , image_size );
+		
+		/* output */
+		if( count == 0 )
+		{
+			printf( "%-10s %-10s %-30s %-19s %-10s\n" , "image_id" , "version" , "author" , "create_datetime" , "size" );
+			printf( "---------------------------------------------------------------------------------\n" );
+		}
+		
+		printf( "%-10s %-10s %-30s %-19s %s\n" , dirent->d_name , version , author , create_datetime , image_size_str );
 		
 		count++;
 	}

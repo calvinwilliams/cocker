@@ -358,6 +358,9 @@ int SnprintfAndPopen( char *output_buf , int output_bufsize , char *cmd_buf , in
 int WriteFileLine( char *fileline , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf , int pathfile_bufsize , char *pathfile_format , ... );
 
+int IsDirectoryNewThan( char *path , time_t mtime );
+int GetDirectorySize( char *path , int *p_directory_size );
+
 /*
  * socket
  */

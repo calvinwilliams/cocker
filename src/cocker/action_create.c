@@ -34,6 +34,10 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	nret = access( env->container_path_base , F_OK ) ;
+	I0TER1( "*** ERROR : container '%s' exist\n" , env->cmd_para.__container_id )
+	
 	if( __image_id && __image_id[0] )
 	{
 		char	image_id[ IMAGES_ID_LEN_MAX + 1 ] ;

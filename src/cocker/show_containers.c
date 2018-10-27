@@ -26,6 +26,12 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 	char		pid_str[ PID_LEN_MAX ] ;
 	pid_t		pid ;
 	char		status[ 40 ] ;
+	char		container_rwlayer_path[ PATH_MAX + 1 ] ;
+	char		container_size_file[ PATH_MAX + 1 ] ;
+	struct stat	container_size_file_stat ;
+	int		container_size ;
+	char		container_size_str[ 20 + 1 ] ;
+	char		file_buffer[ 4096 ] ;
 	
 	int		nret = 0 ;
 	
@@ -42,6 +48,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		if( dirent->d_type != DT_DIR )
 			continue;
 		
+		/* image */
 		memset( container_image_file , 0x00 , sizeof(container_image_file) );
 		memset( image , 0x00 , sizeof(image) );
 		nret = ReadFileLine( image , sizeof(image) , container_image_file , sizeof(container_image_file) , "%s/%s/image" , cocker_env->containers_path_base , dirent->d_name ) ;
@@ -56,6 +63,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( image );
 		
+		/* hostname */
 		memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 		memset( hostname , 0x00 , sizeof(hostname) );
 		nret = ReadFileLine( hostname , sizeof(hostname) , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , dirent->d_name ) ;
@@ -66,6 +74,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( hostname );
 		
+		/* net */
 		memset( container_net_file , 0x00 , sizeof(container_net_file) );
 		memset( net , 0x00 , sizeof(net) );
 		nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/%s/net" , cocker_env->containers_path_base , dirent->d_name ) ;
@@ -76,6 +85,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( net );
 		
+		/* netns */
 		memset( container_netns_file , 0x00 , sizeof(container_netns_file) );
 		memset( netns , 0x00 , sizeof(netns) );
 		nret = ReadFileLine( netns , sizeof(netns) , container_netns_file , sizeof(container_netns_file) , "%s/%s/netns" , cocker_env->containers_path_base , dirent->d_name ) ;
@@ -86,6 +96,62 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		}
 		TrimEnter( netns );
 		
+		/* size */
+		Snprintf( container_rwlayer_path , sizeof(container_rwlayer_path) , "%s/%s/rlayer" , cocker_env->images_path_base , dirent->d_name );
+		
+		nret = ReadFileLine( file_buffer , sizeof(file_buffer) , container_size_file , sizeof(container_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name ) ;
+		if( nret )
+		{
+			nret = GetDirectorySize( container_rwlayer_path , & container_size ) ;
+			if( nret )
+			{
+				container_size = -1 ;
+			}
+			else
+			{
+				Snprintf( file_buffer , sizeof(file_buffer) , "%d" , container_size );
+				WriteFileLine( file_buffer , container_size_file , sizeof(container_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name );
+			}
+		}
+		else
+		{
+			stat( container_size_file , & container_size_file_stat );
+			nret = IsDirectoryNewThan( container_rwlayer_path , container_size_file_stat.st_mtime ) ;
+			if( nret < 0 )
+			{
+				container_size = -1 ;
+			}
+			else if( nret > 0 )
+			{
+				nret = GetDirectorySize( container_rwlayer_path , & container_size ) ;
+				if( nret )
+				{
+					container_size = -1 ;
+				}
+				else
+				{
+					Snprintf( file_buffer , sizeof(file_buffer) , "%d" , container_size );
+					WriteFileLine( file_buffer , container_size_file , sizeof(container_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name );
+				}
+			}
+			else
+			{
+				container_size = atoi(file_buffer) ;
+			}
+		}
+		
+		if( container_size == -1 )
+			Snprintf( container_size_str , sizeof(container_size_str) , "(unknow)" );
+		else if( container_size > 1024*1024*1024 )
+			Snprintf( container_size_str , sizeof(container_size_str) , "%d GB" , container_size / (1024*1024*1024) );
+		else if( container_size > 1024*1024 )
+			Snprintf( container_size_str , sizeof(container_size_str) , "%d MB" , container_size / (1024*1024) );
+		else if( container_size > 1024 )
+			Snprintf( container_size_str , sizeof(container_size_str) , "%d KB" , container_size / 1024 );
+		else
+			Snprintf( container_size_str , sizeof(container_size_str) , "%d B" , container_size );
+		
+		/* pid */
 		memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
 		memset( pid_str , 0x00 , sizeof(pid_str) );
 		nret = ReadFileLine( pid_str , sizeof(pid_str) , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , cocker_env->containers_path_base , dirent->d_name ) ;
@@ -117,13 +183,14 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 			}
 		}
 		
+		/* output */
 		if( count == 0 )
 		{
-			printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , "container_id" , "image" , "hostname" , "net" , "netns" , "status" );
-			printf( "---------------------------------------------------------------------------------------\n" );
+			printf( "%-20s %-10s %-10s %-10s %-16s %-10s %s\n" , "container_id" , "image" , "hostname" , "net" , "netns" , "size" , "status" );
+			printf( "-------------------------------------------------------------------------------------------\n" );
 		}
 		
-		printf( "%-20s %-10s %-10s %-10s %-26s %s\n" , dirent->d_name , image , hostname , net , netns , status );
+		printf( "%-20s %-10s %-10s %-10s %-16s %-10s %s\n" , dirent->d_name , image , hostname , net , netns , container_size_str , status );
 		
 		count++;
 	}

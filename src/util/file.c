@@ -204,3 +204,88 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
 	return 0;
 }
 
+int IsDirectoryNewThan( char *path , time_t mtime )
+{
+	DIR		*dir = NULL ;
+	struct dirent	*dirent = NULL ;
+	char		sub_path[ PATH_MAX + 1 ] ;
+	struct stat	dir_stat ;
+	
+	int		nret = 0 ;
+	
+	dir = opendir( path ) ;
+	if( dir == NULL )
+		return -1;
+	while(1)
+	{
+		dirent = readdir( dir ) ;
+		if( dirent == NULL )
+			break;
+		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
+			continue;
+		
+		if( Snprintf( sub_path , sizeof(sub_path) , "%s/%s" , path , dirent->d_name ) == NULL )
+			return -2;
+		
+		if( dirent->d_type == DT_DIR )
+		{
+			memset( & dir_stat , 0x00 , sizeof(struct stat) );
+			nret = stat( sub_path , & dir_stat ) ;
+			if( nret == -1 )
+				return -3;
+			if( dir_stat.st_mtime > mtime )
+				return 1;
+			
+			return IsDirectoryNewThan( sub_path , mtime );
+		}
+	}
+	
+	return 0;
+}
+
+static int _GetDirectorySize( char *path , int *p_directory_size )
+{
+	DIR		*dir = NULL ;
+	struct dirent	*dirent = NULL ;
+	char		sub_path[ PATH_MAX + 1 ] ;
+	struct stat	file_stat ;
+	
+	int		nret = 0 ;
+	
+	dir = opendir( path ) ;
+	if( dir == NULL )
+		return -1;
+	while(1)
+	{
+		dirent = readdir( dir ) ;
+		if( dirent == NULL )
+			break;
+		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
+			continue;
+		
+		if( Snprintf( sub_path , sizeof(sub_path) , "%s/%s" , path , dirent->d_name ) == NULL )
+			return -2;
+		
+		if( dirent->d_type == DT_DIR )
+		{
+			return _GetDirectorySize( sub_path , p_directory_size );
+		}
+		else if( dirent->d_type == DT_REG )
+		{
+			memset( & file_stat , 0x00 , sizeof(struct stat) );
+			nret = stat( sub_path , & file_stat ) ;
+			if( nret == -1 )
+				return -3;
+			(*p_directory_size) += file_stat.st_size ;
+		}
+	}
+	
+	return 0;
+}
+
+int GetDirectorySize( char *path , int *p_directory_size )
+{
+	(*p_directory_size) = 0 ;
+	return _GetDirectorySize( path , p_directory_size );
+}
+
