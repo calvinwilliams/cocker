@@ -8,11 +8,6 @@
 
 #!/bin/bash
 
-############################################################
-# cocker shell
-# copyright by calvin<calvinwilliams@163.com> 2018
-############################################################
-
 if [ $# -ne 1 ] ; then
 	echo "USAGE : cocker_install_test.sh (container_path_base)"
 	exit 1

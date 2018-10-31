@@ -16,6 +16,8 @@ NOCLEAN_OBJ	=	\
 			cocker_profile_template.sh \
 			cocker_etc_profile_template.sh \
 			cocker_install_test.sh \
+			cocker_create_image_rhel-7.4-x86_64.sh \
+			cocker_create_image_rhel-7.4-gcc-x86_64.sh \
 
 NOCLEAN_OBJINST	=	$(_BINBASE)
 
@@ -30,7 +32,7 @@ CLEAN_ADDITION	=
 
 ###### 加载mktpl模板库
 # 最终目标列表
-all		:	$(OBJ) $(OBJ2) $(LIB) $(LIB2) $(SQL) $(NOINST_OBJ) $(BIN) $(BIN2)
+all	:	$(OBJ) $(OBJ2) $(LIB) $(LIB2) $(SQL) $(NOINST_OBJ) $(BIN) $(BIN2)
 
 prepro_all	:	$(PREPRO)
 
