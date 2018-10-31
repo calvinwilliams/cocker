@@ -161,6 +161,7 @@ cocker -a create -d -m test --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t -e "/bin/bash -l"
+cocker -a create -d -m "rhel-7.4:rhel-7.4-gcc" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"
@@ -183,7 +184,8 @@ cocker -a del_image -d -m test2
 cocker -a export -d -m test
 cocker -a export -d -m test --image-file test.cockerimage
 cocker -a import -d --image-file test.cockerimage
-cocker -a import -d --image-file test.cockerimage -m test
+cocker -a import -d --image-file rhel-7.4-x86_64.cockerimage -m rhel-7.4
+cocker -a import -d --image-file rhel-7.4-gcc-x86_64.cockerimage -m rhel-7.4-gcc
 */
 
 /* for test

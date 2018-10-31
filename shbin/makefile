@@ -14,6 +14,8 @@ NOCLEAN_OBJ	=	\
 			cocker_profile_template.sh \
 			cocker_etc_profile_template.sh \
 			cocker_install_test.sh \
+			cocker_create_image_rhel-7.4-x86_64.sh \
+			cocker_create_image_rhel-7.4-gcc-x86_64.sh \
 
 NOCLEAN_OBJINST	=	$(_BINBASE)
 
