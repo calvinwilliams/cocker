@@ -96,11 +96,11 @@ extern "C" {
 #endif
 
 #ifndef CONTAINER_ID_LEN_MAX
-#define CONTAINER_ID_LEN_MAX	10
+#define CONTAINER_ID_LEN_MAX	64
 #endif
 
 #ifndef ETHERNET_NAME_LEN_MAX
-#define ETHERNET_NAME_LEN_MAX	16
+#define ETHERNET_NAME_LEN_MAX	13
 #endif
 
 #ifndef NET_LEN_MAX
@@ -338,7 +338,8 @@ char *Snprintf( char *path_buf , int path_bufsize , char *path_format , ... );
 
 char *TrimEnter( char *str );
 
-void *GenerateContainerId( char *images_id , char *container_id );
+char *GenerateContainerId( char *images_id , char *container_id );
+char *GenerateEthernamePostfix( char *container_id , char *ethername_postfix );
 
 /*
  * file

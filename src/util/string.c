@@ -68,7 +68,7 @@ char *TrimEnter( char *str )
 	return str;
 }
 
-void *GenerateContainerId( char *images_id , char *container_id )
+char *GenerateContainerId( char *images_id , char *container_id )
 {
 	MD5_CTX			md5_ctx ;
 	struct timeval		now ;
@@ -77,7 +77,7 @@ void *GenerateContainerId( char *images_id , char *container_id )
 	int			i ;
 	unsigned char		*p_md5 = NULL ;
 	unsigned char		*p_md5_exp = NULL ;
-	const unsigned char	hex_charset[] = "0123456789abcdef" ;
+	const unsigned char	hex_charset[] = "0123456789ABCDEF" ;
 	
 	MD5_Init( & md5_ctx );
 	
@@ -99,3 +99,29 @@ void *GenerateContainerId( char *images_id , char *container_id )
 	
 	return container_id;
 }
+
+char *GenerateEthernamePostfix( char *container_id , char *ethername_postfix )
+{
+	MD5_CTX			md5_ctx ;
+	unsigned char		md5[ MD5_DIGEST_LENGTH + 1 ] ;
+	int			i ;
+	unsigned char		*p_md5 = NULL ;
+	unsigned char		*p_md5_exp = NULL ;
+	const unsigned char	hex_charset[] = "0123456789ABCDEF" ;
+	
+	MD5_Init( & md5_ctx );
+	
+	MD5_Update( & md5_ctx , container_id , strlen(container_id) );
+	
+	memset( md5 , 0x00 , sizeof(md5) );
+	MD5_Final( md5 , & md5_ctx );
+	
+	for( p_md5 = md5 , p_md5_exp = (unsigned char *)ethername_postfix , i = 0 ; i < 5 ; p_md5++ , p_md5_exp+=2 , i++ )
+	{
+		p_md5_exp[0] = hex_charset[(p_md5[0]&0xF0)>>4] ;
+		p_md5_exp[1] = hex_charset[p_md5[0]&0x0F] ;
+	}
+	
+	return ethername_postfix;
+}
+
