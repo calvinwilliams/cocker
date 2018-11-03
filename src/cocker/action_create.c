@@ -65,6 +65,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	GetEthernetNames( env , __container_id );
 	
 	/* read pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , __container_id ) ;
 	if( nret == 0 )
 	{

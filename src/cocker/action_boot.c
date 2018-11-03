@@ -124,6 +124,8 @@ static int CloneEntry( void *pv )
 	SetLogcFile( "/var/cocker/cocker.log" );
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
+	memset( net , 0x00 , sizeof(net) );
+	memset( container_net_file , 0x00 , sizeof(container_net_file) );
 	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file %s ok\n" , container_net_file )
@@ -154,6 +156,8 @@ static int CloneEntry( void *pv )
 	setgroups(0,NULL);
 	
 	/* sethostname */
+	memset( hostname , 0x00 , sizeof(hostname) );
+	memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
 	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->cmd_para.__container_id )
 	EIDTI( "read file %s ok\n" , container_hostname_file )
@@ -167,6 +171,8 @@ static int CloneEntry( void *pv )
 	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
+	memset( image , 0x00 , sizeof(image) );
+	memset( container_image_file , 0x00 , sizeof(container_image_file) );
 	nret = ReadFileLine( image , sizeof(image)-1 , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
 	if( nret )
 	{
@@ -429,6 +435,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	int			nret = 0 ;
 	
 	/* read pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
+	memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
 	INTE( "*** ERROR : ReadFileLine pid failed\n" )
 	if( nret == 0 )
@@ -440,6 +448,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	}
 	
 	/* read net file */
+	memset( net , 0x00 , sizeof(net) );
+	memset( container_net_file , 0x00 , sizeof(container_net_file) );
 	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file net ok\n" )
@@ -449,6 +459,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	/* destroy network */
 	if( STRCMP( net , == , "BRIDGE" ) )
 	{
+		memset( vip , 0x00 , sizeof(vip) );
+		memset( container_vip_file , 0x00 , sizeof(container_vip_file) );
 		nret = ReadFileLine( vip , sizeof(vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
 		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 		EIDTI( "read file %s ok\n" , container_vip_file )
@@ -456,6 +468,7 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		TrimEnter( vip );
 		
 		memset( port_mapping , 0x00 , sizeof(port_mapping) );
+		memset( container_port_mapping_file , 0x00 , sizeof(container_port_mapping_file) );
 		nret = ReadFileLine( port_mapping , sizeof(port_mapping) , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
 		ILTx( (memset( port_mapping,0x00,sizeof(port_mapping))) )
 		EIDTI( "read file %s ok\n" , container_port_mapping_file )
@@ -658,6 +671,7 @@ int DoAction_boot( struct CockerEnvironment *env )
 	GetEthernetNames( env , env->cmd_para.__container_id );
 	
 	/* read pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/pid" , env->container_path_base ) ;
 	if( nret == 0 )
 	{
@@ -671,6 +685,8 @@ int DoAction_boot( struct CockerEnvironment *env )
 	}
 	
 	/* read net file */
+	memset( net , 0x00 , sizeof(net) );
+	memset( container_net_file , 0x00 , sizeof(container_net_file) );
 	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file %s ok\n" , container_net_file )
@@ -680,6 +696,8 @@ int DoAction_boot( struct CockerEnvironment *env )
 	/* create network */
 	if( STRCMP( net , == , "BRIDGE" ) )
 	{
+		memset( vip , 0x00 , sizeof(vip) );
+		memset( container_vip_file , 0x00 , sizeof(container_vip_file) );
 		nret = ReadFileLine( vip , sizeof(vip) , container_vip_file , sizeof(container_vip_file) , "%s/vip" , env->container_path_base ) ;
 		ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 		EIDTI( "read file %s ok\n" , container_vip_file )
@@ -687,6 +705,7 @@ int DoAction_boot( struct CockerEnvironment *env )
 		TrimEnter( vip );
 		
 		memset( port_mapping , 0x00 , sizeof(port_mapping) );
+		memset( container_port_mapping_file , 0x00 , sizeof(container_port_mapping_file) );
 		nret = ReadFileLine( port_mapping , sizeof(port_mapping)-1 , container_port_mapping_file , sizeof(container_port_mapping_file) , "%s/port_mapping" , env->container_path_base ) ;
 		ILTx( (memset(port_mapping,0x00,sizeof(port_mapping))) )
 		EIDTI( "read file %s ok\n" , container_port_mapping_file )

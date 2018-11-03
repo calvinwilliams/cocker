@@ -23,6 +23,8 @@ int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 	GetEthernetNames( env , env->cmd_para.__container_id );
 	
 	/* read pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
+	memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/pid" , env->container_path_base ) ;
 	INTER1( "*** ERROR : SnprintfAndUnlink %s failed\n" , container_pid_file )
 	

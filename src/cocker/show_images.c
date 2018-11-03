@@ -42,8 +42,8 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 			continue;
 		
 		/* author */
-		memset( image_author_file , 0x00 , sizeof(image_author_file) );
 		memset( author , 0x00 , sizeof(author) );
+		memset( image_author_file , 0x00 , sizeof(image_author_file) );
 		nret = ReadFileLine( author , sizeof(author) , image_author_file , sizeof(image_author_file) , "%s/%s/author" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -53,8 +53,8 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		TrimEnter( author );
 		
 		/* create_datetime */
-		memset( image_create_datetime_file , 0x00 , sizeof(image_create_datetime_file) );
 		memset( create_datetime , 0x00 , sizeof(create_datetime) );
+		memset( image_create_datetime_file , 0x00 , sizeof(image_create_datetime_file) );
 		nret = ReadFileLine( create_datetime , sizeof(create_datetime) , image_create_datetime_file , sizeof(image_create_datetime_file) , "%s/%s/create_datetime" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -64,8 +64,8 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		TrimEnter( create_datetime );
 		
 		/* version */
-		memset( image_version_file , 0x00 , sizeof(image_version_file) );
 		memset( version , 0x00 , sizeof(version) );
+		memset( image_version_file , 0x00 , sizeof(image_version_file) );
 		nret = ReadFileLine( version , sizeof(version) , image_version_file , sizeof(image_version_file) , "%s/%s/version" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -77,6 +77,8 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		/* size */
 		Snprintf( image_rlayer_path , sizeof(image_rlayer_path) , "%s/%s/rlayer" , cocker_env->images_path_base , dirent->d_name );
 		
+		memset( file_buffer , 0x00 , sizeof(file_buffer) );
+		memset( image_size_file , 0x00 , sizeof(image_size_file) );
 		nret = ReadFileLine( file_buffer , sizeof(file_buffer) , image_size_file , sizeof(image_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -132,11 +134,11 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		/* output */
 		if( count == 0 )
 		{
-			printf( "%-10s %-10s %-30s %-19s %-10s\n" , "image_id" , "version" , "author" , "create_datetime" , "size" );
-			printf( "---------------------------------------------------------------------------------\n" );
+			printf( "%-20s %-10s %-30s %-19s %-10s\n" , "image_id" , "version" , "author" , "create_datetime" , "size" );
+			printf( "-----------------------------------------------------------------------------------------\n" );
 		}
 		
-		printf( "%-10s %-10s %-30s %-19s %s\n" , dirent->d_name , version , author , create_datetime , image_size_str );
+		printf( "%-20s %-10s %-30s %-19s %s\n" , dirent->d_name , version , author , create_datetime , image_size_str );
 		
 		count++;
 	}
