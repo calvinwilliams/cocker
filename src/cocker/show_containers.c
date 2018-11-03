@@ -49,8 +49,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 			continue;
 		
 		/* image */
-		memset( container_image_file , 0x00 , sizeof(container_image_file) );
 		memset( image , 0x00 , sizeof(image) );
+		memset( container_image_file , 0x00 , sizeof(container_image_file) );
 		nret = ReadFileLine( image , sizeof(image) , container_image_file , sizeof(container_image_file) , "%s/%s/image" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -64,8 +64,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		TrimEnter( image );
 		
 		/* hostname */
-		memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 		memset( hostname , 0x00 , sizeof(hostname) );
+		memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 		nret = ReadFileLine( hostname , sizeof(hostname) , container_hostname_file , sizeof(container_hostname_file) , "%s/%s/hostname" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -75,8 +75,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		TrimEnter( hostname );
 		
 		/* net */
-		memset( container_net_file , 0x00 , sizeof(container_net_file) );
 		memset( net , 0x00 , sizeof(net) );
+		memset( container_net_file , 0x00 , sizeof(container_net_file) );
 		nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/%s/net" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -86,8 +86,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		TrimEnter( net );
 		
 		/* netns */
-		memset( container_netns_file , 0x00 , sizeof(container_netns_file) );
 		memset( netns , 0x00 , sizeof(netns) );
+		memset( container_netns_file , 0x00 , sizeof(container_netns_file) );
 		nret = ReadFileLine( netns , sizeof(netns) , container_netns_file , sizeof(container_netns_file) , "%s/%s/netns" , cocker_env->containers_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -99,6 +99,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		/* size */
 		Snprintf( container_rwlayer_path , sizeof(container_rwlayer_path) , "%s/%s/rlayer" , cocker_env->images_path_base , dirent->d_name );
 		
+		memset( file_buffer , 0x00 , sizeof(file_buffer) );
+		memset( container_size_file , 0x00 , sizeof(container_size_file) );
 		nret = ReadFileLine( file_buffer , sizeof(file_buffer) , container_size_file , sizeof(container_size_file) , "%s/%s/size" , cocker_env->images_path_base , dirent->d_name ) ;
 		if( nret )
 		{
@@ -186,11 +188,11 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		/* output */
 		if( count == 0 )
 		{
-			printf( "%-20s %-10s %-10s %-10s %-16s %-10s %s\n" , "container_id" , "image" , "hostname" , "net" , "netns" , "size" , "status" );
+			printf( "%-20s %-20s %-10s %-10s %-16s %-10s %s\n" , "container_id" , "image" , "hostname" , "net" , "netns" , "size" , "status" );
 			printf( "-------------------------------------------------------------------------------------------\n" );
 		}
 		
-		printf( "%-20s %-10s %-10s %-10s %-16s %-10s %s\n" , dirent->d_name , image , hostname , net , netns , container_size_str , status );
+		printf( "%-20s %-20s %-10s %-10s %-16s %-10s %s\n" , dirent->d_name , image , hostname , net , netns , container_size_str , status );
 		
 		count++;
 	}

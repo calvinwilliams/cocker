@@ -38,6 +38,8 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	GetEthernetNames( env , env->cmd_para.__from_container );
 	
 	/* read pid file */
+	memset( pid_str , 0x00 , sizeof(pid_str) );
+	memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
 	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__from_container ) ;
 	if( nret == 0 )
 	{
@@ -50,6 +52,8 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	}
 	
 	/* read net file */
+	memset( net , 0x00 , sizeof(net) );
+	memset( container_net_file , 0x00 , sizeof(container_net_file) );
 	nret = ReadFileLine( net , sizeof(net) , container_net_file , sizeof(container_net_file) , "%s/net" , env->container_path_base ) ;
 	ILTER1( "*** ERROR : ReadFileLine net failed\n" )
 	EIDTI( "read file net ok\n" )
