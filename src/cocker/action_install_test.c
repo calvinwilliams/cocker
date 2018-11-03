@@ -44,6 +44,7 @@ int DoAction_install_test( struct CockerEnvironment *env )
 	
 	time( & now_tt );
 	localtime_r( & now_tt , & now_tm );
+	memset( time_str , 0x00 , sizeof(time_str) );
 	strftime( time_str , sizeof(time_str) , "%Y-%m-%dT%H:%M:%S" , & now_tm ) ;
 	nret = WriteFileLine( time_str , image_create_datetime_file , sizeof(image_create_datetime_file)-1 , "%s/create_datetime" , env->image_path_base ) ;
 	INTER1( "*** ERROR : WriteFileLine create_datetime failed[%d] , errno[%d]\n" , nret , errno )
