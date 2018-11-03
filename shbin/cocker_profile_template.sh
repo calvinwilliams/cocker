@@ -1,10 +1,10 @@
-/*
- * cocker - Container Machine Engine
- * author	: calvin
- * email	: calvinwilliams@163.com
- *
- * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
- */
+######################################################################
+# cocker - Container Machine Engine
+# author : calvin
+# email  : calvinwilliams@163.com
+#
+# Licensed under the LGPL v2.1, see the file LICENSE in base directory.
+######################################################################
 
 export PATH=.:/bin:/usr/bin:/usr/local/bin
 export PATH=.:/sbin:/usr/sbin:/usr/local/sbin:$PATH
