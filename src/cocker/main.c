@@ -17,9 +17,13 @@ static void usage()
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\")] ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
+	printf( "               -a kill (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ] [ (-h|--shutdown) ]\n" );
+	printf( "               -a author (-m|--image) (image) --author (author)\n" );
+	printf( "               -a version (-m|--image) (image) --version (version)\n" );
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
+	printf( "               -a volume (-c|--container) (container_id) --volume (host_path[:container_path])[ ...]\n" );
 	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
 	printf( "               -a to_container --from-image (image_id) (-m|--image) (lowest_image[:lower_image][...]) [ create options ] --to-container (container_id)\n" );
 	printf( "               -a copy_image --from-image (image_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
@@ -323,13 +327,13 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		{
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
 			{
-				printf( "*** ERROR : expect '--image' with action '-a author'\n" );
+				printf( "*** ERROR : expect '--image' with action '-a version'\n" );
 				return -7;
 			}
 			
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__version) )
 			{
-				printf( "*** ERROR : expect '--version' with action '-a author'\n" );
+				printf( "*** ERROR : expect '--version' with action '-a version'\n" );
 				return -7;
 			}
 			
