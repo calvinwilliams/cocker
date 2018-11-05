@@ -13,21 +13,20 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create (-m|--image) (lowest_image[:lower_image][...]) [ create options ] [ (-c|--container) (container_id) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
+	printf( "               -a create (-m|--image) (image_id[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container_id) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
 	printf( "               -a boot (-c|--container) (container_id) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\")] ]\n" );
 	printf( "               -a attach (-c|--container) (container_id)\n" );
 	printf( "               -a shutdown (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a kill (-c|--container) (container_id) [ (-f|--forcely) ]\n" );
 	printf( "               -a destroy (-c|--container) (container_id) [ (-f|--forcely) ] [ (-h|--shutdown) ]\n" );
-	printf( "               -a author (-m|--image) (image) --author (author)\n" );
-	printf( "               -a version (-m|--image) (image) --version (version)\n" );
+	printf( "               -a version (-m|--image) (image_id) --version (version)\n" );
 	printf( "               -a vip (-c|--container) (container_id) --vip (ip)\n" );
 	printf( "               -a port_mapping (-c|--container) (container_id) --port-mapping (src_port:dst_port)\n" );
 	printf( "               -a volume (-c|--container) (container_id) --volume (host_path[:container_path])[ ...]\n" );
-	printf( "               -a to_image --from-container (container_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
-	printf( "               -a to_container --from-image (image_id) (-m|--image) (lowest_image[:lower_image][...]) [ create options ] --to-container (container_id)\n" );
-	printf( "               -a copy_image --from-image (image_id) [ --author (author) ] [ --verion (verion) ] --to-image (image_id)\n" );
-	printf( "               -a del_image (-m|--image) (image_id)\n" );
+	printf( "               -a to_image --from-container (container_id) [ --verion (verion) ] --to-image (image_id)\n" );
+	printf( "               -a to_container --from-image (image_id[:version]) (-m|--image) (image_id[:version])[,(image[:version])]... [ create options ] --to-container (container_id)\n" );
+	printf( "               -a copy_image --from-image (image_id[:version]) [ --author (author) ] [ --verion (verion) ] --to-image (image_id[:version])\n" );
+	printf( "               -a del_image (-m|--image) (image_id[:version])\n" );
 	printf( "               -a import --image-file (file) (-m|--image) (image_id)\n" );
 	printf( "               -a export (-m|--image) (image_id) --image-file (file)\n" );
 	printf( "               -a install_test\n" );
@@ -60,11 +59,6 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 		else if( STRCMP( argv[i] , == , "-a" ) && i + 1 < argc )
 		{
 			env->cmd_para._action = argv[i+1] ;
-			i++;
-		}
-		else if( STRCMP( argv[i] , == , "--author" ) && i + 1 < argc )
-		{
-			env->cmd_para.__author = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--version" ) && i + 1 < argc )
@@ -304,24 +298,6 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 		if( STRCMP( env->cmd_para._action , == , "install_test" ) )
 		{
 			return -DoAction_install_test( env );
-		}
-		else if( STRCMP( env->cmd_para._action , == , "author" ) )
-		{
-			if( IS_NULL_OR_EMPTY(env->cmd_para.__image_id) )
-			{
-				printf( "*** ERROR : expect '--image' with action '-a author'\n" );
-				return -7;
-			}
-			
-			if( IS_NULL_OR_EMPTY(env->cmd_para.__author) )
-			{
-				printf( "*** ERROR : expect '--author' with action '-a author'\n" );
-				return -7;
-			}
-			
-			INFOLOGC( "--- call DoAction_author ---" )
-			nret = DoAction_author( env ) ;
-			INFOLOGC( "--- DoAction_author return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "version" ) )
 		{

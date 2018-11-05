@@ -29,7 +29,6 @@ struct CommandParameter
 	char			*_action ;
 	char			*_show ;
 	
-	char			*__author ;
 	char			*__version ;
 	char			*__image_id ;
 	char			*__container_id ;
@@ -109,9 +108,6 @@ int DoShow_containers( struct CockerEnvironment *env );
 
 int DoAction_install_test( struct CockerEnvironment *env );
 
-int DoAction_author( struct CockerEnvironment *env );
-int DoAction_version( struct CockerEnvironment *env );
-
 int DoAction_create( struct CockerEnvironment *env );
 int DoAction_destroy( struct CockerEnvironment *env );
 int DoAction_boot( struct CockerEnvironment *env );
@@ -119,6 +115,8 @@ int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
+
+int DoAction_version( struct CockerEnvironment *env );
 
 int DoAction_vip( struct CockerEnvironment *env );
 int DoAction_port_mapping( struct CockerEnvironment *env );
@@ -148,9 +146,8 @@ echo "1" >/proc/sys/net/ipv4/ip_forward
 cocker -s images
 cocker -s containers
 
-cocker -a install_test -d --author "calvin<calvinwilliams@163.com>" --version "1.0.0"
+cocker -a install_test -d --version "1.0.0"
 
-cocker -a author -d -m test --author "calvin<calvinwilliams@gmail.com>"
 cocker -a version -d -m test --version "1.0.1"
 
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test

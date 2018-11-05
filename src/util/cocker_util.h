@@ -79,10 +79,6 @@ extern "C" {
 #define IMAGES_ID_LEN_MAX	1024
 #endif
 
-#ifndef AUTHOR_LEN_MAX
-#define AUTHOR_LEN_MAX		64
-#endif
-
 #ifndef CREATE_DATATIME_LEN_MAX
 #define CREATE_DATATIME_LEN_MAX	20
 #endif

@@ -27,7 +27,6 @@ c_FILE		=	\
 			action_del_image.c \
 			action_export.c \
 			action_import.c \
-			action_author.c \
 			action_version.c \
 			util.c \
 
