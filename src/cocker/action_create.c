@@ -41,17 +41,31 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	if( __image_id && __image_id[0] )
 	{
 		char	image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+		char	version[ PATH_MAX + 1 ] ;
 		char	*p = NULL ;
+		char	*p2 = NULL ;
 		
 		memset( image_id , 0x00 , sizeof(image_id) );
 		strncpy( image_id , __image_id , sizeof(image_id)-1 );
-		p = strtok( image_id , ":" ) ;
+		p = strtok( image_id , "," ) ;
 		while( p )
 		{
-			nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/rlayer" , env->images_path_base , p ) ;
+			p2 = strchr( p , ':' ) ;
+			if( p2 == NULL )
+			{
+				Snprintf( env->version_path_base , sizeof(env->version_path_base) , "%s/%s" , env->images_path_base , p ) ;
+				nret = GetMaxVersionPath( env->version_path_base , version , sizeof(version) ) ;
+				INTER1( "*** ERROR : GetMaxVersionPath[%s] failed[%d]\n" , env->version_path_base , nret )
+				
+				nret = SnprintfAndCheckDir( NULL , -1 , "%s/%s/%s/rlayer" , env->images_path_base , p , version ) ;
+			}
+			else
+			{
+				nret = SnprintfAndCheckDir( NULL , -1 , "%s/%.*s/%s/rlayer" , env->images_path_base , (int)(p2-p) , p , p2+1 ) ;
+			}
 			INTER1( "*** ERROR : image[%s] not found\n" , p )
 			
-			p = strtok( NULL , ":" ) ;
+			p = strtok( NULL , "," ) ;
 		}
 	}
 	

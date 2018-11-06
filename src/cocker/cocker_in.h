@@ -73,6 +73,7 @@ struct CockerEnvironment
 	char			host_eth_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	char			host_eth_ip[ IP_LEN_MAX + 1 ] ;
 	
+	char			version_path_base[ PATH_MAX + 1 ] ;
 	char			image_path_base[ PATH_MAX + 1 ] ;
 	char			container_path_base[ PATH_MAX + 1 ] ;
 	int			src_port ;
@@ -158,7 +159,7 @@ cocker -a create -d -m test --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t -e "/bin/bash -l"
-cocker -a create -d -m "rhel-7.4:rhel-7.4-gcc" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
+cocker -a create -d -m "calvin@rhel-7.4-x86_64:1.0.0,calvin@rhel-7.4-gcc-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"
@@ -172,7 +173,7 @@ cocker -a vip -d --vip 166.88.0.3 -c test
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
 cocker -a volume -d --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom" -c test
 
-cocker -a to_container -d -m test --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
+cocker -a to_container -d --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
 cocker -a to_image -d --from-container test --to-image test
 
 cocker -a copy_image -d --from-image test --to-image test2

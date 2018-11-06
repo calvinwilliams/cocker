@@ -10,6 +10,9 @@
 
 int DoAction_export( struct CockerEnvironment *env )
 {
+	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+	char		*p2 = NULL ;
+	char		version[ PATH_MAX + 1 ] ;
 	char		image_file[ PATH_MAX + 1 ] ;
 	char		current_path[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
@@ -17,17 +20,21 @@ int DoAction_export( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	if( env->cmd_para.__image_file == NULL )
+	Snprintf( image_id , sizeof(image_id) , "%s" , env->cmd_para.__image_id );
+	p2 = strchr( image_id , ':' ) ;
+	if( p2 == NULL )
 	{
-		Snprintf( image_file , sizeof(image_file) , "%s.cockerimage" , env->cmd_para.__image_id );
+		strcpy( version , "_" );
 	}
 	else
 	{
-		memset( image_file , 0x00 , sizeof(image_file) );
-		strncpy( image_file , env->cmd_para.__image_file , sizeof(image_file)-1 );
+		strncpy( version , p2+1 , sizeof(version)-1 );
+		(*p2) = '\0' ;
 	}
 	
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__image_id );
+	Snprintf( image_file , sizeof(image_file) , "%s%s%s.cockerimage" , image_id , (version[0]!='_'?version:"") , version );
+	
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , version );
 	nret = access( env->image_path_base , F_OK ) ;
 	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image_id )
 	

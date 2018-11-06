@@ -27,8 +27,8 @@ static void usage()
 	printf( "               -a to_container --from-image (image_id[:version]) (-m|--image) (image_id[:version])[,(image[:version])]... [ create options ] --to-container (container_id)\n" );
 	printf( "               -a copy_image --from-image (image_id[:version]) [ --author (author) ] [ --verion (verion) ] --to-image (image_id[:version])\n" );
 	printf( "               -a del_image (-m|--image) (image_id[:version])\n" );
-	printf( "               -a import --image-file (file) (-m|--image) (image_id)\n" );
-	printf( "               -a export (-m|--image) (image_id) --image-file (file)\n" );
+	printf( "               -a import --image-file (file)\n" );
+	printf( "               -a export (-m|--image) (image_id)\n" );
 	printf( "               -a install_test\n" );
 	printf( "create options : [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
 	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );

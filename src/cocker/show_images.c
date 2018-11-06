@@ -128,11 +128,11 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 			/* output */
 			if( count == 0 )
 			{
-				printf( "%-20s %-10s %-19s %-10s\n" , "image_id" , "version" , "modify_datetime" , "size" );
-				printf( "-----------------------------------------------------------------------------------------\n" );
+				printf( "%-30s %-10s %-19s %-10s\n" , "image_id" , "version" , "modify_datetime" , "size" );
+				printf( "--------------------------------------------------------------------\n" );
 			}
 			
-			printf( "%-20s %-10s %-19s %s\n" , dirent->d_name , version , image_path_modifytime_buf , image_size_str );
+			printf( "%-30s %-10s %-19s %s\n" , dirent->d_name , version , image_path_modifytime_buf , image_size_str );
 			
 			count++;
 		}

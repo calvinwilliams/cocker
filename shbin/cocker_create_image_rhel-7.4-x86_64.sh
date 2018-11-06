@@ -13,7 +13,19 @@ if [ $? -ne 0 ] ; then
 	echo "*** ERROR : Install supermin5 first"
 fi
 
-IMAGE_FILENAME="rhel-7.4-x86_64.cockerimage"
+printf "Your name or enter null : "
+read MY_NAME
+if [ x"${MY_NAME}" != x"" ] ; then
+	MY_NAME="${MY_NAME}@"
+fi
+
+printf "Version or enter null : "
+read VERSION
+if [ x"${VERSION}" != x"" ] ; then
+	VERSION=":${VERSION}"
+fi
+
+IMAGE_FILENAME="${MY_NAME}rhel-7.4-x86_64${VERSION}.cockerimage"
 
 rm -rf appliance.d supermin.d
 
