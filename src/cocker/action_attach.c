@@ -94,15 +94,15 @@ int DoAction_attach( struct CockerEnvironment *env )
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container )
 	
 	Snprintf( container_merge_path , sizeof(container_merge_path)-1 , "%s/merged" , env->container_path_base );
 	nret = access( container_merge_path , F_OK ) ;
-	I1TER1( "*** ERROR : merged not exist in container '%s'\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : merged not exist in container '%s'\n" , env->cmd_para.__container )
 	
-	GetEthernetNames( env , env->cmd_para.__container_id );
+	GetEthernetNames( env , env->cmd_para.__container );
 	
 	/* client connect to cockerinit */
 	connected_sock = socket( AF_UNIX , SOCK_STREAM , 0 ) ;

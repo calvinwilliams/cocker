@@ -17,10 +17,10 @@ int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id ) ;
+	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir[%s] failed[%d]\n" , env->container_path_base , nret )
 	
-	GetEthernetNames( env , env->cmd_para.__container_id );
+	GetEthernetNames( env , env->cmd_para.__container );
 	
 	/* read pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );

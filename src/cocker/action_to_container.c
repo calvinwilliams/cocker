@@ -10,7 +10,7 @@
 
 int DoAction_to_container( struct CockerEnvironment *env )
 {
-	char			image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+	char			image[ IMAGES_ID_LEN_MAX + 1 ] ;
 	char			version[ PATH_MAX + 1 ] ;
 	char			*p = NULL ;
 	char			*p2 = NULL ;
@@ -19,10 +19,10 @@ int DoAction_to_container( struct CockerEnvironment *env )
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
-	memset( image_id , 0x00 , sizeof(image_id) );
-	strncpy( image_id , env->cmd_para.__from_image , sizeof(image_id)-1 );
+	memset( image , 0x00 , sizeof(image) );
+	strncpy( image , env->cmd_para.__from_image , sizeof(image)-1 );
 	
-	p = image_id ;
+	p = image ;
 	p2 = strchr( p , ':' ) ;
 	if( p2 == NULL )
 	{
@@ -38,9 +38,9 @@ int DoAction_to_container( struct CockerEnvironment *env )
 		(*p2) = '0' ;
 		nret = SnprintfAndCheckDir( NULL , -1 , "%s/%.*s/%s/rlayer" , env->images_path_base , (int)(p2-p) , p , p2+1 ) ;
 	}
-	INTER1( "*** ERROR : image[%s] not found\n" , image_id )
+	INTER1( "*** ERROR : image[%s] not found\n" , image )
 	
-	Snprintf( env->version_path_base , sizeof(env->version_path_base) , "%s/%s" , env->images_path_base , image_id );
+	Snprintf( env->version_path_base , sizeof(env->version_path_base) , "%s/%s" , env->images_path_base , image );
 	
 	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__to_container );
 	nret = access( env->container_path_base , F_OK ) ;
@@ -49,7 +49,7 @@ int DoAction_to_container( struct CockerEnvironment *env )
 	GetEthernetNames( env , env->cmd_para.__to_container );
 	
 	/* create container folders and files */
-	nret = CreateContainer( env , env->cmd_para.__image_id , env->cmd_para.__to_container ) ;
+	nret = CreateContainer( env , env->cmd_para.__image , env->cmd_para.__to_container ) ;
 	INTER1( "*** ERROR : CreateContainer failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTI( "CreateContainer %s from %s ok\n" , env->cmd_para.__to_container , env->cmd_para.__from_image )
 	

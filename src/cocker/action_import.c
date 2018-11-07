@@ -57,8 +57,8 @@ int DoAction_import( struct CockerEnvironment *env )
 	memset( current_path , 0x00 , sizeof(current_path) );
 	getcwd( current_path , sizeof(current_path) );
 	
-	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "cd %s/rlayer/ && tar xzf %s/%s" , env->image_path_base , current_path , env->cmd_para.__image_file ) ;
-	INTER1( "*** ERROR : SnprintfAndSystem [cd %s/rlayer/ && tar xzf %s/%s] failed[%d] , errno[%d]\n" , env->image_path_base , current_path , env->cmd_para.__image_file , nret , errno )
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "cd %s/rlayer/ && tar --force-local -xzf %s/%s" , env->image_path_base , current_path , env->cmd_para.__image_file ) ;
+	INTER1( "*** ERROR : SnprintfAndSystem [cd %s/rlayer/ && tar --force-local -xzf %s/%s] failed[%d] , errno[%d]\n" , env->image_path_base , current_path , env->cmd_para.__image_file , nret , errno )
 	EIDTI( "system [%s] ok\n" , cmd )
 	
 	printf( "OK\n" );

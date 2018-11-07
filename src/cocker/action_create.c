@@ -8,9 +8,9 @@
 
 #include "cocker_in.h"
 
-int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__container_id )
+int CreateContainer( struct CockerEnvironment *env , char *__image , char *__container )
 {
-	char			container_id[ CONTAINER_ID_LEN_MAX + 1 ] ;
+	char			container[ CONTAINER_ID_LEN_MAX + 1 ] ;
 	
 	char			cmd[ 4096 ] ;
 	
@@ -34,20 +34,20 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	int			nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container );
 	nret = access( env->container_path_base , F_OK ) ;
-	I0TER1( "*** ERROR : container '%s' exist\n" , env->cmd_para.__container_id )
+	I0TER1( "*** ERROR : container '%s' exist\n" , env->cmd_para.__container )
 	
-	if( __image_id && __image_id[0] )
+	if( __image && __image[0] )
 	{
-		char	image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+		char	image[ IMAGES_ID_LEN_MAX + 1 ] ;
 		char	version[ PATH_MAX + 1 ] ;
 		char	*p = NULL ;
 		char	*p2 = NULL ;
 		
-		memset( image_id , 0x00 , sizeof(image_id) );
-		strncpy( image_id , __image_id , sizeof(image_id)-1 );
-		p = strtok( image_id , "," ) ;
+		memset( image , 0x00 , sizeof(image) );
+		strncpy( image , __image , sizeof(image)-1 );
+		p = strtok( image , "," ) ;
 		while( p )
 		{
 			p2 = strchr( p , ':' ) ;
@@ -69,18 +69,18 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 		}
 	}
 	
-	if( __container_id == NULL )
+	if( __container == NULL )
 	{
-		memset( container_id , 0x00 , sizeof(container_id) );
-		GenerateContainerId( __image_id , container_id );
-		__container_id = container_id ;
+		memset( container , 0x00 , sizeof(container) );
+		GenerateContainerId( __image , container );
+		__container = container ;
 	}
 	
-	GetEthernetNames( env , __container_id );
+	GetEthernetNames( env , __container );
 	
 	/* read pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , __container_id ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , NULL , -1 , "%s/%s/pid" , env->containers_path_base , __container ) ;
 	if( nret == 0 )
 	{
 		pid = atoi(pid_str) ;
@@ -92,7 +92,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	}
 	
 	/* create container folders and files */
-	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , __container_id ) ;
+	nret = SnprintfAndMakeDir( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , __container ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir / failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTI( "mkdir %s ok\n" , env->container_path_base )
 	
@@ -112,9 +112,9 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	INTER1( "*** ERROR : SnprintfAndMakeDir workdir failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTI( "mkdir %s ok\n" , container_workdir_path )
 	
-	if( __image_id && __image_id[0] )
+	if( __image && __image[0] )
 	{
-		nret = WriteFileLine( __image_id , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
+		nret = WriteFileLine( __image , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
 		INTER1( "*** ERROR : WriteFileLine image failed[%d] , errno[%d]\n" , nret , errno )
 		EIDTI( "write file %s ok\n" , container_image_file )
 	}
@@ -143,7 +143,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 	}
 	
 	if( env->cmd_para.__host_name == NULL )
-		env->cmd_para.__host_name = __container_id ;
+		env->cmd_para.__host_name = __container ;
 	
 	nret = WriteFileLine( env->cmd_para.__host_name , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
 	INTER1( "*** ERROR : WriteFileLine hostname failed[%d] , errno[%d]\n" , nret , errno )
@@ -193,7 +193,7 @@ int DoAction_create( struct CockerEnvironment *env )
 {
 	int		nret = 0 ;
 	
-	nret = CreateContainer( env , env->cmd_para.__image_id , env->cmd_para.__container_id ) ;
+	nret = CreateContainer( env , env->cmd_para.__image , env->cmd_para.__container ) ;
 	if( nret == 0 )
 	{
 		if( env->cmd_para.__boot )

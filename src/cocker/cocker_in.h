@@ -30,8 +30,8 @@ struct CommandParameter
 	char			*_show ;
 	
 	char			*__version ;
-	char			*__image_id ;
-	char			*__container_id ;
+	char			*__image ;
+	char			*__container ;
 	char			*__host_name ;
 	char			*__net ;
 	char			*__host_eth ;
@@ -149,8 +149,6 @@ cocker -s containers
 
 cocker -a install_test -d --version "1.0.0"
 
-cocker -a version -d -m test --version "1.0.1"
-
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
 cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
@@ -169,6 +167,10 @@ cocker -a destroy -d -c test
 cocker -a destroy -d -c test -h
 cocker -a destroy -d -f -c test
 
+cocker -a version -d -m test --version "1.0.1"
+cocker -a version -d -m "test:1.0.1" --version "1.0.2"
+cocker -a version -d -m "test:1.0.2"
+
 cocker -a vip -d --vip 166.88.0.3 -c test
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
 cocker -a volume -d --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom" -c test
@@ -176,11 +178,11 @@ cocker -a volume -d --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom" -c tes
 cocker -a to_container -d --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
 cocker -a to_image -d --from-container test --to-image test
 
-cocker -a copy_image -d --from-image test --to-image test2
+cocker -a copy_image -d --from-image test --to-image "test2:1.0.0"
 cocker -a del_image -d -m test2
 
 cocker -a export -d -m test
-cocker -a export -d -m test --image-file test.cockerimage
+cocker -a export -d -m test
 cocker -a import -d --image-file test.cockerimage
 cocker -a import -d --image-file rhel-7.4-x86_64.cockerimage -m rhel-7.4
 cocker -a import -d --image-file rhel-7.4-gcc-x86_64.cockerimage -m rhel-7.4-gcc

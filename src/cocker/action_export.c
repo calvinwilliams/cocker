@@ -10,7 +10,8 @@
 
 int DoAction_export( struct CockerEnvironment *env )
 {
-	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
+	char		image[ IMAGES_ID_LEN_MAX + 1 ] ;
+	char		*p = NULL ;
 	char		*p2 = NULL ;
 	char		version[ PATH_MAX + 1 ] ;
 	char		image_file[ PATH_MAX + 1 ] ;
@@ -20,8 +21,9 @@ int DoAction_export( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( image_id , sizeof(image_id) , "%s" , env->cmd_para.__image_id );
-	p2 = strchr( image_id , ':' ) ;
+	Snprintf( image , sizeof(image) , "%s" , env->cmd_para.__image );
+	p = image ;
+	p2 = strchr( p , ':' ) ;
 	if( p2 == NULL )
 	{
 		strcpy( version , "_" );
@@ -32,18 +34,18 @@ int DoAction_export( struct CockerEnvironment *env )
 		(*p2) = '\0' ;
 	}
 	
-	Snprintf( image_file , sizeof(image_file) , "%s%s%s.cockerimage" , image_id , (version[0]!='_'?version:"") , version );
+	Snprintf( image_file , sizeof(image_file) , "%s%s%s.cockerimage" , image , (version[0]=='_'?"":":") , version );
 	
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , version );
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image , version );
 	nret = access( env->image_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image_id )
+	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image )
 	
 	/* pack image folders and files */
 	memset( current_path , 0x00 , sizeof(current_path) );
 	getcwd( current_path , sizeof(current_path) );
 	
-	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "cd %s/rlayer/ && tar czf %s * && mv %s %s/" , env->image_path_base , image_file , image_file , current_path ) ;
-	INTER1( "*** ERROR : SnprintfAndSystem [cd %s/rlayer/ && tar czf %s * && mv %s %s/] failed[%d] , errno[%d]\n" , env->image_path_base , image_file , image_file , current_path , nret , errno )
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "cd %s/rlayer/ && tar --force-local -czf %s * && mv %s %s/" , env->image_path_base , image_file , image_file , current_path ) ;
+	INTER1( "*** ERROR : SnprintfAndSystem [cd %s/rlayer/ && tar --force-local -czf %s * && mv %s %s/] failed[%d] , errno[%d]\n" , env->image_path_base , image_file , image_file , current_path , nret , errno )
 	EIDTI( "system [%s] ok\n" , cmd )
 	
 	printf( "OK\n" );

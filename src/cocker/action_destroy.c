@@ -24,11 +24,11 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container );
 	nret = access( env->container_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container )
 	
-	GetEthernetNames( env , env->cmd_para.__container_id );
+	GetEthernetNames( env , env->cmd_para.__container );
 	
 	/* if --shutdown optional */
 	if( env->cmd_para.__shutdown )
@@ -40,7 +40,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 				return -1;
 		}
 		
-		Snprintf( container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container_id ) ;
+		Snprintf( container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container ) ;
 		for( i = 0 ; i < WAIT_FOR_SHUTDOWN_COUNT ; i++ )
 		{
 			nret = access( container_pid_file , F_OK ) ;
@@ -56,7 +56,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	/* read pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );
 	memset( container_pid_file , 0x00 , sizeof(container_pid_file) );
-	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container_id ) ;
+	nret = ReadFileLine( pid_str , sizeof(pid_str)-1 , container_pid_file , sizeof(container_pid_file) , "%s/%s/pid" , env->containers_path_base , env->cmd_para.__container ) ;
 	if( nret == 0 )
 	{
 		TrimEnter( pid_str );
@@ -71,7 +71,7 @@ int DoAction_destroy( struct CockerEnvironment *env )
 	
 	Snprintf( container_rwlayer_path_base , sizeof(container_rwlayer_path_base)-1 , "%s/rwlayer" , env->container_path_base );
 	nret = access( container_rwlayer_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : container '%s' invalid\n" , env->cmd_para.__container_id )
+	I1TER1( "*** ERROR : container '%s' invalid\n" , env->cmd_para.__container )
 	
 	/* clean container resouce */
 	if( env->cmd_para.__forcely )
