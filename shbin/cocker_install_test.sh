@@ -9,7 +9,7 @@
 #!/bin/bash
 
 if [ $# -ne 1 ] ; then
-	echo "USAGE : cocker_install_test.sh (container_path_base)"
+	echo "USAGE : cocker_install_test.sh (image_path_base)"
 	exit 1
 fi
 

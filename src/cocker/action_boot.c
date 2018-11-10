@@ -22,18 +22,19 @@ static int InvertLowerDirs( struct CockerEnvironment *env , char *images , char 
 {
 	int		l ;
 	char		*p = NULL ;
+	char		*p2 = NULL ;
+	char		version[ PATH_MAX + 1 ] ;
 	
 	int		nret = 0 ;
 	
 	if( images )
 	{
-		p = strtok( images , ":" ) ;
+		p = strtok( images , "," ) ;
 	}
 	else
 	{
-		p = strtok( NULL , ":" ) ;
+		p = strtok( NULL , "," ) ;
 	}
-	
 	if( p )
 	{
 		nret = InvertLowerDirs( env , NULL , mount_data , p_len , p_remain_len ) ;
@@ -55,7 +56,19 @@ static int InvertLowerDirs( struct CockerEnvironment *env , char *images , char 
 			(*p_remain_len) -= l ;
 		}
 		
-		l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "%s/%s/rlayer" , env->images_path_base , p ) ;
+		p2 = strchr( p , ':' ) ;
+		if( p2 == NULL )
+		{
+			Snprintf( env->version_path_base , sizeof(env->version_path_base) , "%s/%s" , env->images_path_base , p ) ;
+			nret = GetMaxVersionPath( env->version_path_base , version , sizeof(version) ) ;
+			INTER1( "*** ERROR : GetMaxVersionPath[%s] failed[%d]\n" , env->version_path_base , nret )
+			
+			l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "%s/%s/%s/rlayer" , env->images_path_base , p , version ) ;
+		}
+		else
+		{
+			l = snprintf( mount_data+(*p_len) , (*p_remain_len) , "%s/%.*s/%s/rlayer" , env->images_path_base , (int)(p2-p) , p , p2+1 ) ;
+		}
 		IxTEx( SNPRINTF_OVERFLOW(l,(*p_remain_len)) , exit(9) , "*** ERROR : snprintf overflow\n" )
 		(*p_len) += l ;
 		(*p_remain_len) -= l ;
@@ -159,7 +172,7 @@ static int CloneEntry( void *pv )
 	memset( hostname , 0x00 , sizeof(hostname) );
 	memset( container_hostname_file , 0x00 , sizeof(container_hostname_file) );
 	nret = ReadFileLine( hostname , sizeof(hostname)-1 , container_hostname_file , sizeof(container_hostname_file) , "%s/hostname" , env->container_path_base ) ;
-	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->cmd_para.__container_id )
+	INTEx( (exit(9)) , "*** ERROR : ReadFileLine hostname in container '%s' failed\n" , env->cmd_para.__container )
 	EIDTI( "read file %s ok\n" , container_hostname_file )
 	
 	TrimEnter( hostname );
@@ -171,45 +184,53 @@ static int CloneEntry( void *pv )
 	IDTI( "sethostname [%s] ok\n" , hostname )
 	
 	/* mount filesystem */
+	memset( mount_target , 0x00 , sizeof(mount_target) );
+	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
+	IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
+	
 	memset( image , 0x00 , sizeof(image) );
 	memset( container_image_file , 0x00 , sizeof(container_image_file) );
 	nret = ReadFileLine( image , sizeof(image)-1 , container_image_file , sizeof(container_image_file) , "%s/image" , env->container_path_base ) ;
 	if( nret )
 	{
+		char		container_rwlayer_path[ PATH_MAX + 1 ] ;
+		
 		memset( container_image_file , 0x00 , sizeof(container_image_file) );
 		memset( image , 0x00 , sizeof(image) );
+		
+		Snprintf( container_rwlayer_path , sizeof(container_rwlayer_path) , "%s/rwlayer" , env->container_path_base );
+		nret = mount( container_rwlayer_path , mount_target , NULL , MS_MGC_VAL|MS_BIND , NULL ) ;
+		I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , container_rwlayer_path , mount_target , errno )
+		EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , container_rwlayer_path , mount_target , "(null)" , MS_MGC_VAL|MS_BIND , "(null)" )
 	}
 	else
 	{
 		I0TI( "read file %s ok\n" , container_image_file )
-	}
-	TrimEnter( image );
-	
-	memset( mount_target , 0x00 , sizeof(mount_target) );
-	len = snprintf( mount_target , sizeof(mount_target)-1 , "%s/merged" , env->container_path_base ) ;
-	IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_target)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
-	
-	memset( mount_data , 0x00 , sizeof(mount_data) );
-	if( image[0] == '\0' )
-	{
-		len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
-		IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) , exit(9) , "*** ERROR : snprintf overflow\n" )
-	}
-	else
-	{
-		len = 0 ;
-		remain_len = sizeof(mount_data)-1 ;
-		nret = InvertLowerDirs( env , image , mount_data , & len , & remain_len ) ;
-		INTEx( exit(9) , "*** ERROR : InvertLowerDirs overflow\n" )
 		
-		l = snprintf( mount_data+len , remain_len , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
-		IxTEx( SNPRINTF_OVERFLOW(l,remain_len) , exit(9) , "*** ERROR : snprintf overflow\n" )
-		len += l ;
-		remain_len -= l ;
+		TrimEnter( image );
+		
+		memset( mount_data , 0x00 , sizeof(mount_data) );
+		if( image[0] == '\0' )
+		{
+			len = snprintf( mount_data , sizeof(mount_data)-1 , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
+			IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_data)-1) , exit(9) , "*** ERROR : snprintf overflow\n" )
+		}
+		else
+		{
+			len = 0 ;
+			remain_len = sizeof(mount_data)-1 ;
+			nret = InvertLowerDirs( env , image , mount_data , & len , & remain_len ) ;
+			INTEx( exit(9) , "*** ERROR : InvertLowerDirs overflow\n" )
+			
+			l = snprintf( mount_data+len , remain_len , "upperdir=%s/rwlayer,workdir=%s/workdir" , env->container_path_base , env->container_path_base ) ;
+			IxTEx( SNPRINTF_OVERFLOW(l,remain_len) , exit(9) , "*** ERROR : snprintf overflow\n" )
+			len += l ;
+			remain_len -= l ;
+		}
+		nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
+		I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )
+		EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data )
 	}
-	nret = mount( "overlay" , mount_target , "overlay" , MS_MGC_VAL , (void*)mount_data ) ;
-	I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , mount_data , mount_target , errno )
-	EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "overlay" , mount_target , "overlay" , MS_MGC_VAL , mount_data )
 	
 	/* mount volumes */
 	Snprintf( container_volume_file , sizeof(container_volume_file) , "%s/volume" , env->container_path_base ) ;
@@ -260,30 +281,30 @@ static int CloneEntry( void *pv )
 	{
 		if( env->cmd_para.__cpus )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_cpus_file , sizeof(cgroup_cpuset_cpus_file) , "%s/cpuset/cocker_%s/cpuset.cpus" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_cpus_file , sizeof(cgroup_cpuset_cpus_file) , "%s/cpuset/cocker_%s/cpuset.cpus" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.cpus failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpuset_cpus_file )
 			
-			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpuset/cocker_%s/cpuset.mems" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__cpus , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpuset/cocker_%s/cpuset.mems" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.mems failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpuset_mems_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_cpuset_tasks_file , sizeof(cgroup_cpuset_tasks_file) , "%s/cpuset/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_cpuset_tasks_file , sizeof(cgroup_cpuset_tasks_file) , "%s/cpuset/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine cpuset.tasks failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpuset_tasks_file )
 		}
 		
 		if( env->cmd_para.__cpu_quota )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( "1000000" , cgroup_cpu_cfs_period_us_file , sizeof(cgroup_cpu_cfs_period_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_period_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( "1000000" , cgroup_cpu_cfs_period_us_file , sizeof(cgroup_cpu_cfs_period_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_period_us" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine cpu.cfs_period_us failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpu_cfs_period_us_file )
 			
@@ -293,35 +314,35 @@ static int CloneEntry( void *pv )
 				
 				memset( buf , 0x00 , sizeof(buf) );
 				snprintf( buf , sizeof(buf)-1 , "%d" , 1000000/100*atoi(env->cmd_para.__cpu_quota) );
-				nret = WriteFileLine( buf , cgroup_cpu_cfs_quota_us_file , sizeof(cgroup_cpu_cfs_quota_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+				nret = WriteFileLine( buf , cgroup_cpu_cfs_quota_us_file , sizeof(cgroup_cpu_cfs_quota_us_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container ) ;
 			}
 			else
 			{
-				nret = WriteFileLine( env->cmd_para.__cpu_quota , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+				nret = WriteFileLine( env->cmd_para.__cpu_quota , cgroup_cpuset_mems_file , sizeof(cgroup_cpuset_mems_file) , "%s/cpu,cpuacct/cocker_%s/cpu.cfs_quota_us" , CGROUP_PATH , env->cmd_para.__container ) ;
 			}
 			INTER1( "*** ERROR : WriteFileLine cpu.cfs_quota_us failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpu_cfs_quota_us_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_cpu_tasks_file , sizeof(cgroup_cpu_tasks_file) , "%s/cpu,cpuacct/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_cpu_tasks_file , sizeof(cgroup_cpu_tasks_file) , "%s/cpu,cpuacct/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine cpu.tasks failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_cpu_tasks_file )
 		}
 		
 		if( env->cmd_para.__mem_limit )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mkdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 			
-			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_limit_in_bytes_file , sizeof(cgroup_memory_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_limit_in_bytes_file , sizeof(cgroup_memory_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.limit_in_bytes failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_memory_limit_in_bytes_file )
 			
-			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_memsw_limit_in_bytes_file , sizeof(cgroup_memory_memsw_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.memsw.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( env->cmd_para.__mem_limit , cgroup_memory_memsw_limit_in_bytes_file , sizeof(cgroup_memory_memsw_limit_in_bytes_file) , "%s/memory/cocker_%s/memory.memsw.limit_in_bytes" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.memsw.limit_in_bytes failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_memory_memsw_limit_in_bytes_file )
 			
-			nret = WriteFileLine( pid_str , cgroup_memory_tasks_file , sizeof(cgroup_memory_tasks_file) , "%s/memory/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = WriteFileLine( pid_str , cgroup_memory_tasks_file , sizeof(cgroup_memory_tasks_file) , "%s/memory/cocker_%s/tasks" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTER1( "*** ERROR : WriteFileLine memory.tasks failed[%d] , errno[%d]\n" , nret , errno )
 			EIDTI( "write file %s ok\n" , cgroup_memory_tasks_file )
 		}
@@ -332,6 +353,10 @@ static int CloneEntry( void *pv )
 	*/
 	I( "chroot [%s] ...\n" , mount_target )
 	nret = chroot( mount_target ) ;
+	
+	SetLogcFile( "/cocker.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+	
 	if( env->cmd_para.__debug )
 	{
 		I( "chroot [%s] ok\n" , mount_target )
@@ -366,7 +391,7 @@ static int CloneEntry( void *pv )
 		argv[argc++] = "/bin/cockerinit" ;
 		argv[argc++] = "cockerinit" ;
 		argv[argc++] = "--container" ;
-		argv[argc++] = env->cmd_para.__container_id ;
+		argv[argc++] = env->cmd_para.__container ;
 		argv[argc++] = NULL ;
 		for( i = 0 ; i < argc ; i++ )
 			I( "argv[%d]=[%s]\n" , i , argv[i] )
@@ -521,21 +546,21 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	{
 		if( env->cmd_para.__cpus )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpuset/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
 		
 		if( env->cmd_para.__cpu_quota )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/cpu,cpuacct/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
 		
 		if( env->cmd_para.__mem_limit )
 		{
-			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container_id ) ;
+			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s/memory/cocker_%s" , CGROUP_PATH , env->cmd_para.__container ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
 		}
@@ -664,11 +689,11 @@ int DoAction_boot( struct CockerEnvironment *env )
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
 	/* preprocess input parameters */
-	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container_id );
+	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__container );
 	nret = access( env->container_path_base , F_OK ) ;
-	INTER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container_id )
+	INTER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__container )
 	
-	GetEthernetNames( env , env->cmd_para.__container_id );
+	GetEthernetNames( env , env->cmd_para.__container );
 	
 	/* read pid file */
 	memset( pid_str , 0x00 , sizeof(pid_str) );

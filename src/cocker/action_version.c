@@ -10,19 +10,54 @@
 
 int DoAction_version( struct CockerEnvironment *env )
 {
-	char		image_version_file[ PATH_MAX + 1 ] ;
+	char		image[ IMAGES_ID_LEN_MAX + 1 ] ;
+	char		*p = NULL ;
+	char		*p2 = NULL ;
+	char		old_version[ PATH_MAX + 1 ] ;
+	char		new_version[ PATH_MAX + 1 ] ;
+	char		cmd[ 4096 ] ;
 	
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__image_id );
-	nret = access( env->image_path_base , F_OK ) ;
-	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image_id )
+	if( env->cmd_para.__image )
+	{
+		memset( image , 0x00 , sizeof(image) );
+		strncpy( image , env->cmd_para.__image , sizeof(image)-1 );
+	}
+	p = image ;
+	p2 = strchr( p , ':' ) ;
+	memset( old_version , 0x00 , sizeof(old_version) );
+	if( p2 )
+	{
+		strncpy( old_version , p2+1 , sizeof(old_version)-1 );
+		(*p2)= '\0' ;
+	}
+	if( old_version[0] == '\0' )
+	{
+		strcpy( old_version , "_" );
+	}
 	
-	/* modify vip */
-	nret = WriteFileLine( env->cmd_para.__version , image_version_file , sizeof(image_version_file) , "%s/version" , env->image_path_base ) ;
-	INTER1( "*** ERROR : WriteFileLine version failed[%d] , errno[%d]\n" , nret , errno )
-	EIDTE( "write file [%s] ok\n" , image_version_file )
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image , old_version );
+	nret = access( env->image_path_base , F_OK ) ;
+	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image )
+	
+	memset( new_version , 0x00 , sizeof(new_version) );
+	if( env->cmd_para.__version )
+	{
+		strncpy( new_version , env->cmd_para.__version , sizeof(new_version)-1 );
+	}
+	if( new_version[0] == '\0' )
+	{
+		strcpy( new_version , "_" );
+	}
+	
+	/* modify version */
+	IxTER1( (STRCMP( old_version,==,new_version)) , "version equal\n" )
+	
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mv %s/%s/%s %s/%s/%s" , env->images_path_base , image , old_version , env->images_path_base , image , new_version ) ;
+	INTER1( "*** ERROR : SnprintfAndSystem [mv %s/%s/%s %s/%s/%s] failed[%d] , errno[%d]\n" , env->images_path_base , image , old_version , env->images_path_base , image , new_version , nret , errno )
+	EIDTI( "modify version ok\n" )
 	
 	printf( "OK\n" );
 	

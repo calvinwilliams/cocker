@@ -300,3 +300,86 @@ int GetDirectorySize( char *path , int *p_directory_size )
 	return _GetDirectorySize( path , p_directory_size );
 }
 
+int GetMaxVersionPath( char *version_path_base , char *max_version , int max_version_bufsize )
+{
+	DIR		*dir = NULL ;
+	struct dirent	*dirent = NULL ;
+	int		max_v1 , max_v2 , max_v3 , max_v4 ;
+	int		v1 , v2 , v3 , v4 ;
+	char		version[ PATH_MAX + 1 ] = "" ;
+	
+	dir = opendir( version_path_base ) ;
+	if( dir == NULL )
+		return -1;
+	
+	max_v1 = -1 ;
+	max_v2 = -1 ;
+	max_v3 = -1 ;
+	max_v4 = -1 ;
+	while(1)
+	{
+		dirent = readdir( dir ) ;
+		if( dirent == NULL )
+			break;
+		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
+			continue;
+		if( dirent->d_type != DT_DIR )
+			continue;
+		
+		sscanf( dirent->d_name , "%d.%d.%d.%d" , & v1 , & v2 , & v3 , & v4 );
+		if( v1 < max_v1 )
+			continue;
+		if( v2 < max_v2 )
+			continue;
+		if( v3 < max_v3 )
+			continue;
+		if( v4 < max_v4 )
+			continue;
+		
+		strncpy( version , dirent->d_name , sizeof(version)-1 );
+		max_v1 = v1 ;
+		max_v2 = v2 ;
+		max_v3 = v3 ;
+		max_v4 = v4 ;
+	}
+	
+	closedir( dir );
+	
+	if( version[0] == '0' )
+	{
+		return 1;
+	}
+	else
+	{
+		strncpy( max_version , version , max_version_bufsize-1 );
+		return 0;
+	}
+}
+
+int IsDirectoryEmpty( char *version_path_base )
+{
+	DIR		*dir = NULL ;
+	struct dirent	*dirent = NULL ;
+	
+	dir = opendir( version_path_base ) ;
+	if( dir == NULL )
+		return -1;
+	
+	while(1)
+	{
+		dirent = readdir( dir ) ;
+		if( dirent == NULL )
+			break;
+		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
+			continue;
+		if( dirent->d_type != DT_DIR )
+			continue;
+		
+		closedir( dir );
+		return 1;
+	}
+	
+	closedir( dir );
+	return 0;
+}
+

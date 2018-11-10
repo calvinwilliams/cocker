@@ -16,8 +16,7 @@ int main( int argc , char *argv[] )
 	
 	int				nret = 0 ;
 	
-	mkdir( "/var/cocker" , 00777 );
-	SetLogcFile( "/var/cocker/cockerinit.log" );
+	SetLogcFile( "/cockerinit.log" );
 	SetLogcLevel( LOGCLEVEL_INFO );
 	
 	INFOLOGC( "--- cockerinit begin ---" )

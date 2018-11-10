@@ -79,10 +79,6 @@ extern "C" {
 #define IMAGES_ID_LEN_MAX	1024
 #endif
 
-#ifndef AUTHOR_LEN_MAX
-#define AUTHOR_LEN_MAX		64
-#endif
-
 #ifndef CREATE_DATATIME_LEN_MAX
 #define CREATE_DATATIME_LEN_MAX	20
 #endif
@@ -361,6 +357,9 @@ int ReadFileLine( char *fileline_buf , int fileline_bufsize , char *pathfile_buf
 
 int IsDirectoryNewThan( char *path , time_t mtime );
 int GetDirectorySize( char *path , int *p_directory_size );
+
+int GetMaxVersionPath( char *version_path_base , char *max_version , int max_version_bufsize );
+int IsDirectoryEmpty( char *version_path_base );
 
 /*
  * socket

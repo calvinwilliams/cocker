@@ -10,18 +10,13 @@
 
 int DoAction_to_image( struct CockerEnvironment *env )
 {
+	char		version[ PATH_MAX + 1 ] ;
 	char		pid_str[ PID_LEN_MAX + 1 ] ;
 	pid_t		pid ;
 	char		net[ NET_LEN_MAX + 1 ] ;
 	char		image_rlayer_path_base[ PATH_MAX + 1 ] ;
 	char		container_pid_file[ PATH_MAX + 1 ] ;
 	char		container_net_file[ PATH_MAX + 1 ] ;
-	char		image_author_file[ PATH_MAX + 1 ] ;
-	time_t		now_tt ;
-	struct tm	now_tm ;
-	char		time_str[ CREATE_DATATIME_LEN_MAX ] ;
-	char		image_create_datetime_file[ PATH_MAX + 1 ] ;
-	char		image_version_file[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
 
 	int		nret = 0 ;
@@ -30,6 +25,10 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	Snprintf( env->container_path_base , sizeof(env->container_path_base)-1 , "%s/%s" , env->containers_path_base , env->cmd_para.__from_container );
 	nret = access( env->container_path_base , F_OK ) ;
 	I1TER1( "*** ERROR : container '%s' not found\n" , env->cmd_para.__from_container )
+	
+	memset( version , 0x00 , sizeof(version) );
+	nret = ReadFileLine( version , sizeof(version)-1 , NULL , -1 , "%s/%s/version" , env->containers_path_base , env->cmd_para.__from_container ) ;
+	I1TER1( "*** ERROR : container '%s' is not converted from image\n" , env->cmd_para.__from_container )
 	
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__to_image );
 	nret = access( env->image_path_base , F_OK ) ;
@@ -75,7 +74,9 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	}
 	
 	/* create image */
-	nret = SnprintfAndMakeDir( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__to_image ) ;
+	nret = SnprintfAndMakeDir( NULL , -1 , "%s/%s" , env->images_path_base , env->cmd_para.__to_image ) ;
+	
+	nret = SnprintfAndMakeDir( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , env->cmd_para.__to_image , version ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir image_path_base failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTI( "mkdir %s ok\n" , env->image_path_base )
 	
@@ -86,42 +87,6 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mv -f %s/rwlayer/* %s/rlayer/" , env->container_path_base , env->image_path_base ) ;
 	INTER1( "*** ERROR : SnprintfAndSystem [mv -f %s/rwlayer/* %s/rlayer/] failed[%d] , errno[%d]\n" , env->container_path_base , env->image_path_base , nret , errno )
 	EIDTI( "system [%s] ok\n" , cmd )
-	
-	Snprintf( image_author_file , sizeof(image_author_file) , "%s/author" , env->container_path_base );
-	nret = access( image_author_file , F_OK ) ;
-	if( nret == 0 )
-	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mv %s %s/" , image_author_file , env->image_path_base ) ;
-		INTER1( "*** ERROR : SnprintfAndSystem [mv %s %s/] failed[%d] , errno[%d]\n" , image_author_file , env->image_path_base , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
-	}
-	
-	Snprintf( image_create_datetime_file , sizeof(image_create_datetime_file) , "%s/create_datetime" , env->container_path_base );
-	nret = access( image_create_datetime_file , F_OK ) ;
-	if( nret == 0 )
-	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mv %s %s/" , image_create_datetime_file , env->image_path_base ) ;
-		INTER1( "*** ERROR : SnprintfAndSystem [mv %s %s/] failed[%d] , errno[%d]\n" , image_create_datetime_file , env->image_path_base , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
-	}
-	else
-	{
-		time( & now_tt );
-		localtime_r( & now_tt , & now_tm );
-		strftime( time_str , sizeof(time_str) , "%Y-%m-%dT%H:%M:%S" , & now_tm ) ;
-		nret = WriteFileLine( time_str , image_create_datetime_file , sizeof(image_create_datetime_file)-1 , "%s/create_datetime" , env->image_path_base ) ;
-		INTER1( "*** ERROR : WriteFileLine create_datetime failed[%d] , errno[%d]\n" , nret , errno )
-		EIDTI( "WriteFileLine %s ok\n" , image_create_datetime_file )
-	}
-	
-	Snprintf( image_version_file , sizeof(image_version_file) , "%s/version" , env->container_path_base );
-	nret = access( image_version_file , F_OK ) ;
-	if( nret == 0 )
-	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "mv %s %s/" , image_version_file , env->image_path_base ) ;
-		INTER1( "*** ERROR : SnprintfAndSystem [mv %s %s/] failed[%d] , errno[%d]\n" , image_version_file , env->image_path_base , nret , errno )
-		EIDTE( "system [%s] ok\n" , cmd )
-	}
 	
 	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , env->container_path_base ) ;
 	INTER1( "*** ERROR : SnprintfAndSystem [rm -rf %s] failed[%d] , errno[%d]\n" , env->container_path_base , nret , errno )

@@ -29,10 +29,9 @@ struct CommandParameter
 	char			*_action ;
 	char			*_show ;
 	
-	char			*__author ;
 	char			*__version ;
-	char			*__image_id ;
-	char			*__container_id ;
+	char			*__image ;
+	char			*__container ;
 	char			*__host_name ;
 	char			*__net ;
 	char			*__host_eth ;
@@ -74,6 +73,7 @@ struct CockerEnvironment
 	char			host_eth_name[ ETHERNET_NAME_LEN_MAX + 1 ] ;
 	char			host_eth_ip[ IP_LEN_MAX + 1 ] ;
 	
+	char			version_path_base[ PATH_MAX + 1 ] ;
 	char			image_path_base[ PATH_MAX + 1 ] ;
 	char			container_path_base[ PATH_MAX + 1 ] ;
 	int			src_port ;
@@ -109,9 +109,6 @@ int DoShow_containers( struct CockerEnvironment *env );
 
 int DoAction_install_test( struct CockerEnvironment *env );
 
-int DoAction_author( struct CockerEnvironment *env );
-int DoAction_version( struct CockerEnvironment *env );
-
 int DoAction_create( struct CockerEnvironment *env );
 int DoAction_destroy( struct CockerEnvironment *env );
 int DoAction_boot( struct CockerEnvironment *env );
@@ -119,6 +116,8 @@ int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
+
+int DoAction_version( struct CockerEnvironment *env );
 
 int DoAction_vip( struct CockerEnvironment *env );
 int DoAction_port_mapping( struct CockerEnvironment *env );
@@ -148,10 +147,7 @@ echo "1" >/proc/sys/net/ipv4/ip_forward
 cocker -s images
 cocker -s containers
 
-cocker -a install_test -d --author "calvin<calvinwilliams@163.com>" --version "1.0.0"
-
-cocker -a author -d -m test --author "calvin<calvinwilliams@gmail.com>"
-cocker -a version -d -m test --version "1.0.1"
+cocker -a install_test -d --version "1.0.0"
 
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
@@ -161,7 +157,7 @@ cocker -a create -d -m test --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t -e "/bin/bash -l"
-cocker -a create -d -m "rhel-7.4:rhel-7.4-gcc" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
+cocker -a create -d -m "calvin@rhel-7.4-x86_64:1.0.0,calvin@rhel-7.4-gcc-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"
@@ -171,18 +167,22 @@ cocker -a destroy -d -c test
 cocker -a destroy -d -c test -h
 cocker -a destroy -d -f -c test
 
+cocker -a version -d -m test --version "1.0.1"
+cocker -a version -d -m "test:1.0.1" --version "1.0.2"
+cocker -a version -d -m "test:1.0.2"
+
 cocker -a vip -d --vip 166.88.0.3 -c test
 cocker -a port_mapping -d --port-mapping 19528:9528 -c test
 cocker -a volume -d --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom" -c test
 
-cocker -a to_container -d -m test --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
+cocker -a to_container -d --from-image test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 --to-container test
 cocker -a to_image -d --from-container test --to-image test
 
-cocker -a copy_image -d --from-image test --to-image test2
-cocker -a del_image -d -m test2
+cocker -a copy_image -d --from-image test --to-image "test2:1.0.0"
+cocker -a del_image -d -m "test2:1.0.0"
 
 cocker -a export -d -m test
-cocker -a export -d -m test --image-file test.cockerimage
+cocker -a export -d -m test
 cocker -a import -d --image-file test.cockerimage
 cocker -a import -d --image-file rhel-7.4-x86_64.cockerimage -m rhel-7.4
 cocker -a import -d --image-file rhel-7.4-gcc-x86_64.cockerimage -m rhel-7.4-gcc
