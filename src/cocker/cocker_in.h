@@ -179,7 +179,7 @@ cocker -a to_container -d --from-image test --host test --net BRIDGE --vip 166.8
 cocker -a to_image -d --from-container test --to-image test
 
 cocker -a copy_image -d --from-image test --to-image "test2:1.0.0"
-cocker -a del_image -d -m test2
+cocker -a del_image -d -m "test2:1.0.0"
 
 cocker -a export -d -m test
 cocker -a export -d -m test

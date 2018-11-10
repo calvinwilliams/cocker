@@ -42,5 +42,5 @@ cp -f /usr/bin/ld ${IMAGE_RLAYER_PATH_BASE}/usr/bin/
 
 cd appliance.d && tar --numeric-owner -cvzf ../${IMAGE_FILENAME} * && cd ..
 
-# rm -rf appliance.d supermin.d
+rm -rf appliance.d supermin.d
 
