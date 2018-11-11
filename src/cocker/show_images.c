@@ -114,16 +114,16 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 				}
 			}
 			
-			if( image_size == -1 )
-				Snprintf( image_size_str , sizeof(image_size_str) , "(unknow)" );
-			else if( image_size > 1024*1024*1024 )
+			if( image_size > 1024*1024*1024 )
 				Snprintf( image_size_str , sizeof(image_size_str) , "%d GB" , image_size / (1024*1024*1024) );
 			else if( image_size > 1024*1024 )
 				Snprintf( image_size_str , sizeof(image_size_str) , "%d MB" , image_size / (1024*1024) );
 			else if( image_size > 1024 )
 				Snprintf( image_size_str , sizeof(image_size_str) , "%d KB" , image_size / 1024 );
-			else
+			else if( image_size >= 0 )
 				Snprintf( image_size_str , sizeof(image_size_str) , "%d B" , image_size );
+			else
+				Snprintf( image_size_str , sizeof(image_size_str) , "(unknow)" );
 			
 			/* output */
 			if( count == 0 )
