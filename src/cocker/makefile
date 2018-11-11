@@ -8,6 +8,7 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
+			util.c \
 			main.c \
 			env.c \
 			show_images.c \
@@ -16,6 +17,7 @@ c_FILE		=	\
 			action_destroy.c \
 			action_boot.c \
 			action_shutdown.c \
+			action_version.c \
 			action_vip.c \
 			action_port_mapping.c \
 			action_volume.c \
@@ -27,8 +29,7 @@ c_FILE		=	\
 			action_del_image.c \
 			action_export.c \
 			action_import.c \
-			action_version.c \
-			util.c \
+			show_ssearch.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall

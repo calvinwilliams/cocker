@@ -29,6 +29,7 @@ static void usage()
 	printf( "               -a del_image (-m|--image) (image[:version])\n" );
 	printf( "               -a import --image-file (file)\n" );
 	printf( "               -a export (-m|--image) (image[:version])\n" );
+	printf( "               -s ssearch --repo (user@host)\n" );
 	printf( "               -a install_test\n" );
 	printf( "create options : [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
 	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
@@ -189,6 +190,16 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__image_file = argv[i+1] ;
 			i++;
 		}
+		else if( STRCMP( argv[i] , == , "--repo" ) && i + 1 < argc )
+		{
+			env->cmd_para.__repo = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--match" ) && i + 1 < argc )
+		{
+			env->cmd_para.__match = argv[i+1] ;
+			i++;
+		}
 		else if( ( STRCMP( argv[i] , == , "-d" ) || STRCMP( argv[i] , == , "--debug" ) ) )
 		{
 			env->cmd_para.__debug = argv[i] ;
@@ -286,6 +297,12 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			INFOLOGC( "--- call DoShow_containers ---" )
 			nret = DoShow_containers( env ) ;
 			INFOLOGC( "--- DoShow_containers return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._show , == , "ssearch" ) )
+		{
+			INFOLOGC( "--- call DoShow_ssearch ---" )
+			nret = DoShow_ssearch( env ) ;
+			INFOLOGC( "--- DoShow_ssearch return[%d] ---" , nret )
 		}
 		else
 		{

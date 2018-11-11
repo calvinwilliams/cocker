@@ -58,6 +58,9 @@ struct CommandParameter
 	
 	struct list_head	volume_list ;
 	char			*__volume ;
+	
+	char			*__repo ;
+	char			*__match ;
 } ;
 
 struct CockerEnvironment
@@ -132,6 +135,8 @@ int DoAction_del_image( struct CockerEnvironment *env );
 
 int DoAction_export( struct CockerEnvironment *env );
 int DoAction_import( struct CockerEnvironment *env );
+
+int DoShow_ssearch( struct CockerEnvironment *env );
 
 /* depend on
 sudo yum install -y telnet
