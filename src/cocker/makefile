@@ -30,6 +30,8 @@ c_FILE		=	\
 			action_export.c \
 			action_import.c \
 			show_ssearch.c \
+			action_spush.c \
+			action_spull.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall

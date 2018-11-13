@@ -95,6 +95,7 @@ struct CockerEnvironment
  */
 
 void GetEthernetNames( struct CockerEnvironment *env , char *container_id );
+int SplitImageVersion( char *image_id , char *version , int version_bufsize );
 
 /*
  * environment
@@ -137,6 +138,9 @@ int DoAction_export( struct CockerEnvironment *env );
 int DoAction_import( struct CockerEnvironment *env );
 
 int DoShow_ssearch( struct CockerEnvironment *env );
+
+int DoAction_spush( struct CockerEnvironment *env );
+int DoAction_spull( struct CockerEnvironment *env );
 
 /* depend on
 sudo yum install -y telnet
@@ -191,6 +195,11 @@ cocker -a export -d -m test
 cocker -a import -d --image-file test.cockerimage
 cocker -a import -d --image-file rhel-7.4-x86_64.cockerimage -m rhel-7.4
 cocker -a import -d --image-file rhel-7.4-gcc-x86_64.cockerimage -m rhel-7.4-gcc
+
+cocker -a ssearch
+cocker -a ssearch --match calvin
+cocker -a spush -m calvin=rhel-7.4-x86_64:1.0.0 -d -f
+
 */
 
 /* for test

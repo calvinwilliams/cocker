@@ -16,7 +16,7 @@ fi
 printf "Your name or enter null : "
 read MY_NAME
 if [ x"${MY_NAME}" != x"" ] ; then
-	MY_NAME="${MY_NAME}@"
+	MY_NAME="${MY_NAME}="
 fi
 
 printf "Version or enter null : "
