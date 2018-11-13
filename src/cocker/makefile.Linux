@@ -30,6 +30,7 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 	$(CC) $(CFLAGS) -c $<
 
 c_FILE		=	\
+			util.c \
 			main.c \
 			env.c \
 			show_images.c \
@@ -38,6 +39,7 @@ c_FILE		=	\
 			action_destroy.c \
 			action_boot.c \
 			action_shutdown.c \
+			action_version.c \
 			action_vip.c \
 			action_port_mapping.c \
 			action_volume.c \
@@ -49,8 +51,9 @@ c_FILE		=	\
 			action_del_image.c \
 			action_export.c \
 			action_import.c \
-			action_version.c \
-			util.c \
+			show_ssearch.c \
+			action_spush.c \
+			action_spull.c \
 
 ###### 目标文件、安装目录配置区
 include ../../makeinstall

@@ -20,8 +20,6 @@ int DoShow_ssearch( struct CockerEnvironment *env )
 	char		image_size_str[ 32 + 1] ;
 	char		image_modify_datetime[ 32 + 1 ] ;
 	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
-	char		image_version[ VERSION_LEN_MAX + 1 ] ;
-	char		*p = NULL ;
 	
 	int		nret = 0 ;
 	
@@ -61,20 +59,9 @@ int DoShow_ssearch( struct CockerEnvironment *env )
 		
 		memset( image_modify_datetime , 0x00 , sizeof(image_modify_datetime) );
 		memset( image_id , 0x00 , sizeof(image_id) );
-		memset( image_version , 0x00 , sizeof(image_version) );
 		sscanf( buf , "%*s%*s%*s%*s%d%s %[^.].%*s%*s%s" , & image_size , image_modify_datetime , image_modify_datetime+10 , image_id );
 		image_modify_datetime[10] = 'T' ;
-		image_id[strlen(image_id)-1-(sizeof(COCKERIMAGE_FILE_EXTNAME)-1)] = '\0' ;
-		p = strchr( image_id , ':' ) ;
-		if( p )
-		{
-			strncpy( image_version , p+1 , sizeof(image_version)-1 );
-			(*p) = '\0' ;
-		}
-		else
-		{
-			strcpy( image_version , "_" );
-		}
+		image_id[strlen(image_id)-sizeof(COCKERIMAGE_FILE_EXTNAME)] = '\0' ;
 		
 		if( image_size > 1024*1024*1024 )
 			Snprintf( image_size_str , sizeof(image_size_str) , "%d GB" , image_size / (1024*1024*1024) );
@@ -90,11 +77,11 @@ int DoShow_ssearch( struct CockerEnvironment *env )
 		/* output */
 		if( count == 0 )
 		{
-			printf( "%-30s %-10s %-19s %-10s\n" , "image_id" , "version" , "modify_datetime" , "size" );
-			printf( "--------------------------------------------------------------------\n" );
+			printf( "%-45s %-19s %-10s\n" , "image_id" , "modify_datetime" , "size" );
+			printf( "----------------------------------------------------------------------\n" );
 		}
 		
-		printf( "%-30s %-10s %-19s %s\n" , image_id , image_version , image_modify_datetime , image_size_str );
+		printf( "%-45s %-19s %s\n" , image_id , image_modify_datetime , image_size_str );
 		
 		count++;
 	}

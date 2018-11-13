@@ -1,3 +1,7 @@
+0.21.0		2018-11-13	calvin
+		* 新增cocker指令'-a spush'
+		* 新增cocker指令'-a spull'
+
 0.20.0		2018-11-11	calvin
 		* 镜像支持多版本管理了
 		* 新增cocker指令'-s ssearch'

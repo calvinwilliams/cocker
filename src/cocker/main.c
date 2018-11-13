@@ -556,6 +556,30 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			nret = DoAction_import( env ) ;
 			INFOLOGC( "--- DoAction_import return[%d] ---" , nret )
 		}
+		else if( STRCMP( env->cmd_para._action , == , "spush" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image) )
+			{
+				printf( "*** ERROR : expect '--image' with action '-a spush'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_spush ---" )
+			nret = DoAction_spush( env ) ;
+			INFOLOGC( "--- DoAction_spush return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "spull" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__image) )
+			{
+				printf( "*** ERROR : expect '--image' with action '-a spull'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_spull ---" )
+			nret = DoAction_spull( env ) ;
+			INFOLOGC( "--- DoAction_spull return[%d] ---" , nret )
+		}
 		else
 		{
 			printf( "*** ERROR : action[%s] invalid\n" , env->cmd_para._action );

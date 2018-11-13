@@ -33,3 +33,21 @@ void GetEthernetNames( struct CockerEnvironment *env , char *container_id )
 	return;
 }
 
+int SplitImageVersion( char *image_id , char *version , int version_bufsize )
+{
+	char	*p = NULL ;
+	
+	memset( version , 0x00 , version_bufsize );
+	
+	p = strchr( image_id , ':' ) ;
+	if( p )
+	{
+		strncpy( version , p+1 , version_bufsize-1 );
+		(*p) = '\0' ;
+		
+		return 1;
+	}
+	
+	return 0;
+}
+
