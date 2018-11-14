@@ -15,7 +15,7 @@
 - [3. 使用教程](#3-使用教程)
     - [3.1. 背后的目录结构](#31-背后的目录结构)
     - [3.2. 网络模型](#32-网络模型)
-    - [3.3. cocker指令教程](#33-cocker指令教程)
+    - [3.3. cocker指令](#33-cocker指令)
         - [3.3.1. 额外附加选项](#331-额外附加选项)
         - [3.3.2. 查询镜像列表](#332-查询镜像列表)
         - [3.3.3. 由镜像创建容器](#333-由镜像创建容器)
@@ -351,9 +351,39 @@ cocker支持三种网络模型：HOST、CUSTOM和BRIDGE。
 | CUSTOM | 仅仅预置网络命名空间，不创建容器内外网卡等，由完全由用户自设置 |
 | BRIDGE | 预置以NAT方式的容器向宿主机的网络连通方式、自定义多组指定端口映射转发的宿主机向容器的网络连通方式 |
 
-## 3.3. cocker指令教程
-
 首次执行`cocker`会创建网桥设备`cocker0`，网段为"166.88.0.x"。
+
+## 3.3. cocker指令
+
+不带选项执行`cocker`将得到所有指令和选项列表
+
+```
+# cocker
+USAGE : cocker -v
+               -s images
+               -s containers
+               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|"program para1 ...") ] ]
+               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|"program para1 ...") ]
+               -a attach (-c|--container) (container)
+               -a shutdown (-c|--container) (container) [ (-f|--forcely) ]
+               -a kill (-c|--container) (container) [ (-f|--forcely) ]
+               -a destroy (-c|--container) (container) [ (-f|--forcely) ] [ (-h|--shutdown) ]
+               -a version (-m|--image) (image[:version]) [ --version (version) ]
+               -a vip (-c|--container) (container) --vip (ip)
+               -a port_mapping (-c|--container) (container) --port-mapping (src_port:dst_port)
+               -a volume (-c|--container) (container) --volume (host_path[:container_path])[ ...]
+               -a to_image --from-container (container) [ --verion (verion) ] --to-image (image)
+               -a to_container --from-image (image[:version]) (-m|--image) (image[:version])[,(image[:version])]... [ create options ] --to-container (container)
+               -a copy_image --from-image (image[:version]) --to-image (image[:version])
+               -a del_image (-m|--image) (image[:version])
+               -a import --image-file (file)
+               -a export (-m|--image) (image[:version])
+               -s ssearch --srepo (user@host)
+               -a install_test
+create options : [ --volume (host_path:container_path) ][ --volume ... ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]
+cgroup options : [ --cpus [(cpu_num,...)|(cpu_num-cpu_num2)] ] [ --cpu-quota (percent%) ] [ --mem-limit (num|numM) ]
+  enable debug : [ (-d|--debug) ]
+```
 
 ### 3.3.1. 额外附加选项
 
