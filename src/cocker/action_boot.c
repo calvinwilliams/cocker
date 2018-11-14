@@ -8,7 +8,7 @@
 
 #include "cocker_in.h"
 
-static unsigned char	stack_bottom[ 1024 * 1024 ] = {0} ;
+static unsigned char	stack_bottom[ 8*1024*1024 ] = { 0 } ;
 
 static int	g_TERM_flag = 0 ;
 
@@ -449,6 +449,7 @@ int CleanContainerResource( struct CockerEnvironment *env )
 	char			pid_str[ PID_LEN_MAX + 1 ] ;
 	
 	char			port_mapping[ PORT_MAP_LEN_MAX + 1 ] ;
+	char			*p = NULL ;
 	char			src_port_str[ 20 + 1 ] ;
 	
 	char			container_volume_file[ PATH_MAX + 1 ] ;
@@ -504,12 +505,13 @@ int CleanContainerResource( struct CockerEnvironment *env )
 		INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
-		if( port_mapping[0] )
+		p = strtok( port_mapping , "," ) ;
+		while( p )
 		{
 			memset( src_port_str , 0x00 , sizeof(src_port_str) );
-			sscanf( port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			sscanf( p , "%[^:]:%d" , src_port_str , & (env->dst_port) );
 			env->src_port = atoi(src_port_str) ;
-			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , p )
 			
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D PREROUTING -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
@@ -518,6 +520,8 @@ int CleanContainerResource( struct CockerEnvironment *env )
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -D OUTPUT -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTE( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
+			
+			p = strtok( NULL , "," ) ;
 		}
 		
 		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ifconfig %s down" , env->veth1_name ) ;
@@ -675,6 +679,7 @@ int DoAction_boot( struct CockerEnvironment *env )
 	char		container_port_mapping_file[ PATH_MAX + 1 ] ;
 	
 	char		port_mapping[ PORT_MAP_LEN_MAX ] ;
+	char		*p = NULL ;
 	char		src_port_str[ 20 + 1 ] ;
 	
 	char		cmd[ 4096 ] ;
@@ -781,12 +786,13 @@ int DoAction_boot( struct CockerEnvironment *env )
 		INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 		
-		if( port_mapping[0] )
+		p = strtok( port_mapping , "," ) ;
+		while( p )
 		{
 			memset( src_port_str , 0x00 , sizeof(src_port_str) );
-			sscanf( port_mapping , "%[^:]:%d" , src_port_str , & (env->dst_port) );
+			sscanf( p , "%[^:]:%d" , src_port_str , & (env->dst_port) );
 			env->src_port = atoi(src_port_str) ;
-			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , port_mapping )
+			IxTER1( (env->src_port<=0||env->dst_port<=0) , "*** ERROR : file port_mapping value [%s] invalid\n" , p )
 			
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A PREROUTING -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
@@ -795,6 +801,8 @@ int DoAction_boot( struct CockerEnvironment *env )
 			nret = SnprintfAndSystem( cmd , sizeof(cmd) , "iptables -t nat -A OUTPUT -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d" , env->src_port , vip , env->dst_port ) ;
 			INTER1( "*** ERROR : system [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 			EIDTI( "system [%s] ok\n" , cmd )
+			
+			p = strtok( NULL , "," ) ;
 		}
 	}
 	
