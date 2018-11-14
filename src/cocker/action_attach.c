@@ -130,12 +130,12 @@ int DoAction_attach( struct CockerEnvironment *env )
 	}
 	else
 	{
-		I( "connect[%s] ok\n" , connected_addr.sun_path )
+		I( "connect to container ok\n" )
 	}
 	
 	tcp_and_pts_bridge( connected_sock );
 	
-	I( "close connected sock\n" )
+	I( "disconnect from container\n" )
 	close( connected_sock );
 	
 	return 0;

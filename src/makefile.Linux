@@ -11,6 +11,81 @@ MAKEFILE_POSTFIX=.Linux
 DIROBJS		= \
 			util \
 			cocker \
+			cockerinit \
 
 ###### 加载mktpl模板库
+# 文件系统宏
+CD		=	cd
+RM		=	rm -f
+CP		=	cp -f
+MV		=	mv -f
+MKDIR		=	mkdir -p
+
+# 最终目标列表
+all		:	make
+
+# make规则
+.PHONY:make
+make	:
+	@for i in $(DIROBJS) ; do \
+		if [ -d "$$i" ] ; then \
+			if [ -f "$$i/makefile$(MAKEFILE_POSTFIX)" ] ; then \
+				$(CD) $$i ; \
+				$(MAKE) -f makefile$(MAKEFILE_POSTFIX) ; \
+				if [ $$? -ne 0 ] ; then \
+					exit 1 ; \
+				fi ; \
+				$(CD) .. ; \
+			fi ; \
+		fi ; \
+	done
+
+# clean规则
+.PHONY:clean
+clean	:
+	@for i in $(DIROBJS) ; do \
+		if [ -d "$$i" ] ; then \
+			if [ -f "$$i/makefile$(MAKEFILE_POSTFIX)" ] ; then \
+				$(CD) $$i ; \
+				$(MAKE) -f makefile$(MAKEFILE_POSTFIX) clean ; \
+				if [ $$? -ne 0 ] ; then \
+					exit 1 ; \
+				fi ; \
+				$(CD) .. ; \
+			fi ; \
+		fi ; \
+	done
+
+# install规则
+.PHONY:install
+install	:
+	@for i in $(DIROBJS) ; do \
+		if [ -d "$$i" ] ; then \
+			if [ -f "$$i/makefile$(MAKEFILE_POSTFIX)" ] ; then \
+				$(CD) $$i ; \
+				$(MAKE) -f makefile$(MAKEFILE_POSTFIX) install ; \
+				if [ $$? -ne 0 ] ; then \
+					exit 1 ; \
+				fi ; \
+				$(CD) .. ; \
+			fi ; \
+		fi ; \
+	done
+
+# uninstall规则
+.PHONY:uninstall
+uninstall	:
+	@for i in $(DIROBJS) ; do \
+		if [ -d "$$i" ] ; then \
+			if [ -f "$$i/makefile$(MAKEFILE_POSTFIX)" ] ; then \
+				$(CD) $$i ; \
+				$(MAKE) -f makefile$(MAKEFILE_POSTFIX) uninstall ; \
+				if [ $$? -ne 0 ] ; then \
+					exit 1 ; \
+				fi ; \
+				$(CD) .. ; \
+			fi ; \
+		fi ; \
+	done
+
 

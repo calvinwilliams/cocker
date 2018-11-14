@@ -13,8 +13,8 @@ static void usage()
 	printf( "USAGE : cocker -v\n" );
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
-	printf( "               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\") ] ] ]\n" );
-	printf( "               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) [ (-e|--exec) (cmd|\"program para1 ...\")] ]\n" );
+	printf( "               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ] ]\n" );
+	printf( "               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ]\n" );
 	printf( "               -a attach (-c|--container) (container)\n" );
 	printf( "               -a shutdown (-c|--container) (container) [ (-f|--forcely) ]\n" );
 	printf( "               -a kill (-c|--container) (container) [ (-f|--forcely) ]\n" );
@@ -29,10 +29,10 @@ static void usage()
 	printf( "               -a del_image (-m|--image) (image[:version])\n" );
 	printf( "               -a import --image-file (file)\n" );
 	printf( "               -a export (-m|--image) (image[:version])\n" );
-	printf( "               -s ssearch --repo (user@host)\n" );
+	printf( "               -s ssearch --srepo (user@host)\n" );
 	printf( "               -a install_test\n" );
-	printf( "create options : [ --volume (host_path[:container_path]) ][ ...] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
-	printf( "cgroup options : [ --cpus (cpu_num,...) ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
+	printf( "create options : [ --volume (host_path:container_path) ][ --volume ... ] [ --host (hostname) ] [ --net (BRIDGE|HOST|CUSTOM) ] [ --host-eth (eth) ] [ --vip (ip) ] [ --port-mapping (src_port:dst_port) ]\n" );
+	printf( "cgroup options : [ --cpus [(cpu_num,...)|(cpu_num-cpu_num2)] ] [ --cpu-quota (percent%%) ] [ --mem-limit (num|numM) ]\n" );
 	printf( "  enable debug : [ (-d|--debug) ]\n" );
 	return;
 }
@@ -190,9 +190,9 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__image_file = argv[i+1] ;
 			i++;
 		}
-		else if( STRCMP( argv[i] , == , "--repo" ) && i + 1 < argc )
+		else if( STRCMP( argv[i] , == , "--srepo" ) && i + 1 < argc )
 		{
-			env->cmd_para.__repo = argv[i+1] ;
+			env->cmd_para.__srepo = argv[i+1] ;
 			i++;
 		}
 		else if( STRCMP( argv[i] , == , "--match" ) && i + 1 < argc )
@@ -217,7 +217,7 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 	}
 	
 	if( env->cmd_para.__net == NULL )
-		env->cmd_para.__net = "BRIDGE" ;
+		env->cmd_para.__net = "HOST" ;
 	
 	if( ! ( STRCMP( env->cmd_para.__net , == , "BRIDGE" ) || STRCMP( env->cmd_para.__net , == , "HOST" ) || STRCMP( env->cmd_para.__net , == , "CUSTOM" ) ) )
 	{
@@ -324,10 +324,13 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 				return -7;
 			}
 			
-			if( STRCMP( env->cmd_para.__net , == , "BRIDGE" ) && env->cmd_para.__vip[0] == '\0' )
+			if( env->cmd_para.__net && STRCMP( env->cmd_para.__net , == , "BRIDGE" ) )
 			{
-				printf( "*** ERROR : expect '--vip' with action '-a create'\n" );
-				return -7;
+				if( ( env->cmd_para.__vip == NULL || env->cmd_para.__vip[0] == '\0' ) )
+				{
+					printf( "*** ERROR : expect '--vip' with action '-a create'\n" );
+					return -7;
+				}
 			}
 			
 			INFOLOGC( "--- call DoAction_create ---" )

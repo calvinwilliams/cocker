@@ -59,7 +59,7 @@ struct CommandParameter
 	struct list_head	volume_list ;
 	char			*__volume ;
 	
-	char			*__repo ;
+	char			*__srepo ;
 	char			*__match ;
 } ;
 
@@ -144,13 +144,13 @@ int DoAction_spush( struct CockerEnvironment *env );
 int DoAction_spull( struct CockerEnvironment *env );
 
 /* depend on
-sudo yum install -y telnet
-sudo yum install -y nmap-ncat
-sudo yum install -y bridge-utils
+yum install -y telnet
+yum install -y nmap-ncat
+yum install -y bridge-utils
 yum install -y man-pages
 yum install -y man-pages-zh-CN
 echo "1" >/proc/sys/net/ipv4/ip_forward
-	or add net.ipv4.ip_forward=1 to /etc/sysctl.com and run sysctl -p
+	or add net.ipv4.ip_forward=1 to /etc/sysctl.conf and run sysctl -p
 */
 
 /* for test
@@ -159,6 +159,7 @@ cocker -s containers
 
 cocker -a install_test -d --version "1.0.0"
 
+cocker -a create -d -m test -c test
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
 cocker -a create -d -m test --host test --net HOST --vip 166.88.0.2
 cocker -a create -d -m test --host test --net CUSTOM --vip 166.88.0.2
@@ -191,14 +192,21 @@ cocker -a to_image -d --from-container test --to-image test
 cocker -a copy_image -d --from-image test --to-image "test2:1.0.0"
 cocker -a del_image -d -m "test2:1.0.0"
 
-cocker -a export -d -m test
-cocker -a export -d -m test
+cocker -a export -d -m "test:1.1.0"
+cocker -a del_image -d -m "test:1.1.0"
+cocker -a import -d -m "test:1.1.0"
+
 cocker -a import -d --image-file test.cockerimage
 cocker -a import -d --image-file rhel-7.4-x86_64.cockerimage -m rhel-7.4
 cocker -a import -d --image-file rhel-7.4-gcc-x86_64.cockerimage -m rhel-7.4-gcc
 
-cocker -a ssearch
-cocker -a ssearch --match calvin
+cocker -a spush -m "test:1.0.0" -d
+cocker -a del_image -m "test:1.0.0" -d
+cocker -a spull -m "test:1.0.0" -d
+
+cocker -s ssearch --srepo "cockerimages@192.168.6.74"
+cocker -s ssearch --match test
+
 cocker -a spush -m calvin=rhel-7.4-x86_64:1.0.0 -d -f
 
 */
