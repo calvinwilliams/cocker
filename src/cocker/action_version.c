@@ -11,8 +11,6 @@
 int DoAction_version( struct CockerEnvironment *env )
 {
 	char		image[ IMAGES_ID_LEN_MAX + 1 ] ;
-	char		*p = NULL ;
-	char		*p2 = NULL ;
 	char		old_version[ PATH_MAX + 1 ] ;
 	char		new_version[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
@@ -20,23 +18,11 @@ int DoAction_version( struct CockerEnvironment *env )
 	int		nret = 0 ;
 	
 	/* preprocess input parameters */
-	if( env->cmd_para.__image )
-	{
-		memset( image , 0x00 , sizeof(image) );
-		strncpy( image , env->cmd_para.__image , sizeof(image)-1 );
-	}
-	p = image ;
-	p2 = strchr( p , ':' ) ;
-	memset( old_version , 0x00 , sizeof(old_version) );
-	if( p2 )
-	{
-		strncpy( old_version , p2+1 , sizeof(old_version)-1 );
-		(*p2)= '\0' ;
-	}
+	memset( image , 0x00 , sizeof(image) );
+	strncpy( image , env->cmd_para.__image , sizeof(image)-1 );
+	SplitImageVersion( image , old_version , sizeof(old_version) );
 	if( old_version[0] == '\0' )
-	{
 		strcpy( old_version , "_" );
-	}
 	
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image , old_version );
 	nret = access( env->image_path_base , F_OK ) ;

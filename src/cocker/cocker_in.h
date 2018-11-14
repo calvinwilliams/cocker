@@ -96,6 +96,7 @@ struct CockerEnvironment
 
 void GetEthernetNames( struct CockerEnvironment *env , char *container_id );
 int SplitImageVersion( char *image_id , char *version , int version_bufsize );
+int GetMaxVersionPath( char *version_path_base , char *max_version , int max_version_bufsize );
 
 /*
  * environment
@@ -166,7 +167,7 @@ cocker -a create -d -m test --volume "/tmp:/tmp" --volume "/mnt/cdrom:/mnt/cdrom
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t -e "/bin/bash -l"
-cocker -a create -d -m "calvin@rhel-7.4-x86_64:1.0.0,calvin@rhel-7.4-gcc-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test
+cocker -a create -d -m "calvin=rhel-7.4-x86_64:1.0.0,calvin=rhel-7.4-gcc-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping "19527:9527,5142:5142" -c test
 cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"

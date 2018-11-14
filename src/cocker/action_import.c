@@ -12,7 +12,6 @@ int DoAction_import( struct CockerEnvironment *env )
 {
 	int		image_file_len ;
 	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
-	char		*p2 = NULL ;
 	char		version[ PATH_MAX + 1 ] ;
 	char		image_rlayer_path_base[ PATH_MAX + 1 ] ;
 	char		current_path[ PATH_MAX + 1 ] ;
@@ -27,26 +26,16 @@ int DoAction_import( struct CockerEnvironment *env )
 	
 	memset( image_id , 0x00 , sizeof(image_id) );
 	strncpy( image_id , env->cmd_para.__image_file , image_file_len-(sizeof(COCKERIMAGE_FILE_EXTNAME)-1)-1 );
+	SplitImageVersion( image_id , version , sizeof(version) );
 	
-	p2 = strchr( image_id , ':' ) ;
-	if( p2 == NULL )
-	{
-		strcpy( version , "_" );
-	}
-	else
-	{
-		strncpy( version , p2+1 , sizeof(version)-1 );
-		(*p2) = '\0' ;
-	}
-	
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , version );
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , (version[0]?version:"_") );
 	nret = access( env->image_path_base , F_OK ) ;
 	I0TER1( "*** ERROR : image '%s' exist\n" , image_id )
 	
 	/* pack image folders and files */
 	nret = SnprintfAndMakeDir( NULL , -1 , "%s/%s" , env->images_path_base , image_id ) ;
 	
-	nret = SnprintfAndMakeDir( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , version ) ;
+	nret = SnprintfAndMakeDir( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , (version[0]?version:"_") ) ;
 	INTER1( "*** ERROR : SnprintfAndMakeDir / failed[%d] , errno[%d]\n" , nret , errno )
 	EIDTI( "mkdir %s ok\n" , env->image_path_base )
 	
