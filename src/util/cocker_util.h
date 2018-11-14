@@ -127,8 +127,8 @@ extern "C" {
 #define COCKERIMAGE_FILE_EXTNAME	"cockerimage"
 #endif
 
-#ifndef REPO_LEN_MAX
-#define REPO_LEN_MAX		1024
+#ifndef SREPO_LEN_MAX
+#define SREPO_LEN_MAX		1024
 #endif
 
 /*

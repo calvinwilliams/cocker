@@ -30,9 +30,9 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	nret = ReadFileLine( version , sizeof(version)-1 , NULL , -1 , "%s/%s/version" , env->containers_path_base , env->cmd_para.__from_container ) ;
 	I1TER1( "*** ERROR : container '%s' is not converted from image\n" , env->cmd_para.__from_container )
 	
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , env->images_path_base , env->cmd_para.__to_image );
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , env->cmd_para.__to_image , version );
 	nret = access( env->image_path_base , F_OK ) ;
-	I0TER1( "*** ERROR : image '%s' exist\n" , env->cmd_para.__to_image )
+	I0TER1( "*** ERROR : image '%s%s%s' exist\n" , env->cmd_para.__to_image , (version[0]?version:"") , version )
 	
 	GetEthernetNames( env , env->cmd_para.__from_container );
 	

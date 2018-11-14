@@ -10,8 +10,8 @@
 
 int DoAction_spull( struct CockerEnvironment *env )
 {
-	char		repo[ REPO_LEN_MAX + 1 ] ;
-	char		repo_file[ PATH_MAX + 1 ] ;
+	char		srepo[ SREPO_LEN_MAX + 1 ] ;
+	char		srepo_file[ PATH_MAX + 1 ] ;
 	char		image_file[ PATH_MAX + 1 ] ;
 	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
 	char		version[ PATH_MAX + 1 ] ;
@@ -30,25 +30,25 @@ int DoAction_spull( struct CockerEnvironment *env )
 	
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , (version[0]?version:"_") );
 	
-	memset( repo , 0x00 , sizeof(repo) );
-	memset( repo_file , 0x00 , sizeof(repo_file) );
-	nret = ReadFileLine( repo , sizeof(repo) , repo_file , sizeof(repo_file) , "%s/repo" , env->cocker_home ) ;
-	I1TER1( "read %s failed\n" , repo_file )
-	EIDTI( "read %s ok\n" , repo_file )
+	memset( srepo , 0x00 , sizeof(srepo) );
+	memset( srepo_file , 0x00 , sizeof(srepo_file) );
+	nret = ReadFileLine( srepo , sizeof(srepo) , srepo_file , sizeof(srepo_file) , "%s/srepo" , env->cocker_home ) ;
+	I1TER1( "read %s failed\n" , srepo_file )
+	EIDTI( "read %s ok\n" , srepo_file )
 	
 	/* download and import image file */
-	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ssh %s \"ls ./%s.cockerimage\" >/dev/null 2>/dev/null" , repo , env->cmd_para.__image ) ;
+	nret = SnprintfAndSystem( cmd , sizeof(cmd) , "ssh %s \"ls ./%s.cockerimage\" >/dev/null 2>/dev/null" , srepo , env->cmd_para.__image ) ;
 	if( nret )
 	{
-		E( "*** ERROR : image '%s' not found in repo\n" , env->cmd_para.__image_file );
+		E( "*** ERROR : image '%s' not found in srepo\n" , env->cmd_para.__image_file );
 		if( ! env->cmd_para.__forcely )
 			return nret;
 	}
 	
 	if( env->cmd_para.__debug )
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "scp %s:~/%s ." , repo , image_file ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "scp %s:~/%s ." , srepo , image_file ) ;
 	else
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "scp %s:~/%s . >/dev/null 2>/dev/null" , repo , image_file ) ;
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "scp %s:~/%s . >/dev/null 2>/dev/null" , srepo , image_file ) ;
 	INTER1( "*** ERROR : SnprintfAndSystem [%s] failed[%d] , errno[%d]\n" , cmd , nret , errno )
 	EIDTI( "system [%s] ok\n" , cmd )
 	

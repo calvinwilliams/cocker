@@ -10,8 +10,8 @@
 
 int DoShow_ssearch( struct CockerEnvironment *env )
 {
-	char		repo[ REPO_LEN_MAX + 1 ] ;
-	char		repo_file[ PATH_MAX + 1 ] ;
+	char		srepo[ SREPO_LEN_MAX + 1 ] ;
+	char		srepo_file[ PATH_MAX + 1 ] ;
 	char		cmd[ 4096 ] ;
 	FILE		*pp = NULL ;
 	char		buf[ 4096 ] ;
@@ -23,27 +23,27 @@ int DoShow_ssearch( struct CockerEnvironment *env )
 	
 	int		nret = 0 ;
 	
-	if( env->cmd_para.__repo )
+	if( env->cmd_para.__srepo )
 	{
-		memset( repo_file , 0x00 , sizeof(repo_file) );
-		nret = WriteFileLine( env->cmd_para.__repo , repo_file , sizeof(repo_file) , "%s/repo" , env->cocker_home ) ;
-		I1TER1( "write %s failed\n" , repo_file )
-		EIDTI( "write %s ok\n" , repo_file )
+		memset( srepo_file , 0x00 , sizeof(srepo_file) );
+		nret = WriteFileLine( env->cmd_para.__srepo , srepo_file , sizeof(srepo_file) , "%s/srepo" , env->cocker_home ) ;
+		I1TER1( "write %s failed\n" , srepo_file )
+		EIDTI( "write %s ok\n" , srepo_file )
 	}
 	
-	memset( repo , 0x00 , sizeof(repo) );
-	memset( repo_file , 0x00 , sizeof(repo_file) );
-	nret = ReadFileLine( repo , sizeof(repo) , repo_file , sizeof(repo_file) , "%s/repo" , env->cocker_home ) ;
-	I1TER1( "read %s failed\n" , repo_file )
-	EIDTI( "read %s ok\n" , repo_file )
+	memset( srepo , 0x00 , sizeof(srepo) );
+	memset( srepo_file , 0x00 , sizeof(srepo_file) );
+	nret = ReadFileLine( srepo , sizeof(srepo) , srepo_file , sizeof(srepo_file) , "%s/srepo" , env->cocker_home ) ;
+	I1TER1( "read %s failed\n" , srepo_file )
+	EIDTI( "read %s ok\n" , srepo_file )
 	
 	if( env->cmd_para.__match == NULL )
 	{
-		Snprintf( cmd , sizeof(cmd) , "ssh %s ls -l --full-time *.cockerimage 2>/dev/null" , repo ) ;
+		Snprintf( cmd , sizeof(cmd) , "ssh %s ls -l --full-time \"*.cockerimage\" 2>/dev/null" , srepo ) ;
 	}
 	else
 	{
-		Snprintf( cmd , sizeof(cmd) , "ssh %s ls -l --full-time *%s*.cockerimage 2>/dev/null" , repo , env->cmd_para.__match ) ;
+		Snprintf( cmd , sizeof(cmd) , "ssh %s ls -l --full-time \"*%s*.cockerimage\" 2>/dev/null" , srepo , env->cmd_para.__match ) ;
 	}
 	pp = popen( cmd , "r" ) ;
 	IxTER1( (pp==NULL) , "popen [%s] failed , errno[%d]\n" , cmd , errno )
