@@ -6,6 +6,11 @@
 - [1. 概述](#1-概述)
     - [1.1. cocker是什么？](#11-cocker是什么)
     - [1.2. 系统架构](#12-系统架构)
+        - [1.2.1. 状态迁移图](#121-状态迁移图)
+        - [1.2.2. 层叠文件系统](#122-层叠文件系统)
+        - [1.2.3. 网络](#123-网络)
+        - [1.2.4. 系统资源限制](#124-系统资源限制)
+        - [1.2.5. 伪终端](#125-伪终端)
     - [1.3. 快速使用](#13-快速使用)
 - [2. 安装](#2-安装)
     - [2.1. Linux源码编译](#21-linux源码编译)
@@ -69,6 +74,26 @@
 ## 1.2. 系统架构
 
 ![images/cocker_architecture.png](images/cocker_architecture.png)
+
+### 1.2.1. 状态迁移图
+
+![images/cocker_state_transition_diagram.png](images/cocker_state_transition_diagram.png)
+
+### 1.2.2. 层叠文件系统
+
+![images/cocker_overlayfs.png](images/cocker_overlayfs.png)
+
+### 1.2.3. 网络
+
+![images/cocker_network.png](images/cocker_network.png)
+
+### 1.2.4. 系统资源限制
+
+![images/cocker_cgroup.png](images/cocker_cgroup.png)
+
+### 1.2.5. 伪终端
+
+![images/cocker_pty.png](images/cocker_pty.png)
 
 ## 1.3. 快速使用
 
