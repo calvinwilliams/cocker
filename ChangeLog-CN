@@ -1,3 +1,6 @@
+0.22.1		2018-11-18	calvin
+		* README中新增大量图片
+
 0.22.0		2018-11-13	calvin
 		* cocker指令'-a create'的选项'--port-mapping'支持多对映射了
 		* 容器进程栈扩大到8MB
