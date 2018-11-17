@@ -62,11 +62,11 @@
 `cocker`是我个人用C语言完全自研的容器引擎（对标`Docker`），主要解决如下工作场景中的痛点：
 
 * 原生支持多进程架构的容器使用模式，无须引入第三方组件。
-* 按虚拟主机方式管理容器，交互式构建镜像。
+* 按虚拟主机方式管理容器，交互式构建镜像，写过复杂Dockerfile的人都深恶痛绝。
 * 镜像多版本共存管理。
 * （更多...）
 
-`cocker`使用到了以下Linux底层技术：`LXC`、`cgroup`、`overlayfs`、`iptables`、`伪终端`等。
+`cocker`使用到了以下Linux底层技术：`LXC`、`cgroup`、`overlayfs`、`iptables`、`ptms`等。
 
 ## 1.2. 系统架构
 
@@ -96,9 +96,9 @@
 
 层叠文件系统是多镜像容器的存储基础，cocker采用overlayfs作为其层叠文件系统引擎，可以叠加几乎无限的镜像层。
 
-`cocker`的镜像和容器等都存放在环境变量`COCKER_HOME`指向的主目录中，所以规划其大小是使用前必须要考虑的问题。如果没有设置环境变量`COCKER_HOME`，则默认使用`/var/cocker`。
+`cocker`的镜像和容器等都存放在环境变量`COCKER_HOME`指向的主目录中，所以规划其容量是使用前必须要考虑的问题。如果没有设置环境变量`COCKER_HOME`，则默认指向`/var/cocker`。
 
-`COCKER_HOME`主目录中有镜像主目录`images`、容器主目录`containers`、ssh镜像仓库`srepo`，以及日志文件`cocker.log`。
+`COCKER_HOME`主目录中有镜像主目录`images`、容器主目录`containers`、`ssh`镜像仓库`srepo`，以及日志文件`cocker.log`。
 
 ### 1.2.3. 网络
 
@@ -124,7 +124,7 @@
 
 ![images/cocker_pty.png](images/cocker_pty.png)
 
-自带容器根进程接受客户端`cocker`连接后会创建伪终端会话，就像登录到虚拟主机上命令交互一样，无需使用ssh。
+自带容器根进程接受客户端`cocker`连接后会创建伪终端会话，就像登录到虚拟主机上命令交互一样，无需使用`ssh`。
 
 ## 1.3. 快速使用
 
