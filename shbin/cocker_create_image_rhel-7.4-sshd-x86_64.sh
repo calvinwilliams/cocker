@@ -25,22 +25,27 @@ if [ x"${VERSION}" != x"" ] ; then
 	VERSION=":${VERSION}"
 fi
 
-IMAGE_FILENAME="${MY_NAME}rhel-7.4-gcc-x86_64${VERSION}.cockerimage"
+IMAGE_FILENAME="${MY_NAME}rhel-7.4-sshd-x86_64${VERSION}.cockerimage"
 
 rm -rf appliance.d supermin.d
 
 rm -f ${IMAGE_FILENAME}
 
-supermin5 -v --prepare coreutils -o supermin.d
-supermin5 -v --prepare gcc make -o supermin.d
+supermin5 -v --prepare openssh-server -o supermin.d
 supermin5 -v --build --format chroot supermin.d -o appliance.d
 
 IMAGE_RLAYER_PATH_BASE="appliance.d"
 
-rm -f ${IMAGE_RLAYER_PATH_BASE}/usr/bin/ld
-cp -f /usr/bin/ld ${IMAGE_RLAYER_PATH_BASE}/usr/bin/
+echo "sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin" >>${IMAGE_RLAYER_PATH_BASE}/etc/passwd
+# echo "root:root" | chpasswd -R ${IMAGE_RLAYER_PATH_BASE}
+# echo "calvin:calvin" | chpasswd -R ${IMAGE_RLAYER_PATH_BASE}
+ssh-keygen -t rsa -f ${IMAGE_RLAYER_PATH_BASE}/etc/ssh/ssh_host_rsa_key
+ssh-keygen -t rsa -f ${IMAGE_RLAYER_PATH_BASE}/etc/ssh/ssh_host_ecdsa_key
 
 cd appliance.d && tar --numeric-owner -cvzf ../${IMAGE_FILENAME} * && cd ..
 
 rm -rf appliance.d supermin.d
+
+echo "NOTICE : run 'passwd root' later in container"
+echo "NOTICE : run 'nohup /usr/sbin/sshd -D' later in container"
 
