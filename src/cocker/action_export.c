@@ -24,7 +24,7 @@ int DoAction_export( struct CockerEnvironment *env )
 	
 	Snprintf( image_file , sizeof(image_file) , "%s%s%s.cockerimage" , image , (version[0]?":":"") , version );
 	
-	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image , version );
+	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image , (version[0]?version:"_") );
 	nret = access( env->image_path_base , F_OK ) ;
 	I1TER1( "*** ERROR : image '%s' not found\n" , env->cmd_para.__image )
 	

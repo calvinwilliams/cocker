@@ -29,6 +29,8 @@ int DoAction_spull( struct CockerEnvironment *env )
 	SplitImageVersion( image_id , version , sizeof(version) );
 	
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , image_id , (version[0]?version:"_") );
+	nret = access( env->image_path_base , F_OK ) ;
+	I0TER1( "*** ERROR : image '%s' exist\n" , image_id )
 	
 	memset( srepo , 0x00 , sizeof(srepo) );
 	memset( srepo_file , 0x00 , sizeof(srepo_file) );
