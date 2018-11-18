@@ -1,6 +1,7 @@
 0.22.1		2018-11-18	calvin
 		* README中新增大量图片
 		* 增加了一些动作的覆盖警告
+		* 新增构建sshd镜像脚本shbin/cocker_create_image_rhel-7.4-sshd-x86_64.sh
 
 0.22.0		2018-11-13	calvin
 		* cocker指令'-a create'的选项'--port-mapping'支持多对映射了
