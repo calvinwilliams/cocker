@@ -61,6 +61,8 @@ struct CommandParameter
 	
 	char			*__srepo ;
 	char			*__match ;
+	
+	char			*__cmd ;
 } ;
 
 struct CockerEnvironment
@@ -118,6 +120,7 @@ int DoAction_create( struct CockerEnvironment *env );
 int DoAction_destroy( struct CockerEnvironment *env );
 int DoAction_boot( struct CockerEnvironment *env );
 int DoAction_attach( struct CockerEnvironment *env );
+int DoAction_run( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
@@ -174,6 +177,7 @@ cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"
 cocker -a attach -d -c test
+cocker -a run -d -c test --cmd "hostname"
 cocker -a shutdown -d -c test
 cocker -a destroy -d -c test
 cocker -a destroy -d -c test -h
