@@ -21,7 +21,7 @@ static void RestoreTerminalAttr()
 
 static int tcp_and_pts_bridge( int connected_sock )
 {
-	struct pollfd	poll_fds[ 2 ] ;
+	struct pollfd	poll_fds[ 1 ] ;
 	char		buf[ 4096 ] ;
 	int		len ;
 	
@@ -38,11 +38,12 @@ static int tcp_and_pts_bridge( int connected_sock )
 		poll_fds[0].fd = connected_sock ;
 		poll_fds[0].events = POLLIN|POLLHUP ;
 		poll_fds[0].revents = 0 ;
-		poll_fds[1].fd = STDIN_FILENO ;
-		poll_fds[1].events = POLLIN|POLLHUP ;
-		poll_fds[1].revents = 0 ;
-		nret = poll( poll_fds , 2 , -1 ) ;
-		if( nret == -1 )
+		nret = poll( poll_fds , 2 , 10000 ) ;
+		if( nret == 0 )
+		{
+			break;
+		}
+		else if( nret == -1 )
 		{
 			E( "*** ERROR : select failed , errno[%d]\n" , errno )
 			return -1;
@@ -68,33 +69,12 @@ static int tcp_and_pts_bridge( int connected_sock )
 				return -1;
 			}
 		}
-		
-		if( (poll_fds[1].revents&POLLIN) || (poll_fds[1].revents&POLLHUP) )
-		{
-			len = read( STDIN_FILENO , buf , sizeof(buf)-1 ) ;
-			if( len == 0 )
-			{
-				return 0;
-			}
-			else if( len == -1 )
-			{
-				E( "*** ERROR : read STDIN_FILENO failed , errno[%d]\n" , errno )
-				return -1;
-			}
-			
-			nret = writen( connected_sock , buf , len , NULL ) ;
-			if( nret == -1 )
-			{
-				E( "*** ERROR : writen connected_sock failed , errno[%d]\n" , errno )
-				return -1;
-			}
-		}
 	}
 	
 	return 0;
 }
 
-int DoAction_attach( struct CockerEnvironment *env )
+int DoAction_run( struct CockerEnvironment *env )
 {
 	char			container_merge_path[ PATH_MAX + 1 ] ;
 	
@@ -163,11 +143,11 @@ int DoAction_attach( struct CockerEnvironment *env )
 		return -1;
 	}
 	
-	bash_cmd = "bash -l" ;
+	bash_cmd = env->cmd_para.__cmd ;
 	nret = send( connected_sock , bash_cmd , strlen(bash_cmd) , 0 ) ;
 	if( nret == -1 )
 	{
-		E( "*** ERROR : send bash_cmd failed , errno[%d]\n" , errno )
+		E( "*** ERROR : send cmd failed , errno[%d]\n" , errno )
 		return -1;
 	}
 	

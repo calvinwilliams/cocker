@@ -10,36 +10,48 @@
 
 int create_pty( struct CockerInitEnvironment *env )
 {
-	/*
-	struct termios	origin_termios ;
 	struct winsize	origin_winsize ;
-	*/
+	char		cmd[ 4096 ] ;
 	struct termios	ptm_termios ;
+	int		argc ;
+	char		*argv[64] = { NULL } ;
+	char		*p = NULL ;
+	int		i ;
 	
 	int		nret = 0 ;
 	
-	/*
-	nret = tcgetattr( STDIN_FILENO , & origin_termios ) ;
-	if( nret == -1 )
+	SetLogcFile( "/cockerinit.log" );
+	SetLogcLevel( LOGCLEVEL_INFO );
+
+	memset( & origin_winsize , 0x00 , sizeof(struct winsize) );
+	nret = recv( env->accepted_sock , & origin_winsize , sizeof(struct winsize) , 0 ) ;
+	if( nret <= 0 )
 	{
-		ERRORLOGC( "*** ERROR : tcgetattr STDIN_FILENO for origin failed , errno[%d]\n" , errno )
-		exit(1);
+		FATALLOGC( "*** ERROR : recv winsize failed[%d] , errno[%d]\n" , nret , errno )
+		exit(9);
+	}
+	else
+	{
+		INFOLOGC( "recv winsize ok , [%d]bytes\n" , nret )
 	}
 	
-	nret = ioctl( STDIN_FILENO , TIOCGWINSZ , & origin_winsize ) ;
-	if( nret == -1 )
+	memset( cmd , 0x00 , sizeof(cmd) );
+	nret = recv( env->accepted_sock , cmd , sizeof(cmd) , 0 ) ;
+	if( nret <= 0 )
 	{
-		ERRORLOGC( "*** ERROR : ioctl STDIN_FILENO for origin failed , errno[%d]\n" , errno )
-		exit(1);
+		FATALLOGC( "*** ERROR : recv cmd failed[%d] , errno[%d]\n" , nret , errno )
+		exit(9);
 	}
-	*/
+	else
+	{
+		INFOLOGC( "recv cmd ok  , [%d]bytes , cmd[%s]\n" , nret , cmd );
+	}
 	
 	signal( SIGCLD , SIG_IGN );
 	signal( SIGCHLD , SIG_IGN );
 	
-	printf( "pty_fork ...\n" );
-	// env->bash_pid = pty_fork( & origin_termios , & origin_winsize , & (env->ptm_fd) ) ;
-	env->bash_pid = pty_fork( NULL , NULL , & (env->ptm_fd) ) ;
+	/* printf( "pty_fork ...\n" ); */
+	env->bash_pid = pty_fork( NULL , & origin_winsize , & (env->ptm_fd) ) ;
 	if( env->bash_pid < 0 )
 	{
 		FATALLOGC( "*** ERROR : pty_fork failed[%d] , errno[%d]\n" , env->bash_pid , errno )
@@ -47,19 +59,11 @@ int create_pty( struct CockerInitEnvironment *env )
 	}
 	else if( env->bash_pid == 0 )
 	{
-		INFOLOGC( "pty_fork child\n" )
-		
 		nret = tcgetattr( STDIN_FILENO , & ptm_termios ) ;
 		if( nret == -1 )
 		{
-			FATALLOGC( "*** ERROR : tcgetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
-		
-		/*
-		ptm_termios.c_lflag &= ~(ECHO|ECHOE|ECHOK|ECHONL) ;
-		ptm_termios.c_oflag &= ~(ONLCR) ;
-		*/
 		
 		ptm_termios.c_lflag |= ECHO ;
 		ptm_termios.c_oflag |= ONLCR | XTABS ;
@@ -69,11 +73,29 @@ int create_pty( struct CockerInitEnvironment *env )
 		nret = tcsetattr( STDIN_FILENO , TCSANOW , & ptm_termios ) ;
 		if( nret == -1 )
 		{
-			FATALLOGC( "*** ERROR : tcsetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
-		nret = execl( "/bin/bash" , "bash" , "-l" , NULL ) ;
+		argc = 0 ;
+		p = strtok( cmd , " \t" ) ;
+		while( p )
+		{
+			if( argc >= sizeof(argv)/sizeof(argv[0])-1 )
+				break;
+			
+			argv[argc++] = p ;
+			
+			p = strtok( NULL , " \t" ) ;
+		}
+		argv[argc++] = NULL ;
+		
+		for( i = 0 ; i < argc ; i++ )
+			INFOLOGC( "argv[%d]=[%s]\n" , i , argv[i] )
+		
+		if( strchr( argv[0] , '/' ) )
+			nret = execv( argv[0] , argv ) ;
+		else
+			nret = execvp( argv[0] , argv ) ;
 		if( nret == -1 )
 		{
 			FATALLOGC( "*** ERROR : execl failed[%d] , errno[%d]\n" , nret , errno )
@@ -86,8 +108,10 @@ int create_pty( struct CockerInitEnvironment *env )
 	{
 		INFOLOGC( "pty_fork parent\n" )
 		
-		pts_and_tcp_bridge( env );
+		nret = pts_and_tcp_bridge( env );
+		INFOLOGC( "pts_and_tcp_bridge return[%d]\n" , nret )
 		
+		INFOLOGC( "close accepted sock and ptm_fd\n" )
 		close( env->accepted_sock );
 		close( env->ptm_fd );
 	}

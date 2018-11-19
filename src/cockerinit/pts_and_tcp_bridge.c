@@ -10,7 +10,7 @@
 
 int pts_and_tcp_bridge( struct CockerInitEnvironment *env )
 {
-	fd_set		read_fds ;
+	struct pollfd	poll_fds[ 2 ] ;
 	char		buf[ 4096 ] ;
 	int		len ;
 	
@@ -18,42 +18,54 @@ int pts_and_tcp_bridge( struct CockerInitEnvironment *env )
 	
 	while(1)
 	{
-		FD_ZERO( & read_fds );
-		FD_SET( env->accepted_sock , & read_fds );
-		FD_SET( env->ptm_fd , & read_fds );
-		nret = select( MAX(env->accepted_sock,env->ptm_fd)+1 , & read_fds , NULL , NULL , NULL ) ;
+		poll_fds[0].fd = env->accepted_sock ;
+		poll_fds[0].events = POLLIN|POLLHUP ;
+		poll_fds[0].revents = 0 ;
+		poll_fds[1].fd = env->ptm_fd ;
+		poll_fds[1].events = POLLIN|POLLHUP ;
+		poll_fds[1].revents = 0 ;
+		nret = poll( poll_fds , 2 , -1 ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "poll failed , errno[%d]\n" , errno )
 			return -1;
 		}
 		
-		if( FD_ISSET( env->accepted_sock , & read_fds ) )
+		if( (poll_fds[0].revents&POLLIN) || (poll_fds[0].revents&POLLHUP) )
 		{
 			len = read( env->accepted_sock , buf , sizeof(buf)-1 ) ;
-			if( len == -1 )
+			if( len == 0 )
 			{
-				return -1;
+				return 0;
+			}
+			else if( len == -1 )
+			{
+				return -11;
 			}
 			
 			nret = writen( env->ptm_fd , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
-				return -1;
+				return -12;
 			}
 		}
 		
-		if( FD_ISSET( env->ptm_fd , & read_fds ) )
+		if( (poll_fds[1].revents&POLLIN) || (poll_fds[1].revents&POLLHUP) )
 		{
 			len = read( env->ptm_fd , buf , sizeof(buf)-1 ) ;
-			if( len == -1 )
+			if( len == 0 )
 			{
-				return -1;
+				return 0;
+			}
+			else if( len == -1 )
+			{
+				return -21;
 			}
 			
 			nret = writen( env->accepted_sock , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
-				return -1;
+				return -22;
 			}
 		}
 	}

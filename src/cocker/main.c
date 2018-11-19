@@ -16,6 +16,7 @@ static void usage()
 	printf( "               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ] ]\n" );
 	printf( "               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ]\n" );
 	printf( "               -a attach (-c|--container) (container)\n" );
+	printf( "               -a run (-c|--container) (container) (--cmd) (cmd)\n" );
 	printf( "               -a shutdown (-c|--container) (container) [ (-f|--forcely) ]\n" );
 	printf( "               -a kill (-c|--container) (container) [ (-f|--forcely) ]\n" );
 	printf( "               -a destroy (-c|--container) (container) [ (-f|--forcely) ] [ (-h|--shutdown) ]\n" );
@@ -200,6 +201,11 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__match = argv[i+1] ;
 			i++;
 		}
+		else if( STRCMP( argv[i] , == , "--cmd" ) && i + 1 < argc )
+		{
+			env->cmd_para.__cmd = argv[i+1] ;
+			i++;
+		}
 		else if( ( STRCMP( argv[i] , == , "-d" ) || STRCMP( argv[i] , == , "--debug" ) ) )
 		{
 			env->cmd_para.__debug = argv[i] ;
@@ -360,6 +366,24 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			INFOLOGC( "--- call DoAction_attach ---" )
 			nret = DoAction_attach( env ) ;
 			INFOLOGC( "--- DoAction_attach return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "run" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__container) )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a run'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__cmd) )
+			{
+				printf( "*** ERROR : expect '--cmd' with action '-a run'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_run ---" )
+			nret = DoAction_run( env ) ;
+			INFOLOGC( "--- DoAction_run return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "shutdown" ) )
 		{
