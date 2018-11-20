@@ -32,6 +32,7 @@ c_FILE_CLEAN	=	$(c_FILE_o) $(c_FILE2_o) $(c_FILE3_o) $(c_FILE4_o) $(c_FILE5_o)
 c_FILE		=	\
 			list.c \
 			LOGC.c \
+			filerpl.c \
 			version.c \
 			file.c \
 			string.c \
@@ -45,6 +46,7 @@ LIBINST		=	$(_LIBINST)
 HDER		= \
 			list.h \
 			LOGC.h \
+			filerpl.h \
 			cocker_util.h \
 
 HDERINST	=	$(_HDERBASE)/cocker_in

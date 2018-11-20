@@ -163,7 +163,7 @@ int DoAction_attach( struct CockerEnvironment *env )
 		return -1;
 	}
 	
-	bash_cmd = "bash -l" ;
+	bash_cmd = "/bin/bash -l" ;
 	nret = send( connected_sock , bash_cmd , strlen(bash_cmd) , 0 ) ;
 	if( nret == -1 )
 	{

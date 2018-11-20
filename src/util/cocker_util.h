@@ -37,6 +37,7 @@
 #include "list.h"
 
 #include "LOGC.h"
+#include "filerpl.h"
 
 int ptmname_r(int fd, char * buf, size_t buflen);
 int ptsname_r(int fd, char * buf, size_t buflen);

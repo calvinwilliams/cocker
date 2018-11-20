@@ -57,3 +57,6 @@ mkdir -p ${IMAGE_RLAYER_PATH_BASE}/dev/pts
 mkdir -p ${IMAGE_RLAYER_PATH_BASE}/usr/share
 cp -rf /usr/share/terminfo ${IMAGE_RLAYER_PATH_BASE}/usr/share/
 
+# install other test files
+printf "{ \"leaf\":\"\${LEAF}\" }\n" >${IMAGE_RLAYER_PATH_BASE}/root/tpl.txt
+

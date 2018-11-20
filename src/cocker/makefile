@@ -23,6 +23,7 @@ c_FILE		=	\
 			action_volume.c \
 			action_attach.c \
 			action_run.c \
+			action_filerpl.c \
 			action_install_test.c \
 			action_to_container.c \
 			action_to_image.c \

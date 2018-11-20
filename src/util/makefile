@@ -10,6 +10,7 @@
 c_FILE		=	\
 			list.c \
 			LOGC.c \
+			filerpl.c \
 			version.c \
 			file.c \
 			string.c \
@@ -23,6 +24,7 @@ LIBINST		=	$(_LIBINST)
 HDER		= \
 			list.h \
 			LOGC.h \
+			filerpl.h \
 			cocker_util.h \
 
 HDERINST	=	$(_HDERBASE)/cocker_in

@@ -53,7 +53,7 @@ int server( struct CockerInitEnvironment *env )
 		poll_fds[1].fd = env->listen_sock ;
 		poll_fds[1].events = POLLIN|POLLHUP ;
 		poll_fds[1].revents = 0 ;
-		nret = poll( poll_fds , 2 , 1000 ) ;
+		nret = poll( poll_fds , 2 , -1 ) ;
 		if( nret == -1 )
 		{
 			return -1;
