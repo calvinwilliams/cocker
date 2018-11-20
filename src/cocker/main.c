@@ -14,6 +14,7 @@ static void usage()
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
 	printf( "               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ] ]\n" );
+	printf( "               -a filerpl (-c|--container) (container) (--template-file) (template_file) (--mapping-file) (mapping_file) [ (--instance-file) (instance_file) ]\n" );
 	printf( "               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ]\n" );
 	printf( "               -a attach (-c|--container) (container)\n" );
 	printf( "               -a run (-c|--container) (container) (--cmd) (cmd)\n" );
@@ -206,6 +207,21 @@ static int ParseCommandParameters( struct CockerEnvironment *env , int argc , ch
 			env->cmd_para.__cmd = argv[i+1] ;
 			i++;
 		}
+		else if( STRCMP( argv[i] , == , "--template-file" ) && i + 1 < argc )
+		{
+			env->cmd_para.__template_file = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--mapping-file" ) && i + 1 < argc )
+		{
+			env->cmd_para.__mapping_file = argv[i+1] ;
+			i++;
+		}
+		else if( STRCMP( argv[i] , == , "--instance-file" ) && i + 1 < argc )
+		{
+			env->cmd_para.__instance_file = argv[i+1] ;
+			i++;
+		}
 		else if( ( STRCMP( argv[i] , == , "-d" ) || STRCMP( argv[i] , == , "--debug" ) ) )
 		{
 			env->cmd_para.__debug = argv[i] ;
@@ -342,6 +358,30 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			INFOLOGC( "--- call DoAction_create ---" )
 			nret = DoAction_create( env ) ;
 			INFOLOGC( "--- DoAction_create return[%d] ---" , nret )
+		}
+		else if( STRCMP( env->cmd_para._action , == , "filerpl" ) )
+		{
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__container) )
+			{
+				printf( "*** ERROR : expect '--container' with action '-a filerpl'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__template_file) )
+			{
+				printf( "*** ERROR : expect '--template-file' with action '-a filerpl'\n" );
+				return -7;
+			}
+			
+			if( IS_NULL_OR_EMPTY(env->cmd_para.__mapping_file) )
+			{
+				printf( "*** ERROR : expect '--mapping-file' with action '-a filerpl'\n" );
+				return -7;
+			}
+			
+			INFOLOGC( "--- call DoAction_filerpl ---" )
+			nret = DoAction_filerpl( env ) ;
+			INFOLOGC( "--- DoAction_filerpl return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "boot" ) )
 		{

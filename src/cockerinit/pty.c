@@ -16,6 +16,7 @@ int create_pty( struct CockerInitEnvironment *env )
 	int		argc ;
 	char		*argv[64] = { NULL } ;
 	char		*p = NULL ;
+	char		*p2 = NULL ;
 	int		i ;
 	
 	int		nret = 0 ;
@@ -83,7 +84,20 @@ int create_pty( struct CockerInitEnvironment *env )
 			if( argc >= sizeof(argv)/sizeof(argv[0])-1 )
 				break;
 			
-			argv[argc++] = p ;
+			if( argc == 0 )
+			{
+				argv[argc++] = p ;
+				argv[argc++] = p ;
+				p2 = strrchr( argv[1] , '/' ) ;
+				if( p2 )
+				{
+					argv[1] = p2+1 ;
+				}
+			}
+			else
+			{
+				argv[argc++] = p ;
+			}
 			
 			p = strtok( NULL , " \t" ) ;
 		}
@@ -93,9 +107,9 @@ int create_pty( struct CockerInitEnvironment *env )
 			INFOLOGC( "argv[%d]=[%s]\n" , i , argv[i] )
 		
 		if( strchr( argv[0] , '/' ) )
-			nret = execv( argv[0] , argv ) ;
+			nret = execv( argv[0] , argv+1 ) ;
 		else
-			nret = execvp( argv[0] , argv ) ;
+			nret = execvp( argv[0] , argv+1 ) ;
 		if( nret == -1 )
 		{
 			FATALLOGC( "*** ERROR : execl failed[%d] , errno[%d]\n" , nret , errno )

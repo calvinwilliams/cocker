@@ -63,6 +63,9 @@ struct CommandParameter
 	char			*__match ;
 	
 	char			*__cmd ;
+	char			*__template_file ;
+	char			*__mapping_file ;
+	char			*__instance_file ;
 } ;
 
 struct CockerEnvironment
@@ -121,6 +124,7 @@ int DoAction_destroy( struct CockerEnvironment *env );
 int DoAction_boot( struct CockerEnvironment *env );
 int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_run( struct CockerEnvironment *env );
+int DoAction_filerpl( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
@@ -173,6 +177,7 @@ cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-map
 cocker -a create -d -m test --host test --net BRIDGE --vip 166.88.0.2 --port-mapping 19527:9527 -c test -b -t -e "/bin/bash -l"
 cocker -a create -d -m "calvin=rhel-7.4-x86_64:1.0.0,calvin=rhel-7.4-gcc-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping "19527:9527,5142:5142" -c test
 cocker -a create -d -m "calvin=rhel-7.4-x86_64,calvin=rhel-7.4-sshd-x86_64" --host test --net BRIDGE --vip 166.88.0.2 --port-mapping "2222:22" -c test
+cocker -a boot -d -c test
 cocker -a boot -d -c test -t
 cocker -a boot -d --cpus 1 --cpu-quota 30% --mem-limit 100M -c test -t
 cocker -a boot -d -c test -t -e "/bin/bash -l"
@@ -182,6 +187,10 @@ cocker -a shutdown -d -c test
 cocker -a destroy -d -c test
 cocker -a destroy -d -c test -h
 cocker -a destroy -d -f -c test
+
+printf "\${LEAF} ÎÒµÄÊ÷Ò¶\n" >map.txt
+cocker -a filerpl -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
+cocker -a filerpl -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt"
 
 cocker -a version -d -m test --version "1.0.1"
 cocker -a version -d -m "test:1.0.1" --version "1.0.2"
