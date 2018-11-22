@@ -1,3 +1,9 @@
+0.25.0		2018-11-20	calvin
+		* 新增cocker指令'-a putfile'用于复制容器外文件或目录到容器内
+		* 新增cocker指令'-a getfile'用于复制容器内文件或目录到容器外
+		* 新增cocker指令'-s container_root'得到容器外的容器根目录路径
+		* 新增脚本cocker_container_root.sh用于设置容器根目录环境变量
+
 0.24.0		2018-11-20	calvin
 		* 新增cocker指令'-a rplfile'用于替换容器内文件内容
 
