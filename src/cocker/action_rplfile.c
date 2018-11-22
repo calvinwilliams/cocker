@@ -8,7 +8,7 @@
 
 #include "cocker_in.h"
 
-int DoAction_filerpl( struct CockerEnvironment *env )
+int DoAction_rplfile( struct CockerEnvironment *env )
 {
 	char		template_file[ PATH_MAX + 1 ] ;
 	char		instance_file[ PATH_MAX + 1 ] ;

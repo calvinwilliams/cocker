@@ -124,7 +124,7 @@ int DoAction_destroy( struct CockerEnvironment *env );
 int DoAction_boot( struct CockerEnvironment *env );
 int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_run( struct CockerEnvironment *env );
-int DoAction_filerpl( struct CockerEnvironment *env );
+int DoAction_rplfile( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
@@ -189,8 +189,8 @@ cocker -a destroy -d -c test -h
 cocker -a destroy -d -f -c test
 
 printf "\${LEAF} ÎÒµÄÊ÷Ò¶\n" >map.txt
-cocker -a filerpl -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
-cocker -a filerpl -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt"
+cocker -a rplfile -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
+cocker -a rplfile -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt"
 
 cocker -a version -d -m test --version "1.0.1"
 cocker -a version -d -m "test:1.0.1" --version "1.0.2"

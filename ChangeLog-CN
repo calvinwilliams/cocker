@@ -1,5 +1,5 @@
 0.24.0		2018-11-20	calvin
-		* 新增cocker指令'-a filerpl'用于替换容器内文件内容
+		* 新增cocker指令'-a rplfile'用于替换容器内文件内容
 
 0.23.0		2018-11-19	calvin
 		* 新增cocker指令'-a run'用于在容器外执行容器内命令

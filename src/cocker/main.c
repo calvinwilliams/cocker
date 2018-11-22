@@ -14,7 +14,7 @@ static void usage()
 	printf( "               -s images\n" );
 	printf( "               -s containers\n" );
 	printf( "               -a create (-m|--image) (image[:version])[,(image[:version])]... [ create options ] [ (-c|--container) (container) ] [ (-b|--boot) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ] ]\n" );
-	printf( "               -a filerpl (-c|--container) (container) (--template-file) (template_file) (--mapping-file) (mapping_file) [ (--instance-file) (instance_file) ]\n" );
+	printf( "               -a rplfile (-c|--container) (container) (--template-file) (template_file) (--mapping-file) (mapping_file) [ (--instance-file) (instance_file) ]\n" );
 	printf( "               -a boot (-c|--container) (container) [ cgroup options ] [ (-t|--attach) | (-e|--exec) (cmd|\"program para1 ...\") ]\n" );
 	printf( "               -a attach (-c|--container) (container)\n" );
 	printf( "               -a run (-c|--container) (container) (--cmd) (cmd)\n" );
@@ -359,29 +359,29 @@ static int ExecuteCommandParameters( struct CockerEnvironment *env )
 			nret = DoAction_create( env ) ;
 			INFOLOGC( "--- DoAction_create return[%d] ---" , nret )
 		}
-		else if( STRCMP( env->cmd_para._action , == , "filerpl" ) )
+		else if( STRCMP( env->cmd_para._action , == , "rplfile" ) )
 		{
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__container) )
 			{
-				printf( "*** ERROR : expect '--container' with action '-a filerpl'\n" );
+				printf( "*** ERROR : expect '--container' with action '-a rplfile'\n" );
 				return -7;
 			}
 			
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__template_file) )
 			{
-				printf( "*** ERROR : expect '--template-file' with action '-a filerpl'\n" );
+				printf( "*** ERROR : expect '--template-file' with action '-a rplfile'\n" );
 				return -7;
 			}
 			
 			if( IS_NULL_OR_EMPTY(env->cmd_para.__mapping_file) )
 			{
-				printf( "*** ERROR : expect '--mapping-file' with action '-a filerpl'\n" );
+				printf( "*** ERROR : expect '--mapping-file' with action '-a rplfile'\n" );
 				return -7;
 			}
 			
-			INFOLOGC( "--- call DoAction_filerpl ---" )
-			nret = DoAction_filerpl( env ) ;
-			INFOLOGC( "--- DoAction_filerpl return[%d] ---" , nret )
+			INFOLOGC( "--- call DoAction_rplfile ---" )
+			nret = DoAction_rplfile( env ) ;
+			INFOLOGC( "--- DoAction_rplfile return[%d] ---" , nret )
 		}
 		else if( STRCMP( env->cmd_para._action , == , "boot" ) )
 		{

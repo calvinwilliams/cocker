@@ -816,10 +816,10 @@ test
 
 ### 3.1.23. 替换容器内文件内容
 
-使用`cocker`指令`-a filerpl`替换容器内文件内容
+使用`cocker`指令`-a rplfile`替换容器内文件内容
 
 ```
-# cocker -a filerpl -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
+# cocker -a rplfile -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
 OK
 #
 ```
