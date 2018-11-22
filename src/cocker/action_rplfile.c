@@ -36,7 +36,7 @@ int DoAction_rplfile( struct CockerEnvironment *env )
 		strncpy( instance_file , template_file , sizeof(instance_file)-1 );
 	}
 	
-	/* filerpl */
+	/* replace file */
 	if( env->cmd_para.__debug )
 	{
 		I( "filerpl [%s] [%s] [%s]\n" , template_file , env->cmd_para.__mapping_file , instance_file )

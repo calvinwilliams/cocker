@@ -47,11 +47,15 @@
         - [3.1.21. 从cocker自有镜像库下载镜像](#3121-从cocker自有镜像库下载镜像)
         - [3.1.22. 在容器外执行容器内命令](#3122-在容器外执行容器内命令)
         - [3.1.23. 替换容器内文件内容](#3123-替换容器内文件内容)
+        - [3.1.24. 复制容器外文件或目录到容器内](#3124-复制容器外文件或目录到容器内)
+        - [3.1.25. 复制容器内文件或目录到容器外](#3125-复制容器内文件或目录到容器外)
+        - [3.1.26. 得到容器根目录在容器外路径](#3126-得到容器根目录在容器外路径)
     - [3.2. 脚本](#32-脚本)
         - [3.2.1. 创建测试镜像根文件系统脚本](#321-创建测试镜像根文件系统脚本)
         - [3.2.2. 创建操作系统基础镜像脚本](#322-创建操作系统基础镜像脚本)
         - [3.2.3. 创建sshd镜像脚本](#323-创建sshd镜像脚本)
         - [3.2.4. 创建gcc镜像脚本](#324-创建gcc镜像脚本)
+        - [3.2.5. 设置容器根目录环境变量](#325-设置容器根目录环境变量)
 - [4. 最后](#4-最后)
     - [4.1. 关于cocker](#41-关于cocker)
     - [4.2. 关于作者](#42-关于作者)
@@ -854,6 +858,42 @@ ${LEAF} 我的树叶
 
 注意：容器是必须运行中状态。
 
+### 3.1.24. 复制容器外文件或目录到容器内
+
+使用`cocker`指令`-a putfile`复制容器外文件或目录到容器内
+
+```
+# cocker -a putfile -c test --src-file "map.txt" --dst-file "/root/"
+OK
+#
+```
+
+注意：也可通过ssh等服务复制。
+
+### 3.1.25. 复制容器内文件或目录到容器外
+
+使用`cocker`指令`-a getfile`复制容器内文件或目录到容器外
+
+```
+# cocker -a getfile -c test --src-file "/root/map.txt" --dst-file "./"
+OK
+#
+```
+
+注意：也可通过ssh等服务复制。
+
+### 3.1.26. 得到容器根目录在容器外路径
+
+使用`cocker`指令`-s container_root`得到容器根目录在容器外路径
+
+```
+# cocker -s container_root -c test
+/var/cocker/containers/test/merged
+#
+```
+
+注意：外露容器根目录可能不太合适。
+
 ## 3.2. 脚本
 
 ### 3.2.1. 创建测试镜像根文件系统脚本
@@ -889,6 +929,33 @@ ${LEAF} 我的树叶
 ```
 # cocker_create_image_rhel-7.4-gcc-x86_64.sh
 ```
+
+### 3.2.5. 设置容器根目录环境变量
+
+```
+# . cocker_container_root.sh test
+$ echo $COCKER_CONTAINER_ROOT
+/var/cocker/containers/test/merged
+# ls -l $COCKER_CONTAINER_ROOT
+total 20
+drwxr-xr-x.   2 root root 4096 Nov 22 08:26 bin
+-rwxr-xr-x.   1 root root 2634 Nov 22 08:43 cocker.log
+-rwxr-xr-x.   1 root root 4848 Nov 22 08:46 cockerinit.log
+drwxr-xr-x.   1 root root   25 Nov 22 08:43 dev
+drwxr-xr-x.   1 root root    6 Nov 22 08:26 etc
+drwxr-xr-x.   2 root root    6 Nov 22 08:26 lib
+drwxr-xr-x.   2 root root 4096 Nov 22 08:26 lib64
+drwxr-xr-x.   3 root root   19 Nov 22 08:26 mnt
+dr-xr-xr-x. 197 root root    0 Nov 22 08:43 proc
+drwxr-xr-x.   1 root root   42 Nov 22 08:46 root
+drwxr-xr-x.   2 root root   61 Nov 22 08:26 sbin
+drwxr-xr-x.   2 root root    6 Nov 22 08:26 tmp
+drwxr-xr-x.   3 root root   19 Nov 22 08:26 usr
+drwxr-xr-x.   2 root root    6 Nov 22 08:26 var
+```
+
+注意：此脚本调用了指令`-s container_root`。
+注意：外露容器根目录可能不太合适。
 
 # 4. 最后
 

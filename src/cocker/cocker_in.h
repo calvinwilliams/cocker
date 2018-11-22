@@ -66,6 +66,8 @@ struct CommandParameter
 	char			*__template_file ;
 	char			*__mapping_file ;
 	char			*__instance_file ;
+	char			*__src_file ;
+	char			*__dst_file ;
 } ;
 
 struct CockerEnvironment
@@ -116,6 +118,7 @@ int CreateContainer( struct CockerEnvironment *env , char *__image_id , char *__
 
 int DoShow_images( struct CockerEnvironment *env );
 int DoShow_containers( struct CockerEnvironment *env );
+int DoShow_container_root( struct CockerEnvironment *env );
 
 int DoAction_install_test( struct CockerEnvironment *env );
 
@@ -125,6 +128,8 @@ int DoAction_boot( struct CockerEnvironment *env );
 int DoAction_attach( struct CockerEnvironment *env );
 int DoAction_run( struct CockerEnvironment *env );
 int DoAction_rplfile( struct CockerEnvironment *env );
+int DoAction_putfile( struct CockerEnvironment *env );
+int DoAction_getfile( struct CockerEnvironment *env );
 int DoAction_shutdown( struct CockerEnvironment *env );
 int _DoAction_kill( struct CockerEnvironment *env , int signal_no );
 int DoAction_kill( struct CockerEnvironment *env );
@@ -163,6 +168,7 @@ echo "1" >/proc/sys/net/ipv4/ip_forward
 /* for test
 cocker -s images
 cocker -s containers
+cocker -s container_root
 
 cocker -a install_test -d --version "1.0.0"
 
@@ -191,6 +197,9 @@ cocker -a destroy -d -f -c test
 printf "\${LEAF} ÎÒµÄÊ÷Ò¶\n" >map.txt
 cocker -a rplfile -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt" --instance-file "/root/ins.txt"
 cocker -a rplfile -d -c test --template-file "/root/tpl.txt" --mapping-file "map.txt"
+
+cocker -a putfile -c test --src-file "map.txt" --dst-file "/root/"
+cocker -a getfile -c test --src-file "/root/map.txt" --dst-file "./"
 
 cocker -a version -d -m test --version "1.0.1"
 cocker -a version -d -m "test:1.0.1" --version "1.0.2"
@@ -223,6 +232,7 @@ cocker -s ssearch --match test
 
 cocker -a spush -m calvin=rhel-7.4-x86_64:1.0.0 -d -f
 
+. cocker_container_root.sh test
 */
 
 /* for test

@@ -35,6 +35,7 @@ c_FILE		=	\
 			env.c \
 			show_images.c \
 			show_containers.c \
+			show_container_root.c \
 			action_create.c \
 			action_destroy.c \
 			action_boot.c \
@@ -46,6 +47,8 @@ c_FILE		=	\
 			action_attach.c \
 			action_run.c \
 			action_rplfile.c \
+			action_putfile.c \
+			action_getfile.c \
 			action_install_test.c \
 			action_to_container.c \
 			action_to_image.c \
