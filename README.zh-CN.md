@@ -56,6 +56,8 @@
         - [3.2.3. 创建sshd镜像脚本](#323-创建sshd镜像脚本)
         - [3.2.4. 创建gcc镜像脚本](#324-创建gcc镜像脚本)
         - [3.2.5. 设置容器根目录环境变量](#325-设置容器根目录环境变量)
+    - [3.3. 场景示例](#33-场景示例)
+        - [3.3.1. 交互式构建ssh镜像](#331-交互式构建ssh镜像)
 - [4. 最后](#4-最后)
     - [4.1. 关于cocker](#41-关于cocker)
     - [4.2. 关于作者](#42-关于作者)
@@ -907,12 +909,25 @@ OK
 ### 3.2.2. 创建操作系统基础镜像脚本
 
 注意：必须可正常使用yum为前提。
+注意：如需增删软件可修改`supermin5 -v --prepare`后的软件列表。
 
 ```
 # cocker_create_image_rhel-7.4-x86_64.sh
+...
+# ls -l calvin=rhel-7.4-x86_64:1.0.0.cockerimage
+-rw-r--r--  1 root root 91781857 Nov 25 09:03 calvin=rhel-7.4-x86_64:1.0.0.cockerimage
 ```
 
-执行后输入名字和版本号，自动生成可导入的镜像打包文件，文件名格式为`(作者)=(calvin=rhel-7.4-x86_64):(版本号).cockerimage`
+执行后输入名字和版本号，自动生成可导入的镜像打包文件，文件名格式为`(作者)=(rhel-7.4-x86_64):(版本号).cockerimage`
+
+```
+# cocker -a import --image-file calvin=rhel-7.4-x86_64:1.0.0.cockerimage
+OK
+# cocker -s images
+image_id                       version    modify_datetime     size      
+--------------------------------------------------------------------
+calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:03:48 228 MB
+```
 
 ### 3.2.3. 创建sshd镜像脚本
 
@@ -922,6 +937,8 @@ OK
 # cocker_create_image_rhel-7.4-sshd-x86_64.sh
 ```
 
+注意：后面章节通过交互式构建可达到更小更干净的镜像。
+
 ### 3.2.4. 创建gcc镜像脚本
 
 此为创建gcc镜像层镜像打包文件。
@@ -929,6 +946,8 @@ OK
 ```
 # cocker_create_image_rhel-7.4-gcc-x86_64.sh
 ```
+
+注意：后面章节通过交互式构建可达到更小更干净的镜像。
 
 ### 3.2.5. 设置容器根目录环境变量
 
@@ -956,6 +975,119 @@ drwxr-xr-x.   2 root root    6 Nov 22 08:26 var
 
 注意：此脚本调用了指令`-s container_root`。
 注意：外露容器根目录可能不太合适。
+
+## 3.3. 场景示例
+
+### 3.3.1. 交互式构建yum镜像
+
+有了操作系统基础镜像后可以交互式构建其它镜像。大致过程为用基础镜像创建启动容器，在容器内交互式安装和部署，然后停止容器，最后转换容器为新镜像。
+
+```
+# cocker -a create -m "calvin=rhel-7.4-x86_64" --host yum --volume "/mnt/cdrom:/mnt/cdrom" -c "calvin=yum"
+OK
+# cocker -a boot -c "calvin=yum" -t
+[root@yum /root] 
+```
+
+在容器内配置好yum，在我的环境里这样配置
+
+```
+[root@yum /root] mkdir -p /etc/yum.repos.d
+[root@yum /root] vi /etc/yum.repos.d/cdrom.repo
+[cdrom]
+name=cdrom
+baseurl=file:///mnt/cdrom
+gpgcheck=0
+enable=1
+```
+
+```
+[root@yum /root] yum search sshd
+cdrom                                                                                                                                                                                                                 | 4.1 kB  00:00:00     
+(1/2): cdrom/group_gz                                                                                                                                                                                                 | 137 kB  00:00:00     
+(2/2): cdrom/primary_db                                                                                                                                                                                               | 4.0 MB  00:00:00     
+=============================================================================================================== Matched: sshd ===============================================================================================================
+openssh-server.x86_64 : An open source SSH server daemon
+```
+
+转换容器为yum镜像
+
+```
+[root@yum /etc/yum.repos.d] exit
+logout
+# cocker -a shutdown -c "calvin=yum"
+OK
+# cocker -s containers
+container_id         image                hostname   net        netns            size       status
+-----------------------------------------------------------------------------------------------------------
+calvin=yum           calvin=rhel-7.4-x86_64 yum        HOST                        24 MB      STOPED
+# cocker -a to_image --from-container "calvin=yum" --version "1.0.0" --to-image "calvin=yum"
+OK
+# cocker -s containers
+# cocker -s images
+image_id                       version    modify_datetime     size      
+--------------------------------------------------------------------
+calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:55:25 271 MB
+calvin=yum                     1.0.0      2018-11-25T10:16:59 24 MB
+```
+
+### 3.3.2. 交互式构建sshd镜像
+
+注意：交互式构建sshd依赖yum。
+
+```
+# cocker -a create -m "calvin=rhel-7.4-x86_64,calvin=yum" --host sshd --volume "/mnt/cdrom:/mnt/cdrom" --net BRIDGE --vip 166.88.0.2 --port-mapping "2222:22" -c "calvin=sshd"
+OK
+# cocker -a boot -c "calvin=sshd" -t
+[root@sshd /root] 
+```
+
+在容器内配置好sshd，在我的环境里这样配置
+
+```
+[root@sshd /root] yum install -y openssh-server
+...（如有卡住，按Ctrl+C结束后重复执行，后续解决此BUG）
+[root@sshd /root] ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
+...（一般全直接按回车）
+[root@sshd /root] ssh-keygen -t rsa -f /etc/ssh/ssh_host_ecdsa_key
+...（一般全直接按回车）
+[root@sshd /root] echo "root:root" | chpasswd
+...（如有卡住，按Ctrl+C结束）
+[root@sshd /root] nohup /usr/sbin/sshd -D
+```
+
+```
+[root@yum /root] yum search sshd
+cdrom                                                                                                                                                                                                                 | 4.1 kB  00:00:00     
+(1/2): cdrom/group_gz                                                                                                                                                                                                 | 137 kB  00:00:00     
+(2/2): cdrom/primary_db                                                                                                                                                                                               | 4.0 MB  00:00:00     
+=============================================================================================================== Matched: sshd ===============================================================================================================
+openssh-server.x86_64 : An open source SSH server daemon
+```
+
+转换容器为yum镜像
+
+```
+[root@yum /etc/yum.repos.d] exit
+logout
+# cocker -a shutdown -c "calvin=yum"
+OK
+# cocker -s containers
+container_id         image                hostname   net        netns            size       status
+-----------------------------------------------------------------------------------------------------------
+calvin=yum           calvin=rhel-7.4-x86_64 yum        HOST                        24 MB      STOPED
+# cocker -a to_image --from-container "calvin=yum" --version "1.0.0" --to-image "calvin=yum"
+OK
+# cocker -s containers
+# cocker -s images
+image_id                       version    modify_datetime     size      
+--------------------------------------------------------------------
+calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:55:25 271 MB
+calvin=yum                     1.0.0      2018-11-25T10:16:59 24 MB
+```
+
+
+
 
 # 4. 最后
 

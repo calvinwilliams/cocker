@@ -265,6 +265,7 @@ static int CloneEntry( void *pv )
 			len = snprintf( mount_volume , sizeof(mount_volume)-1 , "%s/merged%s" , env->container_path_base , volume.container_path ) ;
 			IxTEx( SNPRINTF_OVERFLOW(len,sizeof(mount_volume)-1) , (exit(9)) , "*** ERROR : snprintf overflow\n" )
 			
+			mkdir( mount_volume , 0777 );
 			nret = mount( volume.host_path , mount_volume , NULL , MS_MGC_VAL|MS_BIND , NULL ) ;
 			I1TERx( (exit(9)) , "*** ERROR : mount[%s][%s] failed , errno[%d]\n" , volume.host_path , mount_volume , errno )
 			EIDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , volume.host_path , mount_volume , "(null)" , MS_MGC_VAL|MS_BIND , "(null)" )
