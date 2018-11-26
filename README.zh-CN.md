@@ -57,7 +57,9 @@
         - [3.2.4. 创建gcc镜像脚本](#324-创建gcc镜像脚本)
         - [3.2.5. 设置容器根目录环境变量](#325-设置容器根目录环境变量)
     - [3.3. 场景示例](#33-场景示例)
-        - [3.3.1. 交互式构建ssh镜像](#331-交互式构建ssh镜像)
+        - [3.3.1. 交互式构建yum镜像](#331-交互式构建yum镜像)
+        - [3.3.2. 交互式构建sshd镜像](#332-交互式构建sshd镜像)
+        - [3.3.3. 交互式构建G6镜像](#333-交互式构建G6镜像)
 - [4. 最后](#4-最后)
     - [4.1. 关于cocker](#41-关于cocker)
     - [4.2. 关于作者](#42-关于作者)
@@ -978,21 +980,6 @@ drwxr-xr-x.   2 root root    6 Nov 22 08:26 var
 
 ## 3.3. 场景示例
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### 3.3.1. 交互式构建yum镜像
 
 有了操作系统基础镜像后可以交互式构建其它镜像。大致过程为用基础镜像创建启动容器，在容器内交互式安装和部署，然后停止容器，最后转换容器为新镜像。
@@ -1007,7 +994,6 @@ OK
 在容器内配置好yum，在我的环境里这样配置
 
 ```
-[root@yum /root] rpm --rebuilddb
 [root@yum /root] mkdir -p /etc/yum.repos.d
 [root@yum /root] vi /etc/yum.repos.d/cdrom.repo
 [cdrom]
@@ -1062,37 +1048,42 @@ OK
 
 ```
 [root@sshd /root] yum install -y openssh-server
-...（如有卡住，按Ctrl+C结束后重复执行，后续解决此BUG）
+...
 [root@sshd /root] ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
 ...（一般全直接按回车）
 [root@sshd /root] ssh-keygen -t rsa -f /etc/ssh/ssh_host_ecdsa_key
 ...（一般全直接按回车）
 [root@sshd /root] echo "root:root" | chpasswd
 ...（如有卡住，按Ctrl+C结束）
-[root@sshd /root] nohup /usr/sbin/sshd -D
+[root@sshd /root] nohup /usr/sbin/sshd -D &
 ```
 
-```
-[root@yum /root] yum search sshd
-cdrom                                                                                                                                                                                                                 | 4.1 kB  00:00:00     
-(1/2): cdrom/group_gz                                                                                                                                                                                                 | 137 kB  00:00:00     
-(2/2): cdrom/primary_db                                                                                                                                                                                               | 4.0 MB  00:00:00     
-=============================================================================================================== Matched: sshd ===============================================================================================================
-openssh-server.x86_64 : An open source SSH server daemon
-```
-
-转换容器为yum镜像
+另外开一屏连接sshd容器
 
 ```
-[root@yum /etc/yum.repos.d] exit
+# ssh root@166.88.0.2 -p 2222
+The authenticity of host '[166.88.0.2]:2222 ([166.88.0.2]:2222)' can't be established.
+RSA key fingerprint is SHA256:kSX5DU3MiwEy8dArBoAk00kbB7hBtRXl/Pm4n9jWjBY.
+RSA key fingerprint is MD5:27:5d:b6:5a:5a:b1:bc:eb:b9:82:98:58:40:7e:eb:45.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[166.88.0.2]:2222' (RSA) to the list of known hosts.
+root@166.88.0.2's password: （root密码前面被重置成root了）
+Last login: Mon Nov 26 13:28:07 2018 from 192.168.6.7
+-bash-4.2# 
+```
+
+转换容器为sshd镜像
+
+```
+[root@sshd /root] exit
 logout
-# cocker -a shutdown -c "calvin=yum"
+# cocker -a shutdown -c "calvin=sshd"
 OK
 # cocker -s containers
 container_id         image                hostname   net        netns            size       status
 -----------------------------------------------------------------------------------------------------------
 calvin=yum           calvin=rhel-7.4-x86_64 yum        HOST                        24 MB      STOPED
-# cocker -a to_image --from-container "calvin=yum" --version "1.0.0" --to-image "calvin=yum"
+# cocker -a to_image --from-container "calvin=sshd" --version "1.0.0" --to-image "calvin=sshd"
 OK
 # cocker -s containers
 # cocker -s images
@@ -1100,10 +1091,80 @@ image_id                       version    modify_datetime     size
 --------------------------------------------------------------------
 calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:55:25 271 MB
 calvin=yum                     1.0.0      2018-11-25T10:16:59 24 MB
+calvin=sshd                    1.0.0      2018-11-26T09:16:59 335 MB
 ```
 
+### 3.3.3. 交互式构建G6镜像
 
+`G6`是本人以前独立自研的负载均衡器（源码托管地址 : [开源中国](https://gitee.com/calvinwilliams/G6)、[github](https://github.com/calvinwilliams/G6)），不少公司在使用，下面介绍交互式构建G6镜像。
 
+```
+# cocker -a create -m "calvin=rhel-7.4-x86_64,calvin=yum,calvin=sshd" --host G6 --volume "/mnt/cdrom:/mnt/cdrom" --net BRIDGE --vip 166.88.0.2 --port-mapping "8600:8600,2222:222" -c "calvin=G6"
+OK
+# cocker -a boot -c "calvin=G6" -t
+[root@G6 /root] 
+```
+
+在容器内配置好G6，在我的环境里这样配置
+
+```
+[root@G6 /root] yum install -y git
+[root@G6 /root] yum install -y make
+[root@G6 /root] yum install -y gcc
+...
+[root@G6 /root] mkdir src && cd src
+[root@G6 /root/src] git clone https://gitee.com/calvinwillisms/G6 && cd G6
+[root@G6 /root/src/G6] cd src
+[root@G6 /root/src/G6/src] make -f makefile.Linux install
+...
+[root@G6 /root/src/G6/src] mkdir ~/etc/ && vi ~/etc/G6.conf
+admin_rule_id G 127.0.0.1:* - 127.0.0.1:8600 ;
+my_rule RR *:* - 0.0.0.0:222 > 166.88.0.2:22 ;
+[root@G6 /root/src/G6/src] cd ~
+[root@G6 /root] nohup /usr/sbin/sshd -D &
+[root@G6 /root] G6
+G6 v1.0.6 build Nov 26 2018 14:28:18
+TCP Bridge && Load-Balance Dispenser
+Copyright by calvin 2016
+USAGE : G6 -f (config_pathfilename) [ -t (forward_thread_size) ] [ -s (forward_session_size) ] [ --log-level (DEBUG|INFO|WARN|ERROR|FATAL) ] [ --log-filename (logfilename) ] [ --close-log ] [ --no-daemon ] [ --set-cpu-affinity ]
+[root@G6 /root] G6 -f ~/etc/G6.conf
+```
+
+另外开一屏连接G6容器
+
+```
+# ssh root@166.88.0.2 -p 2222
+root@166.88.0.2's password: （root密码前面被重置成root了）
+Last login: Mon Nov 26 13:28:07 2018 from 192.168.6.7
+-bash-4.2# 
+```
+
+转换容器为G6镜像
+
+```
+[root@G6 /root] ps -ef
+...
+[root@G6 /root] ps -ef | grep -v grep | grep "G6 -f" | awk '{if($3==1)print $2}' | xargs kill
+[root@G6 /root] ps -ef | grep -v grep | grep -w sshd | awk '{print $2}' | xargs kill
+[root@sshd /root] exit
+logout
+# cocker -a shutdown -c "calvin=G6"
+OK
+# cocker -s containers
+container_id         image                hostname   net        netns            size       status
+-----------------------------------------------------------------------------------------------------------
+calvin=G6            calvin=rhel-7.4-x86_64,calvin=yum,calvin=sshd G6         BRIDGE     nns2513F44178    373 MB     STOPED
+# cocker -a to_image --from-container "calvin=G6" --version "1.0.0" --to-image "calvin=G6"
+OK
+# cocker -s containers
+# cocker -s images
+image_id                       version    modify_datetime     size      
+--------------------------------------------------------------------
+calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:55:25 271 MB
+calvin=yum                     1.0.0      2018-11-25T10:16:59 24 MB
+calvin=sshd                    1.0.0      2018-11-26T09:16:59 335 MB
+calvin=G6                      1.0.0      2018-11-26T10:01:48 373 MB
+```
 
 # 4. 最后
 
