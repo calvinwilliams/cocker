@@ -17,6 +17,8 @@ int server( struct CockerInitEnvironment *env )
 	
 	int			nret = 0 ;
 	
+	signal( SIGPIPE , SIG_IGN );
+	
 	env->listen_sock = socket( AF_UNIX , SOCK_STREAM , 0 ) ;
 	if( env->listen_sock == -1 )
 	{
@@ -47,6 +49,7 @@ int server( struct CockerInitEnvironment *env )
 	
 	while(1)
 	{
+_POLL :
 		poll_fds[0].fd = env->alive_pipe_0 ;
 		poll_fds[0].events = POLLIN|POLLHUP ;
 		poll_fds[0].revents = 0 ;
@@ -79,6 +82,8 @@ _WAITPID :
 				INFOLOGC( "waitpid[%d] ok\n" , pid )
 				goto _WAITPID;
 			}
+			
+			goto _POLL;
 		}
 		
 		if( (poll_fds[0].revents&POLLIN) || (poll_fds[0].revents&POLLHUP) )
@@ -101,8 +106,10 @@ _WAITPID :
 			
 			INFOLOGC( "new session accepted" )
 			
+			/*
 			signal( SIGCLD , SIG_IGN );
 			signal( SIGCHLD , SIG_IGN );
+			*/
 			
 			nret = recv( env->accepted_sock , & ch , 1 , 0 ) ;
 			if( nret <= 0 )

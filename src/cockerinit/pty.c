@@ -48,8 +48,10 @@ int create_pty( struct CockerInitEnvironment *env )
 		INFOLOGC( "recv cmd ok  , [%d]bytes , cmd[%s]\n" , nret , cmd );
 	}
 	
+	/*
 	signal( SIGCLD , SIG_IGN );
 	signal( SIGCHLD , SIG_IGN );
+	*/
 	
 	/* printf( "pty_fork ...\n" ); */
 	env->bash_pid = pty_fork( NULL , & origin_winsize , & (env->ptm_fd) ) ;

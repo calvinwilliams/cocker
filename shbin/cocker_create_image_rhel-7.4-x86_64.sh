@@ -32,7 +32,7 @@ rm -rf appliance.d supermin.d
 rm -f ${IMAGE_FILENAME}
 
 supermin5 -v --prepare bash coreutils -o supermin.d
-supermin5 -v --prepare bash coreutils which man-db procps-ng hostname vim-minimal file iputils openssh-clients openssh-server nmap-ncat util-linux tar wget curl net-tools iproute iptables iptables-services sysvinit-tools time bc m4 expect less findutils sysstat iotop ksh tcsh ftp zip gzip at shadow-utils dos2unix psmisc cronie telnet initscripts sudo cups-client lsof tcpdump sysctl glibc-common binutils valgrind strace yum yum-utils coreutils systemd dbus -o supermin.d
+supermin5 -v --prepare bash coreutils which man-db procps-ng hostname vim-minimal file iputils openssh-clients nmap-ncat util-linux tar wget curl net-tools iproute iptables iptables-services sysvinit-tools time bc m4 expect less findutils sysstat iotop ksh tcsh ftp zip gzip at shadow-utils dos2unix psmisc cronie telnet initscripts sudo cups-client lsof tcpdump sysctl glibc-common binutils valgrind strace -o supermin.d
 supermin5 -v --build --format chroot supermin.d -o appliance.d
 
 IMAGE_RLAYER_PATH_BASE="appliance.d"

@@ -978,6 +978,21 @@ drwxr-xr-x.   2 root root    6 Nov 22 08:26 var
 
 ## 3.3. 场景示例
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### 3.3.1. 交互式构建yum镜像
 
 有了操作系统基础镜像后可以交互式构建其它镜像。大致过程为用基础镜像创建启动容器，在容器内交互式安装和部署，然后停止容器，最后转换容器为新镜像。
@@ -992,6 +1007,7 @@ OK
 在容器内配置好yum，在我的环境里这样配置
 
 ```
+[root@yum /root] rpm --rebuilddb
 [root@yum /root] mkdir -p /etc/yum.repos.d
 [root@yum /root] vi /etc/yum.repos.d/cdrom.repo
 [cdrom]

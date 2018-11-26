@@ -386,6 +386,9 @@ static int CloneEntry( void *pv )
 	close( env->alive_pipe[1] );
 	
 	/* execl */
+	for( i = 1 ; i <= 31 ; i++ )
+		signal( i , SIG_DFL );
+	
 	if( env->cmd_para.__exec == NULL )
 	{
 		argc = 0 ;
