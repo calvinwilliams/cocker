@@ -276,7 +276,7 @@ make[1]: 离开目录“/home/calvin/src/cocker/src”
 
 编译并安装到系统目录里
 
-注意：如果你在非root用户编译源码，前面加上`sodu -E`。
+注意：如果你在非root用户编译源码，前面加上`sudo -E`。
 
 ```
 # make -f makefile.Linux install
