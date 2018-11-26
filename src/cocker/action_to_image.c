@@ -30,6 +30,15 @@ int DoAction_to_image( struct CockerEnvironment *env )
 	nret = ReadFileLine( version , sizeof(version)-1 , NULL , -1 , "%s/%s/version" , env->containers_path_base , env->cmd_para.__from_container ) ;
 	I1TER1( "*** ERROR : container '%s' is not converted from image\n" , env->cmd_para.__from_container )
 	
+	if( env->cmd_para.__version )
+	{
+		strncpy( version , env->cmd_para.__version , sizeof(version)-1 );
+	}
+	if( version[0] == '\0' )
+	{
+		strcpy( version , "_" );
+	}
+	
 	Snprintf( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s/%s" , env->images_path_base , env->cmd_para.__to_image , version );
 	nret = access( env->image_path_base , F_OK ) ;
 	I0TER1( "*** ERROR : image '%s%s%s' exist\n" , env->cmd_para.__to_image , (version[0]?version:"") , version )

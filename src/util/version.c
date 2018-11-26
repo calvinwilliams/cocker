@@ -8,6 +8,6 @@
 
 #include "cocker_util.h"
 
-char	_COCKER_VERSION_0_25_0[] = "0.25.0" ;
-char	*_COCKER_VERSION = _COCKER_VERSION_0_25_0 ;
+char	_COCKER_VERSION_0_27_0[] = "0.27.0" ;
+char	*_COCKER_VERSION = _COCKER_VERSION_0_27_0 ;
 
