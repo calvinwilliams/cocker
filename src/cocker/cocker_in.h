@@ -244,6 +244,11 @@ sudo cp ~/src/cocker/src/util/libcocker_util.so /var/cocker/images/test/rlayer/l
 ip netns del netnstest
 
 echo "let S=0 ; while [ 1 ] ; do let S++; done" >test.sh
+
+cp /home/calvin/src/cocker/src/cockerinit/cockerinit /var/cocker/images/calvin=rhel-7.4-x86_64/1.0.0/rlayer/usr/bin/cockerinit
+cocker -a boot -c G6
+cocker -a shutdown -c G6
+cocker -a run -c "G6" --cmd "nohup /usr/sbin/sshd -D &"
 */
 
 #ifdef __cplusplus

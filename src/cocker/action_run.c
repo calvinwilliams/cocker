@@ -38,7 +38,7 @@ static int tcp_and_pts_bridge( int connected_sock )
 		poll_fds[0].fd = connected_sock ;
 		poll_fds[0].events = POLLIN|POLLHUP ;
 		poll_fds[0].revents = 0 ;
-		nret = poll( poll_fds , 2 , 10000 ) ;
+		nret = poll( poll_fds , 2 , 1000 ) ;
 		if( nret == 0 )
 		{
 			break;
@@ -68,6 +68,8 @@ static int tcp_and_pts_bridge( int connected_sock )
 				E( "*** ERROR : writen STDOUT_FILENO failed , errno[%d]\n" , errno )
 				return -1;
 			}
+			
+			break;
 		}
 	}
 	

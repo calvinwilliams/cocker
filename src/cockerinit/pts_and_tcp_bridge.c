@@ -36,16 +36,19 @@ int pts_and_tcp_bridge( struct CockerInitEnvironment *env )
 			len = read( env->accepted_sock , buf , sizeof(buf)-1 ) ;
 			if( len == 0 )
 			{
+				INFOLOGC( "read 0 from accepted sock\n" )
 				return 0;
 			}
 			else if( len == -1 )
 			{
+				ERRORLOGC( "read from accepted sock failed , errno[%d]\n" , errno )
 				return -11;
 			}
 			
 			nret = writen( env->ptm_fd , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
+				ERRORLOGC( "write to ptm fd failed , errno[%d]\n" , errno )
 				return -12;
 			}
 		}
@@ -55,16 +58,27 @@ int pts_and_tcp_bridge( struct CockerInitEnvironment *env )
 			len = read( env->ptm_fd , buf , sizeof(buf)-1 ) ;
 			if( len == 0 )
 			{
+				INFOLOGC( "read 0 from ptm fd\n" )
 				return 0;
 			}
 			else if( len == -1 )
 			{
-				return -21;
+				if( errno == EIO )
+				{
+					INFOLOGC( "read from ptm fd IOERR , errno[%d]\n" , errno )
+					return 0;
+				}
+				else
+				{
+					ERRORLOGC( "read from ptm fd failed , errno[%d]\n" , errno )
+					return -21;
+				}
 			}
 			
 			nret = writen( env->accepted_sock , buf , len , NULL ) ;
 			if( nret == -1 )
 			{
+				ERRORLOGC( "write to accepted sock failed , errno[%d]\n" , errno )
 				return -22;
 			}
 		}
