@@ -60,6 +60,7 @@
         - [3.3.1. 交互式构建yum镜像](#331-交互式构建yum镜像)
         - [3.3.2. 交互式构建sshd镜像](#332-交互式构建sshd镜像)
         - [3.3.3. 交互式构建G6镜像](#333-交互式构建G6镜像)
+        - [3.3.4. 镜像配置实例化容器并启动服务](#334-镜像配置实例化容器并启动服务)
 - [4. 最后](#4-最后)
     - [4.1. 关于cocker](#41-关于cocker)
     - [4.2. 关于作者](#42-关于作者)
@@ -1146,7 +1147,7 @@ Last login: Mon Nov 26 13:28:07 2018 from 192.168.6.7
 ...
 [root@G6 /root] ps -ef | grep -v grep | grep "G6 -f" | awk '{if($3==1)print $2}' | xargs kill
 [root@G6 /root] ps -ef | grep -v grep | grep -w sshd | awk '{print $2}' | xargs kill
-[root@sshd /root] exit
+[root@G6 /root] exit
 logout
 # cocker -a shutdown -c "calvin=G6"
 OK
@@ -1164,6 +1165,78 @@ calvin=rhel-7.4-x86_64         1.0.0      2018-11-25T09:55:25 271 MB
 calvin=yum                     1.0.0      2018-11-25T10:16:59 24 MB
 calvin=sshd                    1.0.0      2018-11-26T09:16:59 335 MB
 calvin=G6                      1.0.0      2018-11-26T10:01:48 373 MB
+```
+
+### 3.3.4. 镜像配置实例化容器并单进程启动
+
+还是拿本人的`G6`做例子，把镜像`calvin=G6`转化为容器，把配置文件改成模板后再转化回镜像
+
+```
+# cocker -a to_container --from-image "calvin=G6" -m "calvin=rhel-7.4-x86_64" --host G6 --to-container "calvin=G6"
+OK
+# cocker -a boot -c "calvin=G6" -t
+[root@G6 /root] cd etc
+[root@G6 /root/etc] mv G6.conf G6.conf.tpl
+[root@G6 /root/etc] vi G6.conf.tpl
+admin_rule G 127.0.0.1:* - 127.0.0.1:${ADMIN_PORT} ;
+my_rule RR *:* - 0.0.0.0:${FORWARD_PORT} > ${DEST_IP}:${DEST_PORT} ;
+[root@G6 /root/etc] vi ../bin/sshd.start
+nohup /usr/sbin/sshd -D &
+[root@G6 /root/etc] chmod +x ../bin/sshd.start
+[root@G6 /root/etc] exit
+logout
+# cocker -a shutdown -c "calvin=G6"
+OK
+# cocker -a to_image --from-container "calvin=G6" --version "1.1.0" --to-image "calvin=G6"
+OK
+# cocker -s images
+image_id                       version    modify_datetime     size      
+--------------------------------------------------------------------
+calvin=rhel-7.4-x86_64         1.0.0      2018-11-27T08:00:07 273 MB
+calvin=yum                     1.0.0      2018-11-26T09:10:43 24 MB
+calvin=sshd                    1.0.0      2018-11-26T09:17:12 335 MB
+calvin=G6                      1.1.0      2018-11-27T08:03:33 373 MB
+```
+
+最后用镜像创建容器，配置实例化，启动服务
+
+```
+# cocker -a create -m "calvin=rhel-7.4-x86_64,calvin=sshd,calvin=G6" --host G6 --net BRIDGE --vip 166.88.0.2 --port-mapping "8600:8600,2222:222" -c "G6"
+OK
+# cocker -a boot -c "G6"
+OK
+# vi G6.conf.map
+${ADMIN_PORT}   8600
+${FORWARD_PORT} 222
+${DEST_IP}      166.88.0.2
+${DEST_PORT}    22
+# cocker -a rplfile -c "G6" --template-file "/root/etc/G6.conf.tpl" --mapping-file "G6.conf.map" --instance-file "/root/etc/G6.conf"
+OK
+# cocker -a run -c "G6" --cmd "cat /root/etc/G6.conf"
+admin_rule G 127.0.0.1:* - 127.0.0.1:8600 ;
+my_rule RR *:* - 0.0.0.0:222 > 166.88.0.2:22 ;
+# cocker -a run -c "G6" --cmd "nohup /usr/sbin/sshd -D"
+nohup: ignoring input and appending output to 'nohup.out'
+# cocker -a run -c "G6" --cmd "G6 -f /root/etc/G6.conf"
+OK
+```
+
+另外开一屏连接G6容器
+
+```
+# ssh root@166.88.0.2 -p 2222
+root@166.88.0.2's password: （root密码前面被重置成root了）
+Last login: Mon Nov 26 13:28:07 2018 from 192.168.6.7
+-bash-4.2# exit
+```
+
+用完后关闭服务，最后停止和销毁容器
+
+```
+# cocker -a run -c "G6" --cmd "ps -ef | grep -v grep | grep 'G6 -f' | awk '{if($3==1)print $2}' | xargs kill"
+# cocker -a run -c "G6" --cmd "ps -ef | grep -v grep | grep -w sshd | awk '{print $2}' | xargs kill"
+# cocker -a shutdown -c G6
+# cocker -a destroy -c G6
 ```
 
 # 4. 最后

@@ -13,11 +13,13 @@ int create_pty( struct CockerInitEnvironment *env )
 	struct winsize	origin_winsize ;
 	char		cmd[ 4096 ] ;
 	struct termios	ptm_termios ;
+#if 0
 	int		argc ;
 	char		*argv[64] = { NULL } ;
 	char		*p = NULL ;
 	char		*p2 = NULL ;
 	int		i ;
+#endif
 	
 	int		nret = 0 ;
 	
@@ -65,6 +67,7 @@ int create_pty( struct CockerInitEnvironment *env )
 		nret = tcgetattr( STDIN_FILENO , & ptm_termios ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "*** ERROR : tcgetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
@@ -76,9 +79,11 @@ int create_pty( struct CockerInitEnvironment *env )
 		nret = tcsetattr( STDIN_FILENO , TCSANOW , & ptm_termios ) ;
 		if( nret == -1 )
 		{
+			FATALLOGC( "*** ERROR : tcsetattr failed[%d] , errno[%d]\n" , nret , errno )
 			exit(1);
 		}
 		
+#if 0
 		argc = 0 ;
 		p = strtok( cmd , " \t" ) ;
 		while( p )
@@ -112,6 +117,11 @@ int create_pty( struct CockerInitEnvironment *env )
 			nret = execv( argv[0] , argv+1 ) ;
 		else
 			nret = execvp( argv[0] , argv+1 ) ;
+#endif
+		if( STRCMP( cmd , == , "/bin/bash -l" ) )
+			nret = execl( "/bin/bash" , "bash" , "-l" , NULL ) ;
+		else
+			nret = execl( "/bin/bash" , "bash" , "-c" , cmd , NULL ) ;
 		if( nret == -1 )
 		{
 			FATALLOGC( "*** ERROR : execl failed[%d] , errno[%d]\n" , nret , errno )
