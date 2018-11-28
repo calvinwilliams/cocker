@@ -249,6 +249,16 @@ cp /home/calvin/src/cocker/src/cockerinit/cockerinit /var/cocker/images/calvin=r
 cocker -a boot -c G6
 cocker -a shutdown -c G6
 cocker -a run -c "G6" --cmd "nohup /usr/sbin/sshd -D &"
+
+
+cocker -a create -m "calvin=rhel-7.4-x86_64,calvin=sshd,calvin=G6" --host G6 --net BRIDGE --vip 166.88.0.2 --port-mapping "8600:8600,2222:222" -c "G6" -b -e "/root/bin/G6 -f /root/etc/G6.conf --no-daemon" -d
+cocker -a boot -c "G6"
+cocker -a attach -c "G6"
+cocker -a boot -c "G6" -e "/root/bin/G6 -f /root/etc/G6.conf --no-daemon"
+cocker -a shutdown -c G6
+cocker -a shutdown -c G6 -f
+cocker -a destroy -c G6
+cocker -a destroy -c G6 -h
 */
 
 #ifdef __cplusplus

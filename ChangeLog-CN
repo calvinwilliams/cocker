@@ -1,3 +1,7 @@
+0.28.0		2018-11-28	calvin
+		* 修正了cocker指令'-a create'或'-a boot'时单进程启动容器时存在的问题
+		* 文档新增章节 3.3.5. 单进程启动容器
+
 0.27.1		2018-11-27	calvin
 		* 解决了cocker指令'-a to_container'的一个问题
 		* 缩短了cocker指令'-a run'采集输出等待时间

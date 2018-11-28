@@ -39,15 +39,34 @@ int _DoAction_kill( struct CockerEnvironment *env , int signal_no )
 		{
 			/* kill clone create_pty */
 			kill( pid , signal_no );
+			
+			while(1)
+			{
+				nret = kill( pid , 0 ) ;
+				if( nret == -1 )
+				{
+					/* destroy container */
+					CleanContainerResource( env );
+					break;
+				}
+				
+				sleep(1);
+			}
 		}
 		else
 		{
-			printf( "*** ERROR : container is not running\n" );
+			printf( "*** ERROR : container[%s] expection\n" , pid_str );
+			
+			if( env->cmd_para.__forcely )
+			{
+				/* destroy container */
+				CleanContainerResource( env );
+			}
 		}
 	}
 	else
 	{
-		printf( "pid[%s] invalid\n" , pid_str );
+		printf( "*** ERROR : container is not running\n" );
 	}
 	
 	return 0;
