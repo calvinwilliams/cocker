@@ -61,6 +61,7 @@
         - [3.3.2. 交互式构建sshd镜像](#332-交互式构建sshd镜像)
         - [3.3.3. 交互式构建G6镜像](#333-交互式构建G6镜像)
         - [3.3.4. 镜像配置实例化容器并启动](#334-镜像配置实例化容器并启动)
+        - [3.3.5. 单进程启动容器](#335-单进程启动容器)
 - [4. 最后](#4-最后)
     - [4.1. 关于cocker](#41-关于cocker)
     - [4.2. 关于作者](#42-关于作者)
@@ -1112,7 +1113,7 @@ OK
 [root@G6 /root] yum install -y git
 [root@G6 /root] yum install -y make
 [root@G6 /root] yum install -y gcc
-...
+...（这里仅作演示，所以把git、gcc都安装在一起了）
 [root@G6 /root] mkdir src && cd src
 [root@G6 /root/src] git clone https://gitee.com/calvinwillisms/G6 && cd G6
 [root@G6 /root/src/G6] cd src
@@ -1236,7 +1237,22 @@ Last login: Mon Nov 26 13:28:07 2018 from 192.168.6.7
 # cocker -a run -c "G6" --cmd "ps -ef | grep -v grep | grep 'G6 -f' | awk '{if($3==1)print $2}' | xargs kill"
 # cocker -a run -c "G6" --cmd "ps -ef | grep -v grep | grep -w sshd | awk '{print $2}' | xargs kill"
 # cocker -a shutdown -c G6
-# cocker -a destroy -c G6
+```
+
+### 3.3.5. 单进程启动容器
+
+拿前面的`G6`容器来演示像`Docker`那样单进程启动容器
+
+```
+# cocker -a create -m "calvin=rhel-7.4-x86_64,calvin=sshd,calvin=G6" --host G6 --net BRIDGE --vip 166.88.0.2 --port-mapping "8600:8600,2222:222" -c "G6" -b -e "/root/bin/G6 -f /root/etc/G6.conf --no-daemon" -d
+OK
+```
+
+用完后停止并销毁容器
+
+```
+# cocker -a destroy -c G6 -h
+OK
 ```
 
 # 4. 最后

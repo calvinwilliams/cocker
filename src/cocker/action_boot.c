@@ -126,8 +126,10 @@ static int CloneEntry( void *pv )
 	
 	int				argc ;
 	char				*argv[64] = { NULL } ;
+#if 1
 	char				*p = NULL ;
 	char				*p2 = NULL ;
+#endif
 	int				i ;
 	
 	int				nret = 0 ;
@@ -205,7 +207,9 @@ static int CloneEntry( void *pv )
 	}
 	else
 	{
+		/*
 		I0TI( "read file %s ok\n" , container_image_file )
+		*/
 		
 		TrimEnter( image );
 		
@@ -352,7 +356,9 @@ static int CloneEntry( void *pv )
 	/* chroot
 	----------------------------------------------------------------------------------------------------
 	*/
+	/*
 	I( "chroot [%s] ...\n" , mount_target )
+	*/
 	nret = chroot( mount_target ) ;
 	
 	SetLogcFile( "/cocker.log" );
@@ -372,7 +378,9 @@ static int CloneEntry( void *pv )
 	IDTI( "mount [%s][%s][%s][0x%X][%s] ok\n" , "devpts" , "/dev/pts" , "devpts" , MS_MGC_VAL , "(null)" )
 	
 	/* change /root */
+	/*
 	I( "chdir [%s] ...\n" , "/root" )
+	*/
 	nret = chdir( "/root" ) ;
 	if( env->cmd_para.__debug )
 	{
@@ -431,6 +439,9 @@ static int CloneEntry( void *pv )
 		for( i = 0 ; i < argc ; i++ )
 			I( "argv[%d]=[%s]\n" , i , argv[i] )
 		nret = execv( argv[0] , argv+1 ) ;
+#if 0
+		nret = execl( "/bin/bash" , "bash" , "-l" , "-c" , env->cmd_para.__exec , NULL ) ;
+#endif
 	}
 	I1TERx( exit(9) , "*** ERROR : execl failed , errno[%d]\n" , errno )
 	
@@ -691,6 +702,8 @@ int DoAction_boot( struct CockerEnvironment *env )
 	pid_t		pid ;
 	int		null_fd ;
 	char		pid_str[ 20 + 1 ] ;
+	pid_t		container_root_pid ;
+	int		i ;
 	
 	int		nret = 0 ;
 	
@@ -810,19 +823,21 @@ int DoAction_boot( struct CockerEnvironment *env )
 		}
 	}
 	
+	/*
 	if( env->cmd_para.__exec == NULL )
 	{
+	*/
 		signal( SIGCLD , SIG_IGN );
 		signal( SIGCHLD , SIG_IGN );
 		signal( SIGTERM , sig_proc );
 		
-		pid = fork() ;
-		if( pid == -1 )
+		container_root_pid = fork() ;
+		if( container_root_pid == -1 )
 		{
 			E( "*** ERROR : fork failed , errno[%d]\n" , errno )
 			goto _END ;
 		}
-		else if( pid > 0 )
+		else if( container_root_pid > 0 )
 		{
 			if( env->cmd_para.__attach )
 			{
@@ -855,7 +870,9 @@ int DoAction_boot( struct CockerEnvironment *env )
 		dup2( null_fd , 0 );
 		dup2( null_fd , 1 );
 		dup2( null_fd , 2 );
+	/*
 	}
+	*/
 	
 	/* create alive pipe */
 	nret = pipe( env->alive_pipe ) ;
@@ -886,6 +903,13 @@ int DoAction_boot( struct CockerEnvironment *env )
 	
 	close( env->alive_pipe[0] );
 	
+	/*
+	if( env->cmd_para.__exec )
+	{
+		return 0;
+	}
+	*/
+	
 	/* wait for container end */
 	while(1)
 	{
@@ -896,6 +920,25 @@ int DoAction_boot( struct CockerEnvironment *env )
 			if( g_TERM_flag == 1 )
 			{
 				I( "waitpid interrupted by SIGTERM\n" )
+				
+				kill( container_root_pid , SIGTERM );
+				for( i = 0 ; i < 5 ; i++ )
+				{
+					nret = kill( container_root_pid , 0 ) ;
+					if( nret == -1 )
+						break;
+				}
+				if( i >= 5 )
+				{
+					kill( container_root_pid , SIGKILL );
+					for( i = 0 ; i < 5 ; i++ )
+					{
+						nret = kill( container_root_pid , 0 ) ;
+						if( nret == -1 )
+							break;
+					}
+				}
+				
 				break;
 			}
 			
@@ -914,18 +957,14 @@ int DoAction_boot( struct CockerEnvironment *env )
 			break;
 		}
 	}
-	/*
-	while( wait(NULL) < 0 )
-	{
-		continue;
-	}
-	*/
 	
 _END :
 	
 	close( env->alive_pipe[1] );
 	
+	/*
 	CleanContainerResource( env );
+	*/
 	
 	return 0;
 }
