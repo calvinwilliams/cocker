@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# This project exe files
+src/cocker/cocker
+src/cockerinit/cockerinit
