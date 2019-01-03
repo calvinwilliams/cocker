@@ -70,10 +70,12 @@ HDER		= \
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
 			-std=gnu99 \
+			-I../util  \
 			-I$(_HDERBASE)/cocker_in \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
+			-L../util \
 			-L$(_LIBBASE) \
 			-lcocker_util \
 			-lcrypto \
