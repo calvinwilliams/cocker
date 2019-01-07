@@ -5,13 +5,14 @@
 
 - [1. 概述](#1-概述)
     - [1.1. cocker是什么](#11-cocker是什么)
-    - [1.2. 系统架构](#12-系统架构)
-        - [1.2.1. 状态迁移图](#121-状态迁移图)
-        - [1.2.2. 层叠文件系统](#122-层叠文件系统)
-        - [1.2.3. 网络](#123-网络)
-        - [1.2.4. 系统资源限制](#124-系统资源限制)
-        - [1.2.5. 伪终端](#125-伪终端)
-    - [1.3. 快速使用](#13-快速使用)
+    - [1.2. 兼容性](#12-兼容性)
+    - [1.3. 系统架构](#13-系统架构)
+        - [1.3.1. 状态迁移图](#131-状态迁移图)
+        - [1.3.2. 层叠文件系统](#132-层叠文件系统)
+        - [1.3.3. 网络](#133-网络)
+        - [1.3.4. 系统资源限制](#134-系统资源限制)
+        - [1.3.5. 伪终端](#135-伪终端)
+    - [1.4. 快速使用](#14-快速使用)
 - [2. 安装](#2-安装)
     - [2.1. Linux源码编译](#21-linux源码编译)
         - [2.1.1. 确认依赖包已安装](#211-确认依赖包已安装)
@@ -81,7 +82,11 @@
 
 `cocker`使用到了以下Linux底层技术：`LXC`、`cgroup`、`overlayfs`、`iptables`、`ptms`等。
 
-## 1.2. 系统架构
+## 1.2. 兼容性
+
+笔者环境是`Red Hat Enterprise Linux Server release 7.4`，理论上7版本、以及对应`CentOS`都是可用的。有朋友反映在`Ubuntu`上不能使用，经笔者初步试验是由于环境差异造成问题，所以非`RedHat/CentOS`环境等待以后解决其兼容性。
+
+## 1.3. 系统架构
 
 ![images/cocker_architecture.png](images/cocker_architecture.png)
 
@@ -91,7 +96,7 @@
 
 `cgroup`负责隔离域的系统资源管控，包括CPU、内存等。
 
-### 1.2.1. 状态迁移图
+### 1.3.1. 状态迁移图
 
 ![images/cocker_state_transition_diagram.png](images/cocker_state_transition_diagram.png)
 
@@ -103,7 +108,7 @@
 
 `cocker`镜像可以转化为`cocker`容器便于交互式修改，然后再转化回来。
 
-### 1.2.2. 层叠文件系统
+### 1.3.2. 层叠文件系统
 
 ![images/cocker_overlayfs.png](images/cocker_overlayfs.png)
 
@@ -113,7 +118,7 @@
 
 `COCKER_HOME`主目录中有镜像主目录`images`、容器主目录`containers`、`ssh`镜像仓库`srepo`，以及日志文件`cocker.log`。
 
-### 1.2.3. 网络
+### 1.3.3. 网络
 
 ![images/cocker_network.png](images/cocker_network.png)
 
@@ -127,19 +132,19 @@
 
 首次执行`cocker`会创建网桥设备`cocker0`，网段为`166.88.0.x`。
 
-### 1.2.4. 系统资源限制
+### 1.3.4. 系统资源限制
 
 ![images/cocker_cgroup.png](images/cocker_cgroup.png)
 
 `cocker`目前只实现了CPU核分配、时间片占用百分比分配、内存分配，其它系统资源在后续版本中会逐渐完善。
 
-### 1.2.5. 伪终端
+### 1.3.5. 伪终端
 
 ![images/cocker_pty.png](images/cocker_pty.png)
 
 自带容器根进程接受客户端`cocker`连接后会创建伪终端会话，就像登录到虚拟主机上命令交互一样，无需使用`ssh`。
 
-## 1.3. 快速使用
+## 1.4. 快速使用
 
 使用主控工具cocker快速创建一个小型测试镜像，里面调用了自带脚本`cocker_install_test.sh`构建根文件系统。
 
