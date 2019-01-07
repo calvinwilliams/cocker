@@ -18,7 +18,6 @@ int DoAction_install_test( struct CockerEnvironment *env )
 	
 	/* preprocess input parameters */
 	nret = SnprintfAndMakeDir( version_path_base , sizeof(version_path_base)-1 , "%s/test" , env->images_path_base ) ;
-	
 	if( env->cmd_para.__version )
 	{
 		nret = SnprintfAndMakeDir( env->image_path_base , sizeof(env->image_path_base)-1 , "%s/%s" , version_path_base , env->cmd_para.__version ) ;
