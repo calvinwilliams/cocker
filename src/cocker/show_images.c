@@ -14,11 +14,12 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 	struct dirent	*dirent = NULL ;
 	DIR		*dir2 = NULL ;
 	struct dirent	*dirent2 = NULL ;
-	int		count ;
 	char		version_path_base[ PATH_MAX + 1 ] ;
+	char		image_path_base[ PATH_MAX + 1 ] ;
+	struct stat	dir_stat ;
+	int		count ;
 	char		version[ VERSION_LEN_MAX + 1 ] ;
 	char		image_id[ IMAGES_ID_LEN_MAX + 1 ] ;
-	char		image_path_base[ PATH_MAX + 1 ] ;
 	struct stat	image_path_stat ;
 	struct tm	image_path_modifytm ;
 	char		image_path_modifytime_buf[ 32 + 1 ] ;
@@ -41,12 +42,19 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 		
 		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
 			continue;
-		if( dirent->d_type != DT_DIR )
+		
+		if( Snprintf( version_path_base , sizeof(version_path_base) , "%s/%s" , cocker_env->images_path_base , dirent->d_name ) == NULL )
+			continue;
+		memset( & dir_stat , 0x00 , sizeof(struct stat) );
+		nret = stat( version_path_base , & dir_stat ) ;
+		if( nret == -1 )
+			continue;
+		
+		if( ! S_ISDIR(dir_stat.st_mode) )
 			continue;
 		
 		Snprintf( image_id , sizeof(image_id) , "%s" , dirent->d_name );
 		
-		Snprintf( version_path_base , sizeof(version_path_base) , "%s/%s" , cocker_env->images_path_base , image_id );
 		dir2 = opendir( version_path_base ) ;
 		while( dir2 )
 		{
@@ -56,7 +64,14 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 			
 			if( STRCMP( dirent2->d_name , == , "." ) || STRCMP( dirent2->d_name , == , ".." ) )
 				continue;
-			if( dirent2->d_type != DT_DIR )
+			
+			if( Snprintf( image_path_base , sizeof(image_path_base) , "%s/%s" , version_path_base , dirent2->d_name ) == NULL )
+				continue;
+			memset( & dir_stat , 0x00 , sizeof(struct stat) );
+			nret = stat( image_path_base , & dir_stat ) ;
+			if( nret == -1 )
+				continue;
+			if( ! S_ISDIR(dir_stat.st_mode) )
 				continue;
 			
 			Snprintf( version , sizeof(version) , "%s" , dirent2->d_name );

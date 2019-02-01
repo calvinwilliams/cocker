@@ -12,6 +12,8 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 {
 	DIR		*dir = NULL ;
 	struct dirent	*dirent = NULL ;
+	char		container_path_base[ PATH_MAX + 1 ] ;
+	struct stat	dir_stat ;
 	int		count ;
 	
 	char		container_image_file[ PATH_MAX + 1 ] ;
@@ -45,7 +47,14 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		
 		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
 			continue;
-		if( dirent->d_type != DT_DIR )
+		
+		if( Snprintf( container_path_base , sizeof(container_path_base) , "%s/%s" , cocker_env->containers_path_base , dirent->d_name ) == NULL )
+			continue;
+		memset( & dir_stat , 0x00 , sizeof(struct stat) );
+		nret = stat( container_path_base , & dir_stat ) ;
+		if( nret == -1 )
+			continue;
+		if( ! S_ISDIR(dir_stat.st_mode) )
 			continue;
 		
 		/* image */
