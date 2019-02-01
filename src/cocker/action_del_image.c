@@ -41,8 +41,8 @@ int DoAction_del_image( struct CockerEnvironment *env )
 	
 	if( IsDirectoryEmpty( version_path_base ) == 0 )
 	{
-		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rm -rf %s" , version_path_base ) ;
-		INTER1( "*** ERROR : SnprintfAndSystem [rm -rf %s] failed[%d] , errno[%d]\n" , version_path_base , nret , errno )
+		nret = SnprintfAndSystem( cmd , sizeof(cmd) , "rmdir %s" , version_path_base ) ;
+		INTER1( "*** ERROR : SnprintfAndSystem [rmdir %s] failed[%d] , errno[%d]\n" , version_path_base , nret , errno )
 		EIDTI( "system [%s] ok\n" , cmd )
 	}
 	

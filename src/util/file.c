@@ -270,21 +270,22 @@ static int _GetDirectorySize( char *path , int *p_directory_size )
 			return -2;
 		}
 		
-		if( dirent->d_type == DT_DIR )
+		memset( & file_stat , 0x00 , sizeof(struct stat) );
+		nret = stat( sub_path , & file_stat ) ;
+		if( nret == -1 )
+		{
+			closedir( dir );
+			return -3;
+		}
+		
+		if( S_ISDIR(file_stat.st_mode)  )
 		{
 			nret = _GetDirectorySize( sub_path , p_directory_size ) ;
 			if( nret )
 				return nret;
 		}
-		else if( dirent->d_type == DT_REG )
+		else if( S_ISREG(file_stat.st_mode) )
 		{
-			memset( & file_stat , 0x00 , sizeof(struct stat) );
-			nret = stat( sub_path , & file_stat ) ;
-			if( nret == -1 )
-			{
-				closedir( dir );
-				return -3;
-			}
 			(*p_directory_size) += file_stat.st_size ;
 		}
 	}
@@ -315,8 +316,6 @@ int IsDirectoryEmpty( char *version_path_base )
 		if( dirent == NULL )
 			break;
 		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
-			continue;
-		if( dirent->d_type != DT_DIR )
 			continue;
 		
 		closedir( dir );

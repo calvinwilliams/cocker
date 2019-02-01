@@ -55,9 +55,13 @@ int GetMaxVersionPath( char *version_path_base , char *max_version , int max_ver
 {
 	DIR		*dir = NULL ;
 	struct dirent	*dirent = NULL ;
+	char		sub_path[ PATH_MAX + 1 ] ;
+	struct stat	dir_stat ;
 	int		max_v1 , max_v2 , max_v3 , max_v4 ;
 	int		v1 , v2 , v3 , v4 ;
 	char		version[ PATH_MAX + 1 ] = "" ;
+	
+	int		nret = 0 ;
 	
 	dir = opendir( version_path_base ) ;
 	if( dir == NULL )
@@ -74,7 +78,21 @@ int GetMaxVersionPath( char *version_path_base , char *max_version , int max_ver
 			break;
 		if( STRCMP( dirent->d_name , == , "." ) || STRCMP( dirent->d_name , == , ".." ) )
 			continue;
-		if( dirent->d_type != DT_DIR )
+		
+		if( Snprintf( sub_path , sizeof(sub_path) , "%s/%s" , version_path_base , dirent->d_name ) == NULL )
+		{
+			closedir( dir );
+			return -2;
+		}
+		
+		memset( & dir_stat , 0x00 , sizeof(struct stat) );
+		nret = stat( sub_path , & dir_stat ) ;
+		if( nret == -1 )
+		{
+			closedir( dir );
+			return -3;
+		}
+		if( ! S_ISDIR(dir_stat.st_mode) )
 			continue;
 		
 		sscanf( dirent->d_name , "%d.%d.%d.%d" , & v1 , & v2 , & v3 , & v4 );
