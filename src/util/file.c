@@ -227,12 +227,12 @@ int IsDirectoryNewThan( char *path , time_t mtime )
 		if( Snprintf( sub_path , sizeof(sub_path) , "%s/%s" , path , dirent->d_name ) == NULL )
 			return -2;
 		
-		if( dirent->d_type == DT_DIR )
+		memset( & dir_stat , 0x00 , sizeof(struct stat) );
+		nret = stat( sub_path , & dir_stat ) ;
+		if( nret == -1 )
+			return -3;
+		if( S_ISDIR(dir_stat.st_mode) )
 		{
-			memset( & dir_stat , 0x00 , sizeof(struct stat) );
-			nret = stat( sub_path , & dir_stat ) ;
-			if( nret == -1 )
-				return -3;
 			if( dir_stat.st_mtime > mtime )
 				return 1;
 			
