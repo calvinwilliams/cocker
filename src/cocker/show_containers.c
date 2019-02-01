@@ -54,7 +54,7 @@ int DoShow_containers( struct CockerEnvironment *cocker_env )
 		nret = stat( container_path_base , & dir_stat ) ;
 		if( nret == -1 )
 			continue;
-		if( S_ISDIR(dir_stat.st_mode) )
+		if( ! S_ISDIR(dir_stat.st_mode) )
 			continue;
 		
 		/* image */

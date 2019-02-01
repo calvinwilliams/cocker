@@ -65,7 +65,7 @@ int DoShow_images( struct CockerEnvironment *cocker_env )
 			if( STRCMP( dirent2->d_name , == , "." ) || STRCMP( dirent2->d_name , == , ".." ) )
 				continue;
 			
-			if( Snprintf( image_path_base , sizeof(image_path_base) , "%s/%s" , cocker_env->version_path_base , dirent2->d_name ) == NULL )
+			if( Snprintf( image_path_base , sizeof(image_path_base) , "%s/%s" , version_path_base , dirent2->d_name ) == NULL )
 				continue;
 			memset( & dir_stat , 0x00 , sizeof(struct stat) );
 			nret = stat( image_path_base , & dir_stat ) ;
